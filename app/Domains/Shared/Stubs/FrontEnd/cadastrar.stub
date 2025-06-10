@@ -1,0 +1,22 @@
+<script setup lang="ts">
+import {{form}} from '../components/{{form}}.vue'
+import { {{store_name}} } from '../store/{{store_name}}'
+
+definePage({
+  meta: {
+    navActiveLink: '{{entity_var}}',
+    action: 'create',
+    subject: '{{entity_var}}',
+  },
+})
+
+const { resetForm } = {{store_name}}()
+
+onBeforeRouteLeave(() => {
+  resetForm()
+})
+</script>
+
+<template>
+  <{{form}} />
+</template>

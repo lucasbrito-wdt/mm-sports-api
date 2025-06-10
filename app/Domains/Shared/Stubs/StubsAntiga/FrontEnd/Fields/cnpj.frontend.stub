@@ -1,0 +1,1 @@
+<CDFTextField v-model="{{vModel}}" v-mask="'##.###.###/####-##'" :label="{{label}}" :placeholder="{{placeholder}}" :rules="[{{rules}}]"/>

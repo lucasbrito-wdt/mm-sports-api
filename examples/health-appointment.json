@@ -1,0 +1,22 @@
+{
+    "domain": "Health",
+    "model": "Appointment",
+    "schema": "paciente_id=foreign,patients,id;medico_id=foreign,users,id;data_consulta=datetime,req;duracao=integer,req;tipo_consulta=string,50,req;status=string,50,req;observacoes=text,null;prescricao=text,null;valor=decimal,10,2,null;pago=boolean",
+    "foreignKeys": [
+        {
+            "localKey": "paciente_id",
+            "foreignTable": "patients",
+            "foreignKey": "id",
+            "displayField": "nome"
+        },
+        {
+            "localKey": "medico_id",
+            "foreignTable": "users",
+            "foreignKey": "id",
+            "displayField": "name"
+        }
+    ],
+    "force": true,
+    "generateCompleteStructure": false,
+    "generateTests": false
+}

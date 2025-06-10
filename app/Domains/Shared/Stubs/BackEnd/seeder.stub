@@ -1,0 +1,44 @@
+<?php
+
+namespace {{namespace}};
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use App\Domains\{{domainName}}\Models\{{modelName}};
+{{additionalImports}}
+
+class {{seederName}} extends Seeder
+{
+    use WithoutModelEvents;
+
+    /**
+     * Run the database seeds for {{modelName}}.
+     *
+     * @return void
+     */
+    public function run(): void
+    {
+{{additionalSeeders}}        // Para usar factories, crie o arquivo de factory correspondente:
+        // {{modelName}}::factory(10)->create();
+
+        // Criar registros manualmente de exemplo:
+        /*
+        {{modelName}}::create([
+            'nome' => 'Exemplo de {{modelName}}',
+            // Adicione mais campos conforme necessário
+        ]);
+        */
+
+        // Exemplo com relacionamentos:
+        /*
+        $relatedModel = RelatedModel::first();
+        if ($relatedModel) {
+            {{modelName}}::create([
+                'nome' => 'Exemplo com relação',
+                'related_model_id' => $relatedModel->id,
+                // Outros campos...
+            ]);
+        }
+        */
+    }
+}

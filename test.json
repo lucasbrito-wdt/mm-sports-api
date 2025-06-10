@@ -1,0 +1,6 @@
+{
+    "domain": "Teste",
+    "model": "Teste",
+    "schema": "nome=string,req",
+    "foreignKeys": []
+}

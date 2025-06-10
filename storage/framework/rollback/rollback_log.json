@@ -1,0 +1,27 @@
+{
+    "directories": [
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Controllers",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Enums",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Migrations",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Models",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Requests",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Seeders",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Services"
+    ],
+    "created": [
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Models\/Product.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Migrations\/2025_06_10_145920_create_products_table.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Services\/ProductService.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\routes\/domains\/product.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Controllers\/ProductController.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Requests\/ProductRequest.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\routes\/domains\/product.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Seeders\/ProductSeeder.php"
+    ],
+    "modified": {
+        "E:\\wdt\\laravel-backend\\crudgerador\\routes\/api.php": "E:\\wdt\\laravel-backend\\crudgerador\\storage\\framework\/rollback\/backups\/127cb6850a9136580e9f541a176f0d01_api.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\database\\seeders\/DatabaseSeeder.php": "E:\\wdt\\laravel-backend\\crudgerador\\storage\\framework\/rollback\/backups\/996c853361b8b3a98729216970419909_DatabaseSeeder.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\config\\permission_list.php": "E:\\wdt\\laravel-backend\\crudgerador\\storage\\framework\/rollback\/backups\/57d96b093aae2cb128b2feb37353059a_permission_list.php"
+    }
+}

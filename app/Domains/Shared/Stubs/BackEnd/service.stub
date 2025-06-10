@@ -1,0 +1,17 @@
+<?php
+
+namespace {{namespace}};
+
+use {{modelNamespace}};
+use App\Domains\Shared\Services\BaseService;
+
+class {{serviceName}} extends BaseService
+{
+    public function __construct(private readonly {{modelName}} ${{modelVariable}})
+    {
+        $this->setModel($this->{{modelVariable}});
+    }
+
+    // 👉 methods
+    {{methodsForeign}}
+}

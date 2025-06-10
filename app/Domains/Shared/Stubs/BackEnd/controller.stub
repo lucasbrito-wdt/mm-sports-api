@@ -1,0 +1,26 @@
+<?php
+
+namespace {{namespace}};
+
+use App\Domains\Shared\Controller\BaseController;
+use {{serviceNamespace}};
+use {{requestNamespace}};
+
+class {{controllerName}} extends BaseController
+{
+    public function __construct(private readonly {{serviceName}} $service)
+    {
+        $this->setACL('{{subjectName}}', [
+            'list' => ['{{subjectName}}.index'],
+            'create' => ['{{subjectName}}.store'],
+            'edit'=> ['{{subjectName}}.update'],
+            'delete' => ['{{subjectName}}.destroy']
+        ]);
+        parent::__construct();
+        $this->setService($this->service);
+        $this->setRequest('request', {{requestName}}::class);
+    }
+
+    // 👉 methods
+    {{methodsForeign}}
+}

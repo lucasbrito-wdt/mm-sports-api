@@ -1,0 +1,16 @@
+{
+    "domain": "Users",
+    "model": "Profile",
+    "schema": "usuario_id=foreign,users,id;telefone=string,20,null;endereco=string,200,null;cidade=string,100,null;estado=string,2,null;cep=string,10,null;data_nascimento=date,null;biografia=text,null;foto=string,255,null",
+    "foreignKeys": [
+        {
+            "localKey": "usuario_id",
+            "foreignTable": "users",
+            "foreignKey": "id",
+            "displayField": "name"
+        }
+    ],
+    "force": true,
+    "generateCompleteStructure": false,
+    "generateTests": false
+}

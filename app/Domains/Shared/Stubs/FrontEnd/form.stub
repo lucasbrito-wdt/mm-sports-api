@@ -1,0 +1,71 @@
+<script setup lang="ts">
+import { storeToRefs } from 'pinia'
+import LayoutForms from '@/components/CDF/LayoutForms.vue'
+import * as rules from '@/validators/cdf-rules'
+import { blurHandler } from '@/utils/generals'
+{{imports}}
+
+import { {{store_name}} } from '../store/{{store_name}}'
+import type { {{interface_name}} } from '../types'
+
+withDefaults(defineProps<{
+  isEditing: boolean
+  isHeader: boolean
+}>(), {
+  isEditing: false,
+  isHeader: true,
+})
+
+const store = {{store_name}}()
+
+onMounted(() => {
+    // 👉 methods
+   {{methods_fetchs}}
+})
+
+const {
+  form,
+  data,
+  loading,
+  messages,
+  {{fk_refs_state}}
+} = storeToRefs(store)
+
+const {
+  save,
+  update,
+  resetForm,
+  {{fk_methods}}
+} = store
+
+onBeforeRouteLeave(() => {
+  resetForm()
+})
+</script>
+
+<template>
+  <LayoutForms
+    v-model:form="form"
+    v-model:loading="loading.save"
+    :title="{{form_title}}"
+    :is-editing="isEditing"
+    :is-header="isHeader"
+    :actions="{
+      save: {
+        method: () => save(),
+      },
+      update: {
+        method: () => update(),
+      },
+      reset: {
+        method: () => resetForm(),
+      },
+    }"
+    back="/{{entity_singular_var}}"
+  >
+    <template #content>
+      {{fields}}
+      {{fk_inputs}}
+    </template>
+  </LayoutForms>
+</template>

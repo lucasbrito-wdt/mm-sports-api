@@ -1,0 +1,9 @@
+{
+    "domain": "Health",
+    "model": "Patient",
+    "schema": "nome=string,150,req;cpf=string,14,req,unique;rg=string,20,null;data_nascimento=date,req;telefone=string,20,req;email=string,100,null;endereco=string,200,req;convenio=string,100,null;numero_convenio=string,50,null;contato_emergencia=string,150,null;telefone_emergencia=string,20,null",
+    "foreignKeys": [],
+    "force": true,
+    "generateCompleteStructure": false,
+    "generateTests": false
+}

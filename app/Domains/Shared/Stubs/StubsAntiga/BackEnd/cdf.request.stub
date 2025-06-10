@@ -1,0 +1,35 @@
+<?php
+
+namespace {{namespace}};
+
+use Domains\Shared\Requests\BaseFormRequest;
+
+class {{request_name}} extends BaseFormRequest
+{
+    public function base(): array
+    {
+        return [
+            {{requestAttributes}}
+        ];
+    }
+
+    public function view(): array
+    {
+        return [];
+    }
+
+    public function store(): array
+    {
+        return [];
+    }
+
+    public function update(): array
+    {
+        return [];
+    }
+
+    public function destroy(): array
+    {
+        return [];
+    }
+}

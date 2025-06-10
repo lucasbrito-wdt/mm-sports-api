@@ -1,0 +1,15 @@
+{
+    "domain": "Order",
+    "model": "Order",
+    "schema": "numero=string,50,req,unique;cliente_id=foreign,users,id;total=decimal,10,2,req;desconto=decimal,10,2,null;status=string,50,req;observacoes=text,null;data_entrega=date,null",
+    "foreignKeys": [
+        {
+            "domain": "User",
+            "relation": "hasMany",
+            "model": "User"
+        }
+    ],
+    "force": true,
+    "generateCompleteStructure": true,
+    "generateTests": false
+}

@@ -1,0 +1,16 @@
+{
+    "domain": "Product",
+    "model": "Product",
+    "schema": "nome=string,150,req;descricao=text,req;preco=decimal,10,2,req;preco_promocional=decimal,10,2,null;codigo=string,50,req,unique;categoria_id=foreign,categories,id;ativo=boolean;estoque=integer;peso=decimal,8,3,null",
+    "foreignKeys": [
+        {
+            "domain": "Category",
+            "relation": "hasMany",
+            "model": "Category",
+            "required": true
+        }
+    ],
+    "force": true,
+    "generateCompleteStructure": true,
+    "generateTests": false
+}

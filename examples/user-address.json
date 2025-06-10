@@ -1,0 +1,16 @@
+{
+    "domain": "Users",
+    "model": "Address",
+    "schema": "usuario_id=foreign,users,id;tipo=string,50,req;logradouro=string,200,req;numero=string,20,req;complemento=string,100,null;bairro=string,100,req;cidade=string,100,req;estado=string,2,req;cep=string,10,req;principal=boolean",
+    "foreignKeys": [
+        {
+            "localKey": "usuario_id",
+            "foreignTable": "users",
+            "foreignKey": "id",
+            "displayField": "name"
+        }
+    ],
+    "force": true,
+    "generateCompleteStructure": false,
+    "generateTests": false
+}

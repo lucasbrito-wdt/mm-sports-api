@@ -1,0 +1,9 @@
+{
+    "domain": "Education",
+    "model": "Course",
+    "schema": "nome=string,150,req;codigo=string,20,req,unique;descricao=text,req;carga_horaria=integer,req;preco=decimal,10,2,req;ativo=boolean;data_inicio=date,req;data_fim=date,req;vagas=integer,req;modalidade=string,50,req",
+    "foreignKeys": [],
+    "force": true,
+    "generateCompleteStructure": false,
+    "generateTests": false
+}

@@ -1,0 +1,22 @@
+{
+    "domain": "Blog",
+    "model": "Post",
+    "schema": "titulo=string,200,req;slug=string,200,req,unique;conteudo=text,req;resumo=text,null;publicado=boolean;data_publicacao=datetime,null;autor_id=foreign,users,id;categoria_id=foreign,categories,id;visualizacoes=integer;destaque=boolean",
+    "foreignKeys": [
+        {
+            "localKey": "autor_id",
+            "foreignTable": "users",
+            "foreignKey": "id",
+            "displayField": "name"
+        },
+        {
+            "localKey": "categoria_id",
+            "foreignTable": "categories",
+            "foreignKey": "id",
+            "displayField": "nome"
+        }
+    ],
+    "force": true,
+    "generateCompleteStructure": false,
+    "generateTests": false
+}

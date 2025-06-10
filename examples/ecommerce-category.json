@@ -1,0 +1,9 @@
+{
+    "domain": "Category",
+    "model": "Category",
+    "schema": "nome=string,100,req;descricao=text,null;slug=string,100,req,unique;ativa=boolean;ordem=integer,null",
+    "foreignKeys": [],
+    "force": true,
+    "generateCompleteStructure": true,
+    "generateTests": false
+}

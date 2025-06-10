@@ -1,0 +1,1096 @@
+<?php
+
+namespace App\Console\Commands\Generator;
+
+use App\Console\Commands\Generator\Generators\BackEnd\ControllerGenerator;
+use App\Console\Commands\Generator\Generators\BackEnd\MigrationGenerator;
+use App\Console\Commands\Generator\Generators\BackEnd\ModelGenerator;
+use App\Console\Commands\Generator\Generators\BackEnd\SeederGenerator;
+use App\Console\Commands\Generator\Generators\BackEnd\ServiceGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\CriarGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\EditarGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\FormGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\ListGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\ServiceGenerator as FrontEndServiceGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\StoreGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\TypesGenerator;
+use App\Console\Commands\Generator\Utils\AbilityManager;
+use App\Console\Commands\Generator\Utils\ModelRelationsManager;
+use App\Console\Commands\Generator\Utils\RouteManager;
+use App\Console\Commands\Generator\Utils\SummaryBuilder;
+use App\Console\Commands\Generator\Utils\TemplateManager;
+use App\Console\Commands\Generator\Validators\RelationshipValidator;
+use App\Console\Commands\Generator\Validators\SchemaValidator;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use Symfony\Component\Console\Command\Command as CommandAlias;
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\text;
+
+class CrudGenerator extends Command
+{
+    protected $signature = 'generate:crud {--force} {--skip-frontend} {--skip-backend} {--with-tests} {--with-docs} {--config=} {--domain : Gera um domínio em vez de um CRUD} {--rollback : Desfaz todas as alterações/criações feitas pelo gerador}';
+    protected $description = 'Gera um CRUD completo com backend e frontend ou um domínio completo';
+
+    private array $config = [];
+    private array $foreigners = [];
+    private bool $isDomainGenerator = false;
+    private string $rollbackLogPath = '';
+    private array $rollbackLog = [];
+
+    public function __construct(
+        private readonly TemplateManager $templateManager,
+        private readonly SummaryBuilder $summaryBuilder,
+        private readonly SchemaValidator $schemaValidator,
+        private readonly RelationshipValidator $relationshipValidator,
+        private readonly ModelRelationsManager $modelRelationsManager,
+        private readonly AbilityManager $abilityManager,
+        private readonly RouteManager $routeManager,
+    ) {
+        parent::__construct();
+    }
+
+    public function handle(): int
+    {
+        $this->rollbackLogPath = storage_path('framework/rollback/rollback_log.json');
+        if ($this->option('rollback')) {
+            $this->runRollback();
+            return CommandAlias::SUCCESS;
+        }
+
+        $this->isDomainGenerator = $this->option('domain');
+
+        if ($this->isDomainGenerator) {
+            $this->info("\n\n🚀 Gerador de Domínio\n\n");
+        } else {
+            $this->info("\n\n🚀 Gerador de Crud\n\n");
+        }
+
+        // Verificar se foi fornecida uma configuração via JSON ou arquivo externo
+        if ($configJson = $this->option('config')) {
+            try {
+                // Remove aspas simples ou duplas que podem ter vindo do terminal
+                $configJson = trim($configJson, "'\"");
+
+                // Verifica se o valor começa com '@', indicando que é um caminho para arquivo
+                if (str_starts_with($configJson, '@')) {
+                    $filePath = substr($configJson, 1);
+                    if (!file_exists($filePath)) {
+                        throw new \Exception("Arquivo de configuração não encontrado: {$filePath}");
+                    }
+
+                    $configJson = file_get_contents($filePath);
+                }
+
+                // Tenta decodificar o JSON
+                $this->config = json_decode($configJson, true, 512, JSON_THROW_ON_ERROR);
+
+                $this->info('✅ Configuração carregada com sucesso via --config.');
+            } catch (\Throwable $e) {
+                $this->error('❌ Erro ao processar configuração: ' . $e->getMessage());
+                return CommandAlias::FAILURE;
+            }
+        } else {
+            // Fallback: modo interativo ou default
+            $this->gatherInput();
+        }
+
+
+        if ($this->isDomainGenerator) {
+            // Montar e exibir resumo para domínio
+            $this->info('📋 Resumo do Domínio a ser gerado:');
+            $this->line("Domínio: {$this->config['domain']}");
+
+            if (!$this->option('force') && !confirm('Confirma a geração do Domínio?', true)) {
+                $this->info('❌ Operação cancelada pelo usuário.');
+                return CommandAlias::FAILURE;
+            }
+
+            $this->generateDomain();
+
+            if (!$this->option('skip-frontend')) {
+                $this->generateFrontend();
+            }
+
+            $this->info('✅ Domínio gerado com sucesso!');
+        } else {
+            // Montar e exibir resumo para CRUD
+            $summary = $this->summaryBuilder->buildSummary($this->config);
+            $this->info('📋 Resumo do CRUD a ser gerado:');
+            $this->line($summary);
+
+            if (!$this->option('force') && !confirm('Confirma a geração do CRUD?', true)) {
+                $this->info('❌ Operação cancelada pelo usuário.');
+                return CommandAlias::FAILURE;
+            }
+
+            $this->generateCrud();
+
+            if (!$this->option('skip-frontend')) {
+                $this->generateFrontend();
+            }
+
+            $this->info('✅ CRUD gerado com sucesso!');
+        }
+
+        return CommandAlias::SUCCESS;
+    }
+
+    private function gatherInput(): void
+    {
+        // Se for gerador de domínio, coletamos menos informações
+        if ($this->isDomainGenerator) {
+            $this->gatherDomainInput();
+        } else {
+            $this->gatherCrudInput();
+        }
+    }
+
+    private function gatherDomainInput(): void
+    {
+        // Nome do Domínio
+        $this->config['domain'] = text(
+            label: 'Nome do Domínio',
+            placeholder: 'Ex: Products, Users, Orders',
+            validate: function ($value) {
+                if (empty($value)) {
+                    return 'O nome do Domínio é obrigatório';
+                }
+
+                if (!preg_match('/^[A-Z][a-zA-Z]+$/', $value)) {
+                    return 'O nome deve começar com letra maiúscula e conter apenas letras';
+                }
+
+                // Verificar se o domínio já existe
+                if (in_array($value, $this->getAvailableDomains())) {
+                    return "O domínio '$value' já existe";
+                }
+
+                return true;
+            }
+        );
+
+        // Confirmar geração de estrutura completa
+        $this->config['generateCompleteStructure'] = confirm('Deseja gerar uma estrutura completa para o domínio?', true);
+
+        if ($this->config['generateCompleteStructure']) {
+            // Solicitar nome da model base
+            $this->config['model'] = text(
+                label: 'Nome da Model base para o domínio',
+                placeholder: 'Ex: Product, User, Order',
+                default: $this->config['domain'],
+                validate: function ($value) {
+                    if (empty($value)) {
+                        return 'O nome da Model base é obrigatório';
+                    }
+
+                    if (!preg_match('/^[A-Z][a-zA-Z]+$/', $value)) {
+                        return 'O nome deve começar com letra maiúscula e conter apenas letras';
+                    }
+
+                    return true;
+                }
+            );
+
+            // Schema da Migration base
+            $this->config['schema'] = text(
+                label: 'Schema da Migration base | ex: name=string,100,req;price=decimal,10,2,req',
+                validate: function ($value) {
+                    return $this->schemaValidator->validate($value);
+                },
+                hint: 'Formato: campo=tipo,tamanho,req;campo2=tipo2,...'
+            );
+        }
+
+        // Gerar chaves estrangeiras?
+        // Verificar se existem outros domínios disponíveis para criar relacionamentos
+        $domainsAvailable = $this->getAvailableDomains();
+        if (empty($domainsAvailable)) {
+            $this->info('  ℹ️ Não há outros domínios disponíveis para criar relacionamentos.');
+            $this->config['foreignKeys'] = [];
+        } else {
+            $this->gatherForeignKeys();
+        }
+
+        // Gerar testes para o domínio?
+        if (!$this->option('with-tests')) {
+            $this->config['generateTests'] = confirm('Deseja gerar testes para este Domínio?', false);
+        } else {
+            $this->config['generateTests'] = true;
+        }
+
+        // Gerar documentação para o domínio?
+        if (!$this->option('with-docs')) {
+            $this->config['generateDocs'] = confirm('Deseja gerar documentação para este Domínio?', false);
+        } else {
+            $this->config['generateDocs'] = true;
+        }
+    }
+
+    private function gatherCrudInput(): void
+    {
+        // Selecionar Domínio
+        $domainsDir = $this->getAvailableDomains();
+        $this->config['domain'] = select(
+            label: 'Selecione o domínio',
+            options: $domainsDir,
+            required: true
+        );
+
+        // Nome do CRUD
+        $this->config['name'] = text(
+            label: 'Nome do CRUD',
+            placeholder: 'Ex: Product, User, Order',
+            validate: function ($value) {
+                if (empty($value)) {
+                    return 'O nome do CRUD é obrigatório';
+                }
+
+                if (!preg_match('/^[A-Z][a-zA-Z]+$/', $value)) {
+                    return 'O nome deve começar com letra maiúscula e conter apenas letras';
+                }
+
+                return true;
+            }
+        );
+
+        // Nome da Model (default: mesmo nome do CRUD)
+        $this->config['model'] = text(
+            label: 'Nome da Model',
+            default: $this->config['name'],
+            validate: fn($value) => empty($value) ? 'O nome da Model é obrigatório' : true
+        );
+
+        // Nome da Migration
+        $defaultMigration = 'create_' . Str::snake(Str::plural($this->config['name'])) . '_table';
+        $this->config['migration'] = text(
+            label: 'Nome da Migration',
+            default: $defaultMigration,
+            validate: fn($value) => empty($value) ? 'O nome da Migration é obrigatório' : true
+        );
+
+        // Nome do Service (default: NomeCRUDService)
+        $this->config['service'] = text(
+            label: 'Nome do Service',
+            default: $this->config['name'] . 'Service',
+            validate: fn($value) => empty($value) ? 'O nome do Service é obrigatório' : true
+        );
+
+        // Schema da Migration
+        $this->config['schema'] = text(
+            label: 'Schema da Migration | ex: name=string,100,req;price=decimal,10,2,req',
+            validate: function ($value) {
+                return $this->schemaValidator->validate($value);
+            },
+            hint: 'Formato: campo=tipo,tamanho,req;campo2=tipo2,...'
+        );
+
+        // Chaves estrangeiras
+        $this->gatherForeignKeys();
+
+        // Confirmar geração de testes
+        if (!$this->option('with-tests')) {
+            $this->config['generateTests'] = confirm('Deseja gerar testes para este CRUD?', false);
+        } else {
+            $this->config['generateTests'] = true;
+        }
+
+        // Confirmar geração de documentação
+        if (!$this->option('with-docs')) {
+            $this->config['generateDocs'] = confirm('Deseja gerar documentação para este CRUD?', false);
+        } else {
+            $this->config['generateDocs'] = true;
+        }
+    }
+
+    private function gatherForeignKeys(): void
+    {
+        // Inicializa o array de chaves estrangeiras
+        $this->foreigners = [];
+        $this->config['foreignKeys'] = [];
+
+        $count = 0;
+        $hasForeignKeys = confirm('Deseja adicionar chaves estrangeiras?', false);
+
+        while ($hasForeignKeys) {
+            // Domínio da FK
+            $domains = $this->getAvailableDomains();
+
+            // Se não houver domínios disponíveis (isso pode acontecer ao criar o primeiro domínio)
+            if (empty($domains)) {
+                $this->warn('  ⚠️ Não há domínios disponíveis para criar relações.');
+                break;
+            }
+
+            $fkDomain = select(
+                label: 'Domínio da chave estrangeira',
+                options: $domains
+            );
+
+            // Model da FK
+            $fkModels = $this->getAvailableModels($fkDomain);
+
+            // Se não houver modelos disponíveis no domínio selecionado
+            if (empty($fkModels)) {
+                $this->warn("  ⚠️ Não há modelos disponíveis no domínio '{$fkDomain}'.");
+                if (confirm('Deseja selecionar outro domínio?', true)) {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+
+            $fkModel = select(
+                label: 'Model da chave estrangeira',
+                options: $fkModels
+            );
+
+            // Tipo de relação
+            $relationType = select(
+                label: 'Tipo de relação',
+                options: [
+                    'belongsTo' => 'Pertence a (belongsTo)',
+                    'hasMany' => 'Possui muitos (hasMany)',
+                    'hasOne' => 'Possui um (hasOne)',
+                    'belongsToMany' => 'Pertence a muitos (belongsToMany)'
+                ],
+                default: 'belongsTo'
+            );
+
+            // Obrigatoriedade
+            $isRequired = confirm('Esta relação é obrigatória?', true);
+
+            // Montar dados do relacionamento
+            $relation = [
+                'domain' => $fkDomain,
+                'model' => $fkModel,
+                'relation' => $relationType,
+                'required' => $isRequired
+            ];
+
+            // Validar o relacionamento
+            $validationResult = $this->relationshipValidator->validate($relation);
+
+            if ($validationResult !== true) {
+                error($validationResult);
+                if (!confirm('Deseja tentar adicionar este relacionamento novamente?', true)) {
+                    continue;
+                } else {
+                    // Continua o loop sem incrementar $count para tentar novamente
+                    continue;
+                }
+            }
+
+            // Se passou na validação, adiciona o relacionamento
+            $this->foreigners[$count] = $relation;
+
+            $count++;
+            $hasForeignKeys = confirm('Deseja adicionar outra chave estrangeira?', false);
+        }
+
+        $this->config['foreignKeys'] = $this->foreigners;
+
+        // Validar todos os relacionamentos como conjunto
+        if (!empty($this->foreigners)) {
+            $finalValidation = $this->relationshipValidator->validateAll($this->foreigners);
+            if ($finalValidation !== true) {
+                error($finalValidation);
+                if (confirm('Os relacionamentos possuem problemas. Deseja limpar todos e adicionar novamente?', false)) {
+                    $this->foreigners = [];
+                    $this->config['foreignKeys'] = [];
+                    $this->gatherForeignKeys(); // Chamada recursiva para recomeçar
+                }
+            }
+        }
+    }
+
+    private function generateCrud(): void
+    {
+        if ($this->option('skip-backend')) {
+            $this->info('🔹 Geração de backend ignorada conforme solicitado.');
+            return;
+        }
+
+        $this->info('🔹 Gerando componentes de Backend...');
+
+        // Gerar Model
+        $modelGenerator = app(ModelGenerator::class);
+        $modelPath = app_path("Domains/{$this->config['domain']}/Models/{$this->config['model']}.php");
+        if ($modelGenerator->generate($this->config)) {
+            $this->info('  ✓ Model gerada com sucesso');
+            if (file_exists($modelPath)) {
+                $this->logCreatedFile($modelPath);
+            }
+        }
+
+        // Processar relações bidirecionais entre modelos
+        if (!empty($this->config['foreignKeys'])) {
+            $this->modelRelationsManager->createRelationships(
+                $this->config['foreignKeys'],
+                $this->config['domain'],
+                $this->config['model']
+            );
+            $this->info('  ✓ Relações entre modelos configuradas com sucesso');
+        }
+
+        // Gerar Migration
+        $migrationGenerator = app(MigrationGenerator::class);
+        $migrationDir = app_path("Domains/{$this->config['domain']}/Migrations");
+        $tableName = \Illuminate\Support\Str::snake(\Illuminate\Support\Str::plural($this->config['model']));
+        $migrationFilePattern = $migrationDir . '/*_create_' . $tableName . '_table.php';
+        $beforeFiles = glob($migrationFilePattern);
+        if ($migrationGenerator->generate($this->config)) {
+            $this->info('  ✓ Migration gerada com sucesso');
+            // Detecta o novo arquivo gerado
+            $afterFiles = glob($migrationFilePattern);
+            $newFiles = array_diff($afterFiles, $beforeFiles);
+            foreach ($newFiles as $file) {
+                $this->logCreatedFile($file);
+            }
+        } else {
+            $this->error('  ✗ Falha ao gerar migration');
+        }
+
+        // Gerar Service
+        $serviceGenerator = app(ServiceGenerator::class);
+        $servicePath = app_path("Domains/{$this->config['domain']}/Services/{$this->config['service']}.php");
+        if ($serviceGenerator->generate($this->config)) {
+            $this->info('  ✓ Service gerado com sucesso');
+            if (file_exists($servicePath)) {
+                $this->logCreatedFile($servicePath);
+            }
+        }
+
+        // Gerar Controller
+        $controllerGenerator = app(ControllerGenerator::class);
+        if ($controllerGenerator->generate($this->config)) {
+            $this->info('  ✓ Controller gerado com sucesso');
+
+            // Registrar arquivos do Controller e Request criados para rollback
+            $controllerPath = app_path("Domains/{$this->config['domain']}/Controllers/{$this->config['model']}Controller.php");
+            if (file_exists($controllerPath)) {
+                $this->logCreatedFile($controllerPath);
+            }
+
+            $requestPath = app_path("Domains/{$this->config['domain']}/Requests/{$this->config['model']}Request.php");
+            if (file_exists($requestPath)) {
+                $this->logCreatedFile($requestPath);
+            }
+        }
+
+        // Gerar rotas automaticamente após o controller
+        if ($this->routeManager->createDomainRoutes($this->config['domain'], $this->config['model'])) {
+            $this->info('  ✓ Rotas geradas automaticamente');
+            // Registrar arquivos de rotas criados para rollback
+            $routeFilePath = base_path('routes/domains/' . \Illuminate\Support\Str::kebab($this->config['domain']) . '.php');
+            if (file_exists($routeFilePath)) {
+                $this->logCreatedFile($routeFilePath);
+            }
+            // Registrar modificação do api.php para rollback
+            $apiRoutesPath = base_path('routes/api.php');
+            if (file_exists($apiRoutesPath)) {
+                $this->logModifiedFile($apiRoutesPath);
+            }
+        } else {
+            $this->error('  ✗ Falha ao gerar rotas automaticamente');
+        }
+
+        // Gerar Seeder
+        $seederGenerator = app(SeederGenerator::class);
+        if ($seederGenerator->generate($this->config)) {
+            $this->info('  ✓ Seeder gerado com sucesso');
+
+            // Registrar arquivo do Seeder criado para rollback
+            $seederPath = app_path("Domains/{$this->config['domain']}/Seeders/{$this->config['model']}Seeder.php");
+            if (file_exists($seederPath)) {
+                $this->logCreatedFile($seederPath);
+            }
+
+            // Registrar modificação do DatabaseSeeder.php
+            $databaseSeederPath = database_path('seeders/DatabaseSeeder.php');
+            if (file_exists($databaseSeederPath)) {
+                $this->logModifiedFile($databaseSeederPath);
+            }
+        }
+
+        // Gerar abilities
+        $configPath = config_path('permission_list.php');
+        if (file_exists($configPath)) {
+            $this->logModifiedFile($configPath);
+        }
+        $this->abilityManager->createAbilityAndConfig($this->config['domain']);
+        $this->info('  ✓ Abilities e config/permission_list.php atualizados');
+    }
+
+    /**
+     * Gera a estrutura de um novo domínio
+     */
+    private function generateDomain(): void
+    {
+        $domainName = $this->config['domain'];
+        $this->info('🔹 Gerando estrutura para o Domínio: ' . $domainName);
+
+        // Criando estrutura de diretórios
+        $directories = $this->getDomainDirectoryStructure();
+        $baseDomainPath = app_path("Domains/{$domainName}");
+
+        // Verificar se o diretório já existe
+        if (file_exists($baseDomainPath)) {
+            $this->error("O domínio {$domainName} já existe!");
+            return;
+        }
+
+        // Criar diretórios base
+        if (!File::exists($baseDomainPath)) {
+            if (File::makeDirectory($baseDomainPath, 0755, true)) {
+                $this->info("  ✓ Diretório base do domínio criado: {$domainName}");
+                $this->logCreatedDirectory($baseDomainPath);
+            } else {
+                $this->error("  ✗ Falha ao criar diretório base do domínio");
+                return;
+            }
+        }
+
+        // Criar subdiretórios
+        foreach ($directories as $directory) {
+            $path = $baseDomainPath . '/' . $directory;
+            if (!File::exists($path)) {
+                if (File::makeDirectory($path, 0755, true)) {
+                    $this->info("  ✓ Diretório criado: {$directory}");
+                    $this->logCreatedDirectory($path);
+                } else {
+                    $this->error("  ✗ Falha ao criar diretório: {$directory}");
+                }
+            }
+        }
+
+        $this->info('🔹 Gerando arquivos base para o Domínio...');
+
+        // Gerar arquivos base se solicitado
+        if ($this->config['generateCompleteStructure']) {
+            // Gerar os componentes em ordem lógica
+            $this->generateBaseModelForDomain();
+            $this->generateBaseMigrationForDomain();
+            $this->generateBaseServiceForDomain();
+            $this->generateBaseControllerForDomain();
+            $this->generateBaseSeederForDomain();
+            $this->generateAbilitiesForDomain();
+
+            if ($this->config['generateTests']) {
+                $this->generateBaseTestForDomain();
+            }
+
+            // Recapitular tudo o que foi gerado
+            $this->info("\n✅ Domínio $domainName gerado com sucesso com a estrutura completa:");
+            $this->line("   • Model: {$this->config['model']}");
+            $this->line("   • Migration: create_" . Str::snake(Str::plural($this->config['model'])) . "_table");
+            $this->line("   • Controller: {$this->config['model']}Controller");
+            $this->line("   • Service: {$this->config['model']}Service");
+            $this->line("   • Seeder: {$this->config['model']}Seeder");
+
+            // Mostrar informações sobre chaves estrangeiras
+            if (!empty($this->config['foreignKeys'])) {
+                $this->line("\n   Relações:");
+                foreach ($this->config['foreignKeys'] as $fk) {
+                    $relationType = match ($fk['relation']) {
+                        'belongsTo' => 'pertence a',
+                        'hasMany' => 'possui muitos',
+                        'hasOne' => 'possui um',
+                        'belongsToMany' => 'pertence a muitos',
+                        default => $fk['relation']
+                    };
+                    $this->line("   • {$this->config['model']} {$relationType} {$fk['model']} do domínio {$fk['domain']}");
+                }
+            }
+        } else {
+            $this->info("\n✅ Domínio $domainName gerado com sucesso (somente estrutura básica)");
+            $this->line("   Use 'php artisan generate:crud' para adicionar CRUDs a este domínio");
+        }
+    }
+
+    private function generateFrontend(): void
+    {
+        $this->info('🔹 Gerando componentes de Frontend...');
+
+        // Gerar Types
+        $typesGenerator = app(TypesGenerator::class);
+        if ($typesGenerator->generate($this->config)) {
+            $this->info('  ✓ Types gerados com sucesso');
+        }
+
+        // Gerar Store
+        $storeGenerator = app(StoreGenerator::class);
+        if ($storeGenerator->generate($this->config)) {
+            $this->info('  ✓ Store gerado com sucesso');
+        }
+
+        // Gerar Service
+        $serviceGenerator = app(FrontEndServiceGenerator::class);
+        if ($serviceGenerator->generate($this->config)) {
+            $this->info('  ✓ Service gerado com sucesso');
+        }
+
+        // Gerar Form
+        $formGenerator = app(FormGenerator::class);
+        if ($formGenerator->generate($this->config)) {
+            $this->info('  ✓ Formulário gerado com sucesso');
+        }
+
+        // Gerar List
+        $listGenerator = app(ListGenerator::class);
+        if ($listGenerator->generate($this->config)) {
+            $this->info('  ✓ Listagem gerada com sucesso');
+        }
+
+        // Gerar Criar
+        $criarGenerator = app(CriarGenerator::class);
+        if ($criarGenerator->generate($this->config)) {
+            $this->info('  ✓ Página de criação gerada com sucesso');
+        }
+
+        // Gerar Editar
+        $editarGenerator = app(EditarGenerator::class);
+        if ($editarGenerator->generate($this->config)) {
+            $this->info('  ✓ Página de edição gerada com sucesso');
+        }
+
+        // Executar ESLint
+        /* $this->runEslint(); */
+    }
+
+    /**
+     * Executa o ESLint para formatar os arquivos do frontend
+     */
+    private function runEslint(): void
+    {
+        try {
+            $frontEndDir = env('CDF_DIR_FRONT_END', '../frontend');
+            $command = sprintf(
+                'cd %s && %s %s --fix',
+                realpath(dirname(base_path()) . DIRECTORY_SEPARATOR . $frontEndDir),
+                '.\\node_modules\\.bin\\eslint',
+                './src/pages/' . Str::kebab(Str::plural($this->config['domain'])) . '/**/*.{ts,vue}'
+            );
+
+            $this->info('  🔸 Executando ESLint...');
+
+            exec($command, $output, $returnCode);
+
+            if ($returnCode === 0) {
+                $this->info('  ✓ ESLint executado com sucesso');
+            } else {
+                $this->warn('  ⚠️ ESLint encontrou problemas, mas o CRUD foi gerado');
+            }
+        } catch (\Exception $e) {
+            $this->warn('  ⚠️ Não foi possível executar o ESLint: ' . $e->getMessage());
+        }
+    }
+
+    private function getAvailableDomains(): array
+    {
+        $domainsDir = [];
+        foreach (collect(scandir(app_path() . '/Domains')) as $dir) {
+            if (!in_array($dir, ['.', '..', 'Shared', 'Auth', 'ACL'])) {
+                $domainsDir[] = $dir;
+            }
+        }
+        return $domainsDir;
+    }
+
+    private function getAvailableModels(string $domain): array
+    {
+        $modelsDir = [];
+        $modelsPath = app_path() . "/Domains/{$domain}/Models";
+
+        if (file_exists($modelsPath)) {
+            foreach (collect(scandir($modelsPath)) as $file) {
+                if (!in_array($file, ['.', '..']) && pathinfo($file, PATHINFO_EXTENSION) === 'php') {
+                    $modelsDir[] = pathinfo($file, PATHINFO_FILENAME);
+                }
+            }
+        }
+
+        return $modelsDir;
+    }
+
+
+    /**
+     * Retorna a estrutura de diretórios para um domínio
+     */
+    private function getDomainDirectoryStructure(): array
+    {
+        $directories = [
+            'Controllers',
+            'Enums',
+            'Migrations',
+            'Models',
+            'Requests',
+            'Seeders',
+            'Services'
+        ];
+
+        // Adicionar diretórios de teste apenas se generateTests estiver habilitado
+        if ($this->config['generateTests'] ?? false) {
+            $directories[] = 'Tests/Unit';
+            $directories[] = 'Tests/Feature';
+        }
+
+        return $directories;
+    }
+
+    /**
+     * Gera o modelo base para o domínio
+     */
+    private function generateBaseModelForDomain(): void
+    {
+        $domainName = $this->config['domain'];
+        $modelName = $this->config['model'];
+
+        // Configuração para o gerador de modelo
+        $modelConfig = [
+            'domain' => $domainName,
+            'model' => $modelName,
+            'schema' => $this->config['schema'],
+            'foreignKeys' => $this->config['foreignKeys'] ?? []
+        ];
+
+        // Gerar Model
+        $modelGenerator = app(ModelGenerator::class);
+        $modelPath = app_path("Domains/{$domainName}/Models/{$modelName}.php");
+        if ($modelGenerator->generate($modelConfig)) {
+            $this->info('  ✓ Model base gerada com sucesso');
+            if (file_exists($modelPath)) {
+                $this->logCreatedFile($modelPath);
+            }
+        }
+
+        // Processar relações bidirecionais entre modelos
+        if (!empty($this->config['foreignKeys'])) {
+            $this->modelRelationsManager->createRelationships(
+                $this->config['foreignKeys'],
+                $this->config['domain'],
+                $this->config['model']
+            );
+            $this->info('  ✓ Relações entre modelos configuradas com sucesso');
+        }
+    }
+
+    /**
+     * Gera a migration base para o domínio
+     */
+    private function generateBaseMigrationForDomain(): void
+    {
+        $domainName = $this->config['domain'];
+        $modelName = $this->config['model'];
+
+        // Configuração para o gerador de migration
+        $migrationConfig = [
+            'domain' => $domainName,
+            'model' => $modelName,
+            'migration' => 'create_' . Str::snake(Str::plural($modelName)) . '_table',
+            'schema' => $this->config['schema'],
+            'foreignKeys' => $this->config['foreignKeys'] ?? []
+        ];
+
+        // Gerar Migration
+        $migrationGenerator = app(MigrationGenerator::class);
+        $migrationDir = app_path("Domains/{$domainName}/Migrations");
+        $tableName = \Illuminate\Support\Str::snake(\Illuminate\Support\Str::plural($modelName));
+        $migrationFilePattern = $migrationDir . '/*_create_' . $tableName . '_table.php';
+        $beforeFiles = glob($migrationFilePattern);
+        if ($migrationGenerator->generate($migrationConfig)) {
+            $this->info('  ✓ Migration base gerada com sucesso em ' . database_path('migrations'));
+            // Detecta o novo arquivo gerado
+            $afterFiles = glob($migrationFilePattern);
+            $newFiles = array_diff($afterFiles, $beforeFiles);
+            foreach ($newFiles as $file) {
+                $this->logCreatedFile($file);
+            }
+        } else {
+            $this->error('  ✗ Falha ao gerar migration');
+        }
+    }
+
+    /**
+     * Gera o serviço base para o domínio
+     */
+    private function generateBaseServiceForDomain(): void
+    {
+        $domainName = $this->config['domain'];
+        $modelName = $this->config['model'];
+        $serviceName = $modelName . 'Service';
+
+        // Configuração para o gerador de serviço
+        $serviceConfig = [
+            'domain' => $domainName,
+            'model' => $modelName,
+            'service' => $serviceName,
+            'foreignKeys' => $this->config['foreignKeys'] ?? []
+        ];
+
+        // Gerar Service
+        $serviceGenerator = app(ServiceGenerator::class);
+        $servicePath = app_path("Domains/{$domainName}/Services/{$serviceName}.php");
+        if ($serviceGenerator->generate($serviceConfig)) {
+            $this->info('  ✓ Service base gerado com sucesso');
+            if (file_exists($servicePath)) {
+                $this->logCreatedFile($servicePath);
+            }
+
+            // Gerar rotas automaticamente após o controller base
+            if ($this->routeManager->createDomainRoutes($domainName, $modelName)) {
+                $this->info('  ✓ Rotas base geradas automaticamente');
+                // Registrar arquivos de rotas criados para rollback
+                $routeFilePath = base_path('routes/domains/' . \Illuminate\Support\Str::kebab($domainName) . '.php');
+                if (file_exists($routeFilePath)) {
+                    $this->logCreatedFile($routeFilePath);
+                }
+                // Registrar modificação do api.php para rollback
+                $apiRoutesPath = base_path('routes/api.php');
+                if (file_exists($apiRoutesPath)) {
+                    $this->logModifiedFile($apiRoutesPath);
+                }
+            } else {
+                $this->error('  ✗ Falha ao gerar rotas base automaticamente');
+            }
+        }
+    }
+
+    /**
+     * Gera o controller base para o domínio
+     */
+    private function generateBaseControllerForDomain(): void
+    {
+        $domainName = $this->config['domain'];
+        $modelName = $this->config['model'];
+
+        // Configuração para o gerador de controller
+        $controllerConfig = [
+            'domain' => $domainName,
+            'model' => $modelName,
+            'schema' => $this->config['schema'],
+            'service' => $modelName . 'Service',
+            'foreignKeys' => $this->config['foreignKeys'] ?? []
+        ];
+
+        // Gerar Controller
+        $controllerGenerator = app(ControllerGenerator::class);
+        $controllerPath = app_path("Domains/{$domainName}/Controllers/{$modelName}Controller.php");
+        if ($controllerGenerator->generate($controllerConfig)) {
+            $this->info('  ✓ Controller base gerado com sucesso');
+            if (file_exists($controllerPath)) {
+                $this->logCreatedFile($controllerPath);
+            }
+
+            // Registrar arquivo do Request criado para rollback
+            $requestPath = app_path("Domains/{$domainName}/Requests/{$modelName}Request.php");
+            if (file_exists($requestPath)) {
+                $this->logCreatedFile($requestPath);
+            }
+
+            // Gerar rotas automaticamente após o controller base
+            if ($this->routeManager->createDomainRoutes($domainName, $modelName)) {
+                $this->info('  ✓ Rotas base geradas automaticamente');
+                // Registrar arquivos de rotas criados para rollback
+                $routeFilePath = base_path('routes/domains/' . \Illuminate\Support\Str::kebab($domainName) . '.php');
+                if (file_exists($routeFilePath)) {
+                    $this->logCreatedFile($routeFilePath);
+                }
+                // Registrar modificação do api.php para rollback
+                $apiRoutesPath = base_path('routes/api.php');
+                if (file_exists($apiRoutesPath)) {
+                    $this->logModifiedFile($apiRoutesPath);
+                }
+            } else {
+                $this->error('  ✗ Falha ao gerar rotas base automaticamente');
+            }
+        }
+
+        // Gerar Seeder
+        $seederGenerator = app(SeederGenerator::class);
+        if ($seederGenerator->generate($this->config)) {
+            $this->info('  ✓ Seeder gerado com sucesso');
+        }
+    }
+
+    /**
+     * Gera testes base para o domínio
+     */
+    private function generateBaseTestForDomain(): void
+    {
+        $domainName = $this->config['domain'];
+        $modelName = $this->config['model'];
+
+        // Criar diretório para testes unitários
+        $unitTestDir = app_path("Domains/{$domainName}/Tests/Unit");
+        if (!file_exists($unitTestDir)) {
+            mkdir($unitTestDir, 0755, true);
+            $this->logCreatedDirectory($unitTestDir);
+        }
+
+        // Criar diretório para testes de integração
+        $featureTestDir = app_path("Domains/{$domainName}/Tests/Feature");
+        if (!file_exists($featureTestDir)) {
+            mkdir($featureTestDir, 0755, true);
+            $this->logCreatedDirectory($featureTestDir);
+        }
+
+        $this->info('  ✓ Estrutura de testes gerada com sucesso');
+    }
+
+    /**
+     * Gera o seeder base para o domínio
+     */
+    private function generateBaseSeederForDomain(): void
+    {
+        $domainName = $this->config['domain'];
+        $modelName = $this->config['model'];
+
+        // Configuração para o gerador de seeder
+        $seederConfig = [
+            'domain' => $domainName,
+            'model' => $modelName, // Garante que sempre exista a chave 'model'
+            'foreignKeys' => $this->config['foreignKeys'] ?? []
+        ];
+
+        // Gerar Seeder
+        $seederGenerator = app(SeederGenerator::class);
+        $seederPath = app_path("Domains/{$domainName}/Seeders/{$modelName}Seeder.php");
+        if ($seederGenerator->generate($seederConfig)) {
+            $this->info('  ✓ Seeder base gerado com sucesso');
+            if (file_exists($seederPath)) {
+                $this->logCreatedFile($seederPath);
+            }
+
+            // Registrar modificação do DatabaseSeeder.php
+            $databaseSeederPath = database_path('seeders/DatabaseSeeder.php');
+            if (file_exists($databaseSeederPath)) {
+                $this->logModifiedFile($databaseSeederPath);
+            }
+        } else {
+            $this->error('  ✗ Falha ao gerar seeder');
+        }
+    }
+
+    public function generateAbilitiesForDomain(): void
+    {
+        $domainName = $this->config['domain'];
+        $modelName = $this->config['model'];
+
+        // Criar abilities e atualizar config/permission_list.php
+        $abilityManager = app(AbilityManager::class);
+        $configPath = config_path('permission_list.php');
+        if (file_exists($configPath)) {
+            $this->logModifiedFile($configPath);
+        }
+        $abilityManager->createAbilityAndConfig($modelName, $domainName);
+        $this->info('  ✓ Abilities e config/permission_list.php atualizados');
+    }
+
+    /**
+     * Executa o rollback de todas as alterações/criações feitas pelo gerador
+     */
+    private function runRollback(): void
+    {
+        if (!file_exists($this->rollbackLogPath)) {
+            $this->error('Nenhum log de rollback encontrado. Nada a desfazer.');
+            return;
+        }
+        $this->info('🔄 Iniciando rollback das alterações/criações do gerador...');
+        $log = json_decode(file_get_contents($this->rollbackLogPath), true);
+        if (!$log || !is_array($log)) {
+            $this->error('Log de rollback corrompido ou inválido.');
+            return;
+        }
+
+        // Identificar e remover rotas de domínios criados
+        foreach ($log['created'] ?? [] as $file) {
+            // Verificar se é um arquivo de rotas de domínio
+            if (str_contains($file, 'routes/domains/') && str_ends_with($file, '.php')) {
+                $domainName = basename($file, '.php');
+                $domainName = \Illuminate\Support\Str::studly(str_replace('-', '', $domainName));
+
+                // Remover rotas do domínio usando RouteManager
+                if ($this->routeManager->removeDomainRoutes($domainName)) {
+                    $this->info("  ✓ Rotas do domínio {$domainName} removidas");
+                }
+            }
+        }
+
+        // Restaurar arquivos modificados
+        foreach ($log['modified'] ?? [] as $file => $backup) {
+            if (file_exists($backup)) {
+                copy($backup, $file);
+                $this->info("  ✓ Arquivo restaurado: $file");
+            }
+        }
+        // Remover arquivos criados
+        foreach ($log['created'] ?? [] as $file) {
+            if (file_exists($file)) {
+                unlink($file);
+                $this->info("  ✓ Arquivo removido: $file");
+            }
+        }
+        // Remover diretórios criados (em ordem reversa para garantir remoção)
+        foreach (array_reverse($log['directories'] ?? []) as $dir) {
+            if (is_dir($dir) && count(scandir($dir)) === 2) { // vazio
+                rmdir($dir);
+                $this->info("  ✓ Diretório removido: $dir");
+            }
+        }
+        // Limpar log
+        unlink($this->rollbackLogPath);
+        $this->info('✅ Rollback concluído!');
+    }
+
+    /**
+     * Registra um arquivo criado para possível rollback
+     */
+    private function logCreatedFile(string $file): void
+    {
+        $this->rollbackLog['created'][] = $file;
+        $this->saveRollbackLog();
+    }
+
+    /**
+     * Registra um arquivo modificado para possível rollback (salva backup)
+     */
+    private function logModifiedFile(string $file): void
+    {
+        $backupDir = storage_path('framework/rollback/backups');
+        if (!file_exists($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+        $backupFile = $backupDir . '/' . md5($file) . '_' . basename($file);
+        if (!isset($this->rollbackLog['modified'][$file]) && file_exists($file)) {
+            copy($file, $backupFile);
+            $this->rollbackLog['modified'][$file] = $backupFile;
+            $this->saveRollbackLog();
+        }
+    }
+
+    /**
+     * Registra um diretório criado para possível rollback
+     */
+    private function logCreatedDirectory(string $dir): void
+    {
+        $this->rollbackLog['directories'][] = $dir;
+        $this->saveRollbackLog();
+    }
+
+    /**
+     * Salva o log de rollback em disco
+     */
+    private function saveRollbackLog(): void
+    {
+        $dir = dirname($this->rollbackLogPath);
+        if (!file_exists($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        file_put_contents($this->rollbackLogPath, json_encode($this->rollbackLog, JSON_PRETTY_PRINT));
+    }
+}

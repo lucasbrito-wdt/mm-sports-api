@@ -1,0 +1,16 @@
+<?php
+
+namespace {{namespace}};
+
+use Domains\{{domain_name}}\Services\{{service_name}};
+use Domains\Shared\BLL\BaseBLL;
+
+class {{bll_name}} extends BaseBLL
+{
+    public function __construct(private readonly {{service_name}} ${{service_var}})
+    {
+        $this->setService($this->{{service_var}});
+    }
+    // 👉 methods
+    {{methods_fk}}
+}

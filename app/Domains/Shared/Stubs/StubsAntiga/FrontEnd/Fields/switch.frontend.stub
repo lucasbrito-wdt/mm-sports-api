@@ -1,0 +1,1 @@
+<CDFSwitch v-model="{{vModel}}" :label="{{label}}" :rules="[{{rules}}]" :true-value="1" :false-value="0"/>

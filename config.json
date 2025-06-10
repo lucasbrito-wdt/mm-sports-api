@@ -1,0 +1,11 @@
+{
+    "domain": "Produto",
+    "model": "Produto",
+    "baseModel": "Produto",
+    "schema": "nome=string,100,req;descricao=text",
+    "baseSchema": "nome=string,req;descricao=text",
+    "foreignKeys": [],
+    "force": true,
+    "generateCompleteStructure": true,
+    "generateTests": false
+}

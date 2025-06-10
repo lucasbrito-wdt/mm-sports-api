@@ -1,0 +1,20 @@
+<?php
+
+namespace {{namespace}};
+
+use Domains\Shared\Models\BaseModel;
+
+class {{model_name}} extends BaseModel
+{
+    protected $fillable = [
+        'id',
+        {{fillable}}
+    ];
+
+    protected $list = [
+        'id',
+        {{fillable}}
+    ];
+
+    protected $table = '{{table_name}}';
+}

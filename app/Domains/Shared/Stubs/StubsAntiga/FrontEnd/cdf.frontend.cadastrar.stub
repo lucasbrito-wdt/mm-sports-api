@@ -1,0 +1,22 @@
+<script setup lang="ts">
+import Form{{entity_var}} from '../components/{{import_formulario}}.vue'
+import { {{store_name}} } from '../store/{{store_name}}'
+
+definePage({
+  meta: {
+    navActiveLink: '{{ entity_singular_var }}',
+    action: 'create',
+    subject: '{{ entity_singular_var }}',
+  },
+})
+
+const { resetForm } = {{store_name}}()
+
+onBeforeRouteLeave(() => {
+  resetForm()
+})
+</script>
+
+<template>
+  <Form{{entity_var}} />
+</template>

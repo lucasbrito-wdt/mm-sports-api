@@ -1,0 +1,16 @@
+{
+    "domain": "Education",
+    "model": "Student",
+    "schema": "nome=string,150,req;email=string,100,req,unique;cpf=string,14,req,unique;telefone=string,20,null;data_nascimento=date,req;curso_id=foreign,courses,id;data_matricula=date,req;status=string,50,req;nota_final=decimal,5,2,null",
+    "foreignKeys": [
+        {
+            "localKey": "curso_id",
+            "foreignTable": "courses",
+            "foreignKey": "id",
+            "displayField": "nome"
+        }
+    ],
+    "force": true,
+    "generateCompleteStructure": false,
+    "generateTests": false
+}

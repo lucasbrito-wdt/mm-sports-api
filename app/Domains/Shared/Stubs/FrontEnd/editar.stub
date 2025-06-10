@@ -1,0 +1,25 @@
+<script setup lang="ts">
+import {{form}} from '../components/{{form}}.vue'
+import { {{store_name}} } from '../store/{{store_name}}'
+
+definePage({
+  meta: {
+    navActiveLink: '{{entity_var}}',
+    action: 'edit',
+    subject: '{{entity_var}}',
+  },
+})
+
+const store = {{store_name}}()
+const router = useRouter()
+
+const {
+  fetchItem,
+} = store
+
+fetchItem(router.currentRoute.value.params.id)
+</script>
+
+<template>
+  <{{form}} is-editing />
+</template>

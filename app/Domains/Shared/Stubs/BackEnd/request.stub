@@ -1,0 +1,35 @@
+<?php
+
+namespace {{namespace}};
+
+use App\Domains\Shared\Requests\BaseFormRequest;
+
+class {{requestName}} extends BaseFormRequest
+{
+    public function base(): array
+    {
+        return [
+            {{validationRules}}
+        ];
+    }
+
+    public function view(): array
+    {
+        return [];
+    }
+
+    public function store(): array
+    {
+        return [];
+    }
+
+    public function update(): array
+    {
+        return [];
+    }
+
+    public function destroy(): array
+    {
+        return [];
+    }
+}

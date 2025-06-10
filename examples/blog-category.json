@@ -1,0 +1,9 @@
+{
+    "domain": "Blog",
+    "model": "Category",
+    "schema": "nome=string,100,req;slug=string,100,req,unique;descricao=text,null;cor=string,7,null;ativa=boolean",
+    "foreignKeys": [],
+    "force": true,
+    "generateCompleteStructure": false,
+    "generateTests": false
+}
