@@ -50,4 +50,3 @@ php artisan make:crud --rollback
 ## Licença
 
 MIT License
-# crud-gerador
