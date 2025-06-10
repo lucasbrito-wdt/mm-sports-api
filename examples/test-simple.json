@@ -1,0 +1,13 @@
+{
+    "domain": "TestFinal",
+    "model": "MainModel",
+    "schema": "name=string,100,req",
+    "generateCompleteStructure": true,
+    "force": true,
+    "crud": [
+        {
+            "model": "SubModel",
+            "schema": "main_model_id=integer,req;title=string,100,req"
+        }
+    ]
+}

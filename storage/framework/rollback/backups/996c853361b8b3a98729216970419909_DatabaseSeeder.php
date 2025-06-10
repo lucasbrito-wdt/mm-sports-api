@@ -12,6 +12,11 @@ use App\Domains\TesteDomain\Seeders\TesteModelSeeder;
 use App\Domains\Produto\Seeders\TesteCompletoSeeder;
 use App\Domains\Catalog\Seeders\CategorySeeder;
 use App\Domains\Catalog\Seeders\ProductSeeder;
+use App\Domains\Library\Seeders\BookSeeder;
+use App\Domains\Library\Seeders\BookLoanSeeder;
+use App\Domains\TestMultiple\Seeders\ParentSeeder;
+use App\Domains\BlogSystem\Seeders\PostSeeder;
+use App\Domains\TestFinal\Seeders\MainModelSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -26,5 +31,10 @@ class DatabaseSeeder extends Seeder
         $this->call(TesteCompletoSeeder::class);
         $this->call(CategorySeeder::class);
         $this->call(ProductSeeder::class);
+        $this->call(BookSeeder::class);
+        $this->call(BookLoanSeeder::class);
+        $this->call(ParentSeeder::class);
+        $this->call(PostSeeder::class);
+        $this->call(MainModelSeeder::class);
     }
 }

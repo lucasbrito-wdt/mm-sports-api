@@ -1,0 +1,23 @@
+{
+    "domain": "TestDomain",
+    "model": "MainModel",
+    "schema": "name=string,100,req;description=text",
+    "foreignKeys": [],
+    "generateCompleteStructure": true,
+    "generateTests": false,
+    "generateDocs": false,
+    "crud": [
+        {
+            "model": "SubModel",
+            "schema": "main_model_id=foreign,main_models,id,req;title=string,150,req;active=boolean",
+            "foreignKeys": [
+                {
+                    "localKey": "main_model_id",
+                    "foreignTable": "main_models",
+                    "foreignKey": "id",
+                    "displayField": "name"
+                }
+            ]
+        }
+    ]
+}

@@ -41,4 +41,22 @@ return [
         'category block',
         'category manage',
     ],
+    'product' => [
+        'product read',
+        'product create',
+        'product delete',
+        'product list',
+        'product edit',
+        'product block',
+        'product manage',
+    ],
+    'book' => [
+        'book read',
+        'book create',
+        'book delete',
+        'book list',
+        'book edit',
+        'book block',
+        'book manage',
+    ],
 ];

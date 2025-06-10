@@ -1,0 +1,33 @@
+{
+    "domain": "BlogComplete",
+    "model": "Post",
+    "schema": "title=string,200,req;content=text,req;published_at=datetime;excerpt=string,500",
+    "generateCompleteStructure": true,
+    "generateTests": false,
+    "generateDocs": false,
+    "force": true,
+    "crud": [
+        {
+            "model": "Comment",
+            "schema": "post_id=integer,req;author_name=string,100,req;email=string,100;comment_text=text,req;approved=boolean",
+            "foreignKeys": [
+                {
+                    "localKey": "post_id",
+                    "foreignTable": "posts",
+                    "foreignKey": "id",
+                    "displayField": "title"
+                }
+            ]
+        },
+        {
+            "model": "Tag",
+            "schema": "name=string,50,req;slug=string,50,unique;color=string,7",
+            "foreignKeys": []
+        },
+        {
+            "model": "Category",
+            "schema": "name=string,100,req;slug=string,100,unique;description=text",
+            "foreignKeys": []
+        }
+    ]
+}

@@ -70,6 +70,34 @@ php artisan generate:crud --domain
 }
 ```
 
+### 🔥 NOVO: Múltiplos CRUDs em um Domínio
+```json
+{
+    "domain": "BlogSystem",
+    "model": "Post",
+    "schema": "title=string,200,req;content=text,req",
+    "generateCompleteStructure": true,
+    "force": true,
+    "crud": [
+        {
+            "model": "Comment",
+            "schema": "post_id=integer,req;author_name=string,100,req;comment_text=text,req"
+        },
+        {
+            "model": "Tag", 
+            "schema": "name=string,50,req;slug=string,50,unique"
+        }
+    ]
+}
+```
+
+**Comando:**
+```bash
+php artisan generate:crud --config=@examples/blog-complete-system.json --domain --force
+```
+
+**Resultado:** 4 CRUDs completos (Post, Comment, Tag, Category) com frontend e backend!
+
 ---
 
 ## 📋 Sintaxe Rápida de Schema

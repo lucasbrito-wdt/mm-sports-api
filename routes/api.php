@@ -20,3 +20,15 @@ require __DIR__.'/domains/category.php';
 
 // Product Domain Routes
 require __DIR__.'/domains/product.php';
+
+// Library Domain Routes
+require __DIR__.'/domains/library.php';
+
+// TestMultiple Domain Routes
+require __DIR__.'/domains/test-multiple.php';
+
+// BlogSystem Domain Routes
+require __DIR__.'/domains/blog-system.php';
+
+// TestFinal Domain Routes
+require __DIR__.'/domains/test-final.php';

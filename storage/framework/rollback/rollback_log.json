@@ -1,23 +1,28 @@
 {
     "directories": [
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Controllers",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Enums",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Migrations",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Models",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Requests",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Seeders",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Services"
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Controllers",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Enums",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Migrations",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Models",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Requests",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Seeders",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Services"
     ],
     "created": [
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Models\/Product.php",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Migrations\/2025_06_10_145920_create_products_table.php",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Services\/ProductService.php",
-        "E:\\wdt\\laravel-backend\\crudgerador\\routes\/domains\/product.php",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Controllers\/ProductController.php",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Requests\/ProductRequest.php",
-        "E:\\wdt\\laravel-backend\\crudgerador\\routes\/domains\/product.php",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/Product\/Seeders\/ProductSeeder.php"
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Models\/MainModel.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Migrations\/2025_06_10_163024_create_main_modeis_table.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Services\/MainModelService.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\routes\/domains\/test-final.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Controllers\/MainModelController.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Requests\/MainModelRequest.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\routes\/domains\/test-final.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Seeders\/MainModelSeeder.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Models\/SubModel.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Migrations\/2025_06_10_163024_create_sub_modeis_table.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Services\/SubModelService.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Controllers\/SubModelController.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Seeders\/SubModelSeeder.php"
     ],
     "modified": {
         "E:\\wdt\\laravel-backend\\crudgerador\\routes\/api.php": "E:\\wdt\\laravel-backend\\crudgerador\\storage\\framework\/rollback\/backups\/127cb6850a9136580e9f541a176f0d01_api.php",

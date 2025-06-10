@@ -14,6 +14,23 @@ php artisan generate:crud --config=examples/[nome-do-arquivo].json --force
 
 ## 📝 Exemplos Disponíveis
 
+> **🎉 NOVIDADE**: Agora é possível gerar múltiplos CRUDs relacionados dentro de um único domínio!
+
+### 🔥 Sistema Completo com Múltiplos CRUDs
+
+#### [`blog-complete-system.json`](blog-complete-system.json) - **NOVO!**
+Sistema de blog completo com múltiplos CRUDs relacionados
+```bash
+php artisan generate:crud --config=@examples/blog-complete-system.json --domain --force
+```
+
+**Gera automaticamente:**
+- 📦 **CRUD Principal**: Post (artigos do blog)
+- 📦 **CRUDs Adicionais**: Comment, Tag, Category
+- 🎨 **Frontend Completo**: Components Vue.js para todos os modelos
+- 🔧 **Backend Completo**: Models, Controllers, Services, Migrations
+- 🔗 **Relacionamentos**: Configurados automaticamente entre models
+
 ### 1. 🛒 E-commerce
 
 #### [`ecommerce-category.json`](ecommerce-category.json)

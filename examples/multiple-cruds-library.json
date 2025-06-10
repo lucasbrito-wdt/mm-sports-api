@@ -1,0 +1,59 @@
+{
+    "domain": "Library",
+    "model": "Book",
+    "schema": "title=string,255,req;author=string,200,req;isbn=string,20,unique;published_year=integer,req;genre=string,100;description=text",
+    "foreignKeys": [],
+    "generateCompleteStructure": true,
+    "generateTests": false,
+    "generateDocs": false,
+    "crud": [
+        {
+            "model": "BookLoan",
+            "schema": "book_id=foreign,books,id,req;user_id=foreign,users,id,req;loan_date=date,req;return_date=date;returned_at=datetime",
+            "foreignKeys": [
+                {
+                    "localKey": "book_id",
+                    "foreignTable": "books",
+                    "foreignKey": "id",
+                    "displayField": "title",
+                    "relation": "belongsTo",
+                    "model": "Book",
+                    "domain": "Library"
+                },
+                {
+                    "localKey": "user_id",
+                    "foreignTable": "users",
+                    "foreignKey": "id",
+                    "displayField": "name",
+                    "relation": "belongsTo",
+                    "model": "User",
+                    "domain": "Auth"
+                }
+            ]
+        },
+        {
+            "model": "BookReview",
+            "schema": "book_id=foreign,books,id,req;user_id=foreign,users,id,req;rating=integer,req;comment=text;reviewed_at=datetime,req",
+            "foreignKeys": [
+                {
+                    "localKey": "book_id",
+                    "foreignTable": "books",
+                    "foreignKey": "id",
+                    "displayField": "title",
+                    "relation": "belongsTo",
+                    "model": "Book",
+                    "domain": "Library"
+                },
+                {
+                    "localKey": "user_id",
+                    "foreignTable": "users",
+                    "foreignKey": "id",
+                    "displayField": "name",
+                    "relation": "belongsTo",
+                    "model": "User",
+                    "domain": "Auth"
+                }
+            ]
+        }
+    ]
+}
