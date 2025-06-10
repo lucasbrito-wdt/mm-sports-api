@@ -11,7 +11,7 @@
     ],
     "created": [
         "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Models\/MainModel.php",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Migrations\/2025_06_10_163024_create_main_modeis_table.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Migrations\/2025_06_10_170957_create_main_modeis_table.php",
         "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Services\/MainModelService.php",
         "E:\\wdt\\laravel-backend\\crudgerador\\routes\/domains\/test-final.php",
         "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Controllers\/MainModelController.php",
@@ -19,7 +19,7 @@
         "E:\\wdt\\laravel-backend\\crudgerador\\routes\/domains\/test-final.php",
         "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Seeders\/MainModelSeeder.php",
         "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Models\/SubModel.php",
-        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Migrations\/2025_06_10_163024_create_sub_modeis_table.php",
+        "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Migrations\/2025_06_10_170957_create_sub_modeis_table.php",
         "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Services\/SubModelService.php",
         "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Controllers\/SubModelController.php",
         "E:\\wdt\\laravel-backend\\crudgerador\\app\\Domains\/TestFinal\/Seeders\/SubModelSeeder.php"
