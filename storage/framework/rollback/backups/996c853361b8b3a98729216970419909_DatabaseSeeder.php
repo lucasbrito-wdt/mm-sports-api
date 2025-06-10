@@ -17,6 +17,7 @@ use App\Domains\Library\Seeders\BookLoanSeeder;
 use App\Domains\TestMultiple\Seeders\ParentSeeder;
 use App\Domains\BlogSystem\Seeders\PostSeeder;
 use App\Domains\TestFinal\Seeders\MainModelSeeder;
+use App\Domains\TestFinal\Seeders\SubModelSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -36,5 +37,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ParentSeeder::class);
         $this->call(PostSeeder::class);
         $this->call(MainModelSeeder::class);
+        $this->call(SubModelSeeder::class);
     }
 }
