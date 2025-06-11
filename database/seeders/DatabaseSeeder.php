@@ -25,18 +25,5 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RolesPermissionSeeder::class);
         $this->call(AuthDomainDatabaseSeeder::class);
-        $this->call(TesteSeeder::class);
-        $this->call(ProdutoSeeder::class);
-        $this->call(TesteFrontendSeeder::class);
-        $this->call(TesteModelSeeder::class);
-        $this->call(TesteCompletoSeeder::class);
-        $this->call(CategorySeeder::class);
-        $this->call(ProductSeeder::class);
-        $this->call(BookSeeder::class);
-        $this->call(BookLoanSeeder::class);
-        $this->call(ParentSeeder::class);
-        $this->call(PostSeeder::class);
-        $this->call(MainModelSeeder::class);
-        $this->call(SubModelSeeder::class);
     }
 }
