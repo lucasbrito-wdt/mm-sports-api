@@ -400,6 +400,28 @@ Route::group([
     }
 
     /**
+     * Adiciona rotas para um modelo a um arquivo de domínio existente.
+     *
+     * @param array $config Configuração do modelo
+     * @return bool
+     */
+    public function addRoutes(array $config): bool
+    {
+        $domainName = $config['domain'];
+        $modelName = $config['model'];
+        $routeFilePath = base_path(self::ROUTES_BASE_PATH . '/domains/' . Str::kebab($domainName) . '.php');
+
+        if (!File::exists($routeFilePath)) {
+            // Se o arquivo não existe, cria um novo
+            return $this->createDomainRoutes($domainName, $modelName, $config);
+        }
+
+        // Se existe, adiciona as rotas ao arquivo existente
+        $this->addRoutesToExistingFile($domainName, $modelName, $routeFilePath, $config);
+        return true;
+    }
+
+    /**
      * Cria rotas para Foreign Keys (FK).
      *
      * @param string $routeName Nome da rota (baseado no modelo atual)

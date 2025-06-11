@@ -32,13 +32,4 @@ return [
         'permission edit',
         'permission delete',
     ],
-    'category' => [
-        'category read',
-        'category create',
-        'category delete',
-        'category list',
-        'category edit',
-        'category block',
-        'category manage',
-    ],
 ];

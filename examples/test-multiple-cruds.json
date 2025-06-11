@@ -1,0 +1,13 @@
+{
+    "domain": "TestMultiple",
+    "model": "Parent",
+    "schema": "name=string,100,req;status=string,50",
+    "generateCompleteStructure": true,
+    "force": true,
+    "crud": [
+        {
+            "model": "Child",
+            "schema": "parent_id=integer,req;child_name=string,100,req;age=integer"
+        }
+    ]
+}

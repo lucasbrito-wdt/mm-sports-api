@@ -108,6 +108,35 @@ O sistema criará:
 - Service base
 - Arquivos de configuração
 
+#### 🔗 Múltiplos CRUDs em um Domínio
+
+**NOVA FUNCIONALIDADE**: Agora é possível gerar múltiplos CRUDs relacionados dentro de um único domínio:
+
+```json
+{
+  "domain": "BlogSystem",
+  "model": "Post",
+  "schema": "title=string,200,req;content=text,req",
+  "generateCompleteStructure": true,
+  "crud": [
+    {
+      "model": "Comment",
+      "schema": "post_id=integer,req;author_name=string,100,req;comment_text=text,req"
+    },
+    {
+      "model": "Tag",
+      "schema": "name=string,50,req;slug=string,50,unique"
+    }
+  ]
+}
+```
+
+Esta configuração gerará:
+- **CRUD Principal**: Post (Model, Controller, Service, Migration, Seeder, Frontend)
+- **CRUDs Adicionais**: Comment e Tag (todos os arquivos para cada um)
+- **Frontend Completo**: Components, Stores, Services para todos os modelos
+- **Rotas Organizadas**: Todas as rotas no mesmo arquivo de domínio
+
 ### 3. ⚡ Geração via Configuração JSON
 
 Para automação, use arquivos de configuração:

@@ -4,6 +4,12 @@ Esta pasta contém scripts para automatizar a geração de CRUDs em lote.
 
 ## 💻 PowerShell (Windows)
 
+### 🔥 Teste de Múltiplos CRUDs (NOVO!)
+```powershell
+.\scripts\test-multiple-cruds.ps1
+```
+**Testa a nova funcionalidade de múltiplos CRUDs em um único domínio**
+
 ### E-commerce Completo
 ```powershell
 .\scripts\generate-ecommerce.ps1

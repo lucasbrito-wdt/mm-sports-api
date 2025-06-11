@@ -10,6 +10,7 @@ use App\Console\Commands\Generator\Generators\BackEnd\ServiceGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\CriarGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\EditarGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\FormGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\FrontendPathTrait;
 use App\Console\Commands\Generator\Generators\FrontEnd\ListGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\ServiceGenerator as FrontEndServiceGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\StoreGenerator;
@@ -33,6 +34,7 @@ use function Laravel\Prompts\text;
 
 class CrudGenerator extends Command
 {
+    use FrontendPathTrait;
     protected $signature = 'generate:crud {--force} {--skip-frontend} {--skip-backend} {--with-tests} {--with-docs} {--config=} {--domain : Gera um domínio em vez de um CRUD} {--rollback : Desfaz todas as alterações/criações feitas pelo gerador}';
     protected $description = 'Gera um CRUD completo com backend e frontend ou um domínio completo';
 
@@ -104,6 +106,19 @@ class CrudGenerator extends Command
             // Montar e exibir resumo para domínio
             $this->info('📋 Resumo do Domínio a ser gerado:');
             $this->line("Domínio: {$this->config['domain']}");
+
+            // Mostrar CRUD principal se existir
+            if (isset($this->config['model'])) {
+                $this->line("CRUD Principal: {$this->config['model']}");
+            }
+
+            // Mostrar CRUDs adicionais se existirem
+            if (isset($this->config['crud']) && is_array($this->config['crud'])) {
+                $this->line("CRUDs Adicionais:");
+                foreach ($this->config['crud'] as $crud) {
+                    $this->line("  - {$crud['model']}");
+                }
+            }
 
             if (!$this->option('force') && !confirm('Confirma a geração do Domínio?', true)) {
                 $this->info('❌ Operação cancelada pelo usuário.');
@@ -572,38 +587,64 @@ class CrudGenerator extends Command
 
         // Gerar arquivos base se solicitado
         if ($this->config['generateCompleteStructure']) {
-            // Gerar os componentes em ordem lógica
-            $this->generateBaseModelForDomain();
-            $this->generateBaseMigrationForDomain();
-            $this->generateBaseServiceForDomain();
-            $this->generateBaseControllerForDomain();
-            $this->generateBaseSeederForDomain();
-            $this->generateAbilitiesForDomain();
+            // Gerar o CRUD principal se existir
+            if (isset($this->config['model'])) {
+                $this->info('🔹 Gerando CRUD principal...');
+                $this->generateBaseModelForDomain();
+                $this->generateBaseMigrationForDomain();
+                $this->generateBaseServiceForDomain();
+                $this->generateBaseControllerForDomain();
+                $this->generateBaseSeederForDomain();
+                $this->generateAbilitiesForDomain();
 
-            if ($this->config['generateTests']) {
-                $this->generateBaseTestForDomain();
+                if ($this->config['generateTests'] ?? false) {
+                    $this->generateBaseTestForDomain();
+                }
+            }
+
+            // Gerar CRUDs adicionais se existirem
+            if (isset($this->config['crud']) && is_array($this->config['crud'])) {
+                $this->info('🔹 Gerando CRUDs adicionais...');
+                foreach ($this->config['crud'] as $index => $crudConfig) {
+                    $this->info("  ↳ Gerando CRUD: {$crudConfig['model']}");
+                    $this->generateAdditionalCrud($crudConfig);
+                }
             }
 
             // Recapitular tudo o que foi gerado
             $this->info("\n✅ Domínio $domainName gerado com sucesso com a estrutura completa:");
-            $this->line("   • Model: {$this->config['model']}");
-            $this->line("   • Migration: create_" . Str::snake(Str::plural($this->config['model'])) . "_table");
-            $this->line("   • Controller: {$this->config['model']}Controller");
-            $this->line("   • Service: {$this->config['model']}Service");
-            $this->line("   • Seeder: {$this->config['model']}Seeder");
 
-            // Mostrar informações sobre chaves estrangeiras
+            // Mostrar CRUD principal
+            if (isset($this->config['model'])) {
+                $this->line("📦 CRUD Principal:");
+                $this->line("   • Model: {$this->config['model']}");
+                $this->line("   • Migration: create_" . Str::snake(Str::plural($this->config['model'])) . "_table");
+                $this->line("   • Controller: {$this->config['model']}Controller");
+                $this->line("   • Service: {$this->config['model']}Service");
+                $this->line("   • Seeder: {$this->config['model']}Seeder");
+            }
+
+            // Mostrar CRUDs adicionais
+            if (isset($this->config['crud']) && is_array($this->config['crud'])) {
+                $this->line("\n📦 CRUDs Adicionais:");
+                foreach ($this->config['crud'] as $crudConfig) {
+                    $this->line("   • {$crudConfig['model']} (Model, Migration, Controller, Service, Seeder)");
+                }
+            }
+
+            // Mostrar informações sobre chaves estrangeiras do CRUD principal
             if (!empty($this->config['foreignKeys'])) {
-                $this->line("\n   Relações:");
+                $this->line("\n🔗 Relações do CRUD Principal:");
                 foreach ($this->config['foreignKeys'] as $fk) {
-                    $relationType = match ($fk['relation']) {
+                    $relationType = $fk['relation'] ?? 'belongsTo';
+                    $relationTypeText = match ($relationType) {
                         'belongsTo' => 'pertence a',
                         'hasMany' => 'possui muitos',
                         'hasOne' => 'possui um',
                         'belongsToMany' => 'pertence a muitos',
-                        default => $fk['relation']
+                        default => $relationType
                     };
-                    $this->line("   • {$this->config['model']} {$relationType} {$fk['model']} do domínio {$fk['domain']}");
+                    $this->line("   • {$this->config['model']} {$relationTypeText} {$fk['model']} do domínio {$fk['domain']}");
                 }
             }
         } else {
@@ -1083,6 +1124,108 @@ class CrudGenerator extends Command
     }
 
     /**
+     * Gera um CRUD adicional dentro do domínio
+     */
+    private function generateAdditionalCrud(array $crudConfig): void
+    {
+        // Preparar configuração para o CRUD adicional
+        $additionalConfig = [
+            'domain' => $this->config['domain'], // Usa o mesmo domínio
+            'model' => $crudConfig['model'],
+            'schema' => $crudConfig['schema'] ?? '',
+            'foreignKeys' => $crudConfig['foreignKeys'] ?? [],
+            'generateTests' => $this->config['generateTests'] ?? false,
+        ];
+
+        // Gerar Model
+        $modelGenerator = app(ModelGenerator::class);
+        $modelPath = app_path("Domains/{$additionalConfig['domain']}/Models/{$additionalConfig['model']}.php");
+        if ($modelGenerator->generate($additionalConfig)) {
+            $this->info("    ✓ Model {$additionalConfig['model']} gerada");
+            if (file_exists($modelPath)) {
+                $this->logCreatedFile($modelPath);
+            }
+        }
+
+        // Processar relações bidirecionais entre modelos (se configuração completa)
+        if (!empty($additionalConfig['foreignKeys'])) {
+            $hasCompleteStructure = true;
+            foreach ($additionalConfig['foreignKeys'] as $fk) {
+                if (!isset($fk['relation']) || !isset($fk['model']) || !isset($fk['domain'])) {
+                    $hasCompleteStructure = false;
+                    break;
+                }
+            }
+
+            if ($hasCompleteStructure) {
+                $this->modelRelationsManager->createRelationships(
+                    $additionalConfig['foreignKeys'],
+                    $additionalConfig['domain'],
+                    $additionalConfig['model']
+                );
+                $this->info("    ✓ Relações configuradas para {$additionalConfig['model']}");
+            }
+        }
+
+        // Gerar Migration
+        $migrationGenerator = app(MigrationGenerator::class);
+        $migrationDir = app_path("Domains/{$additionalConfig['domain']}/Migrations");
+        $tableName = \Illuminate\Support\Str::snake(\Illuminate\Support\Str::plural($additionalConfig['model']));
+        $migrationFile = date('Y_m_d_His') . "_create_{$tableName}_table.php";
+        $migrationPath = $migrationDir . '/' . $migrationFile;
+
+        if ($migrationGenerator->generate($additionalConfig)) {
+            $this->info("    ✓ Migration para {$additionalConfig['model']} gerada");
+            if (file_exists($migrationPath)) {
+                $this->logCreatedFile($migrationPath);
+            }
+        }
+
+        // Gerar Service
+        $serviceGenerator = app(ServiceGenerator::class);
+        $servicePath = app_path("Domains/{$additionalConfig['domain']}/Services/{$additionalConfig['model']}Service.php");
+        if ($serviceGenerator->generate($additionalConfig)) {
+            $this->info("    ✓ Service para {$additionalConfig['model']} gerado");
+            if (file_exists($servicePath)) {
+                $this->logCreatedFile($servicePath);
+            }
+        }
+
+        // Gerar Controller
+        $controllerGenerator = app(ControllerGenerator::class);
+        $controllerPath = app_path("Domains/{$additionalConfig['domain']}/Controllers/{$additionalConfig['model']}Controller.php");
+        if ($controllerGenerator->generate($additionalConfig)) {
+            $this->info("    ✓ Controller para {$additionalConfig['model']} gerado");
+            if (file_exists($controllerPath)) {
+                $this->logCreatedFile($controllerPath);
+            }
+        }
+
+        // Atualizar rotas
+        $this->routeManager->addRoutes($additionalConfig);
+        $this->info("    ✓ Rotas para {$additionalConfig['model']} adicionadas");
+
+        // Gerar Seeder
+        $seederGenerator = app(SeederGenerator::class);
+        $seederPath = app_path("Domains/{$additionalConfig['domain']}/Seeders/{$additionalConfig['model']}Seeder.php");
+        if ($seederGenerator->generate($additionalConfig)) {
+            $this->info("    ✓ Seeder para {$additionalConfig['model']} gerado");
+            if (file_exists($seederPath)) {
+                $this->logCreatedFile($seederPath);
+            }
+        }
+
+        // Adicionar abilities para o modelo adicional
+        $this->abilityManager->addAbility($additionalConfig['domain'], $additionalConfig['model']);
+        $this->info("    ✓ Abilities para {$additionalConfig['model']} adicionadas");
+
+        // Gerar frontend para o CRUD adicional
+        if (!$this->option('skip-frontend')) {
+            $this->generateFrontendForAdditionalCrud($additionalConfig);
+        }
+    }
+
+    /**
      * Salva o log de rollback em disco
      */
     private function saveRollbackLog(): void
@@ -1092,5 +1235,97 @@ class CrudGenerator extends Command
             mkdir($dir, 0755, true);
         }
         file_put_contents($this->rollbackLogPath, json_encode($this->rollbackLog, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Gera o frontend para um CRUD adicional
+     */
+    private function generateFrontendForAdditionalCrud(array $config): void
+    {
+        $this->info("    🎨 Gerando frontend para {$config['model']}...");
+
+        // Gerar TypeScript types
+        $typesGenerator = app(TypesGenerator::class);
+        if ($typesGenerator->generate($config)) {
+            $this->info("      ✓ Types TypeScript geradas");
+
+            // Registrar arquivo gerado para rollback
+            $typesPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/types/{$config['model']}.ts";
+            if (file_exists($typesPath)) {
+                $this->logCreatedFile($typesPath);
+            }
+        }
+
+        // Gerar Store Pinia
+        $storeGenerator = app(StoreGenerator::class);
+        if ($storeGenerator->generate($config)) {
+            $this->info("      ✓ Store Pinia gerada");
+
+            // Registrar arquivo gerado para rollback
+            $storePath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/stores/" . Str::camel($config['model']) . "Store.ts";
+            if (file_exists($storePath)) {
+                $this->logCreatedFile($storePath);
+            }
+        }
+
+        // Gerar Service
+        $frontendServiceGenerator = app(FrontEndServiceGenerator::class);
+        if ($frontendServiceGenerator->generate($config)) {
+            $this->info("      ✓ Service do frontend gerado");
+
+            // Registrar arquivo gerado para rollback
+            $servicePath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/services/" . Str::camel($config['model']) . "Service.ts";
+            if (file_exists($servicePath)) {
+                $this->logCreatedFile($servicePath);
+            }
+        }
+
+        // Gerar Form Component
+        $formGenerator = app(FormGenerator::class);
+        if ($formGenerator->generate($config)) {
+            $this->info("      ✓ Componente Form gerado");
+
+            // Registrar arquivo gerado para rollback
+            $formPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/components/{$config['model']}Form.vue";
+            if (file_exists($formPath)) {
+                $this->logCreatedFile($formPath);
+            }
+        }
+
+        // Gerar List Component
+        $listGenerator = app(ListGenerator::class);
+        if ($listGenerator->generate($config)) {
+            $this->info("      ✓ Componente List gerado");
+
+            // Registrar arquivo gerado para rollback
+            $listPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/components/{$config['model']}List.vue";
+            if (file_exists($listPath)) {
+                $this->logCreatedFile($listPath);
+            }
+        }
+
+        // Gerar Criar Component
+        $criarGenerator = app(CriarGenerator::class);
+        if ($criarGenerator->generate($config)) {
+            $this->info("      ✓ Componente Criar gerado");
+
+            // Registrar arquivo gerado para rollback
+            $criarPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/components/Criar{$config['model']}.vue";
+            if (file_exists($criarPath)) {
+                $this->logCreatedFile($criarPath);
+            }
+        }
+
+        // Gerar Editar Component
+        $editarGenerator = app(EditarGenerator::class);
+        if ($editarGenerator->generate($config)) {
+            $this->info("      ✓ Componente Editar gerado");
+
+            // Registrar arquivo gerado para rollback
+            $editarPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/components/Editar{$config['model']}.vue";
+            if (file_exists($editarPath)) {
+                $this->logCreatedFile($editarPath);
+            }
+        }
     }
 }
