@@ -163,19 +163,27 @@ class FormGenerator
 
         foreach ($columns as $column) {
             @[$field, $params] = explode('=', $column);
-            @[$type, $option, $required] = explode(',', $params ?? '');
+            @[$type, $option1, $option2, $required] = explode(',', $params ?? '');
 
             if (!$field) {
                 continue;
             }
 
-            $fields[] = [
+            $fieldData = [
                 'name' => $field,
                 'type' => $type ?? 'string',
-                'option' => $option ?? null,
+                'option1' => $option1 ?? null,
+                'option2' => $option2 ?? null,
                 'required' => $required === 'req',
                 'label' => Str::title(str_replace('_', ' ', $field)),
             ];
+
+            // Adicionar informações de tamanho para campos string e text
+            if (in_array(strtolower($type), ['string', 'text']) && $option1 && is_numeric($option1)) {
+                $fieldData['max_length'] = intval($option1);
+            }
+
+            $fields[] = $fieldData;
         }
 
         return $fields;

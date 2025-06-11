@@ -18,6 +18,9 @@ use App\Domains\TestMultiple\Seeders\ParentSeeder;
 use App\Domains\BlogSystem\Seeders\PostSeeder;
 use App\Domains\TestFinal\Seeders\MainModelSeeder;
 use App\Domains\TestFinal\Seeders\SubModelSeeder;
+use App\Domains\Teste\Seeders\TesteSeeder;
+use App\Domains\TestImprovements\Seeders\ArticleSeeder;
+use App\Domains\BlogComplete\Seeders\PostSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -25,5 +28,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RolesPermissionSeeder::class);
         $this->call(AuthDomainDatabaseSeeder::class);
+        $this->call(TesteSeeder::class);
+        $this->call(ArticleSeeder::class);
+        $this->call(PostSeeder::class);
     }
 }

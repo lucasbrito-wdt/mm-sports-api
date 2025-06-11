@@ -128,7 +128,7 @@ class MigrationGenerator
                 break;
 
             case 'datetime':
-                $result = "\$table->dateTime('{$field}')";
+                $result = "\$table->dateTime('{$field}')->default(now())";
                 break;
 
             case 'decimal':

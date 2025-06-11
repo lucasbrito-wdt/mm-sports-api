@@ -107,12 +107,28 @@ class FieldsGenerator
         // Construir regras de validação
         $rules = $this->buildValidationRules($fieldConfig);
 
-        return [
+        $variables = [
             '{{vModel}}' => "data.{$fieldName}",
             '{{label}}' => "'{$label}'",
             '{{placeholder}}' => "'{$placeholder}'",
             '{{rules}}' => $rules,
         ];
+
+        // Adicionar atributo maxlength para campos string e text
+        if ((isset($fieldConfig['type']) && in_array(strtolower($fieldConfig['type']), ['string', 'text'])) && isset($fieldConfig['max_length'])) {
+            $variables['{{maxlength}}'] = ' maxlength="' . $fieldConfig['max_length'] . '"';
+        } else {
+            $variables['{{maxlength}}'] = '';
+        }
+
+        // Adicionar tipo de campo para campos date/datetime
+        if (isset($fieldConfig['type']) && in_array(strtolower($fieldConfig['type']), ['date', 'datetime'])) {
+            $variables['{{fieldType}}'] = strtolower($fieldConfig['type']) === 'datetime' ? 'datetime-local' : 'date';
+        } else {
+            $variables['{{fieldType}}'] = 'text'; // Valor padrão para outros tipos
+        }
+
+        return $variables;
     }
 
     /**
@@ -141,14 +157,16 @@ class FieldsGenerator
             case 'celular':
                 $rules[] = 'rules.telefoneValidator';
                 break;
-            case 'input':
-                if (isset($fieldConfig['max_length'])) {
-                    $rules[] = "maxLength({$fieldConfig['max_length']})";
-                }
-                if (isset($fieldConfig['min_length'])) {
-                    $rules[] = "minLength({$fieldConfig['min_length']})";
-                }
-                break;
+        }
+
+        // Adicionar validação de tamanho para campos string e text
+        if (isset($fieldConfig['type']) && in_array(strtolower($fieldConfig['type']), ['string', 'text']) && isset($fieldConfig['max_length'])) {
+            $rules[] = "maxLength({$fieldConfig['max_length']})";
+        }
+
+        // Adicionar validação de tamanho mínimo se especificado
+        if (isset($fieldConfig['min_length'])) {
+            $rules[] = "minLength({$fieldConfig['min_length']})";
         }
 
         return implode(', ', $rules);

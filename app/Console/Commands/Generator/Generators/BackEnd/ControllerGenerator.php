@@ -124,6 +124,14 @@ class ControllerGenerator
                     $ruleArray[] = "max:{$length}";
                     break;
 
+                case 'text':
+                    $ruleArray[] = 'string';
+                    // Só adiciona max se option1 for um número válido
+                    if ($option1 && is_numeric($option1)) {
+                        $ruleArray[] = "max:{$option1}";
+                    }
+                    break;
+
                 case 'integer':
                 case 'biginteger':
                     $ruleArray[] = 'integer';

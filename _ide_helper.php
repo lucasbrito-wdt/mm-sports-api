@@ -2430,7 +2430,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get the currently authenticated user.
          *
-         * @return \App\Models\User|null 
+         * @return \App\Domains\Auth\Models\User|null 
          * @static 
          */
         public static function user()
@@ -2468,7 +2468,7 @@ namespace Illuminate\Support\Facades {
          * Log the given user ID into the application without sessions or cookies.
          *
          * @param mixed $id
-         * @return \App\Models\User|false 
+         * @return \App\Domains\Auth\Models\User|false 
          * @static 
          */
         public static function onceUsingId($id)
@@ -2554,7 +2554,7 @@ namespace Illuminate\Support\Facades {
          *
          * @param mixed $id
          * @param bool $remember
-         * @return \App\Models\User|false 
+         * @return \App\Domains\Auth\Models\User|false 
          * @static 
          */
         public static function loginUsingId($id, $remember = false)
@@ -2609,7 +2609,7 @@ namespace Illuminate\Support\Facades {
          * The application must be using the AuthenticateSession middleware.
          *
          * @param string $password
-         * @return \App\Models\User|null 
+         * @return \App\Domains\Auth\Models\User|null 
          * @throws \Illuminate\Auth\AuthenticationException
          * @static 
          */
@@ -2635,7 +2635,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get the last user we attempted to authenticate.
          *
-         * @return \App\Models\User 
+         * @return \App\Domains\Auth\Models\User 
          * @static 
          */
         public static function getLastAttempted()
@@ -2759,7 +2759,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Return the currently cached user.
          *
-         * @return \App\Models\User|null 
+         * @return \App\Domains\Auth\Models\User|null 
          * @static 
          */
         public static function getUser()
@@ -2821,7 +2821,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Determine if the current user is authenticated. If not, throw an exception.
          *
-         * @return \App\Models\User 
+         * @return \App\Domains\Auth\Models\User 
          * @throws \Illuminate\Auth\AuthenticationException
          * @static 
          */

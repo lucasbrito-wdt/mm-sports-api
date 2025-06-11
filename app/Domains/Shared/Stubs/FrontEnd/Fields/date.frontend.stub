@@ -1,1 +1,1 @@
-<CDFTextField v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" type="date" :rules="[{{rules}}]"/>
+<CDFTextField v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" type="{{fieldType}}" :rules="[{{rules}}]"/>

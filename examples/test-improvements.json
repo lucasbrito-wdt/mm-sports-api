@@ -1,0 +1,10 @@
+{
+    "domain": "TestImprovements",
+    "model": "Article",
+    "schema": "title=string,100,req;content=text,500,req;status=string,20;published_at=datetime;created_by=integer",
+    "foreignKeys": [],
+    "generateTests": false,
+    "generateDocs": false,
+    "generateCompleteStructure": true,
+    "force": true
+}
