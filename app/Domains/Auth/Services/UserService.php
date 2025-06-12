@@ -24,9 +24,6 @@ class UserService extends BaseService
             ->whereHas('belongsToManyRoles', function (Builder $query) {
                 $query->whereNot('slug', 'admin');
             })
-            ->when(count($this->user->getList()) > 0, function (Builder $query) {
-                $query->select($this->user->getList());
-            })
             ->when(isset($options['sort_by']), function (Builder $query) use ($options) {
                 $query->orderBy($options['sort_by'], $options['sort_order'] ?? 'asc');
             })

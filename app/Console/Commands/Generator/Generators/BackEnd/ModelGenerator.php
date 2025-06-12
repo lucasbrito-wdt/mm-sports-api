@@ -6,6 +6,8 @@ use App\Console\Commands\Generator\Utils\TemplateManager;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
+use function Laravel\Prompts\warning;
+
 class ModelGenerator
 {
     private TemplateManager $templateManager;
@@ -80,13 +82,17 @@ class ModelGenerator
         }
 
         // Adicionar campos de chaves estrangeiras para relacionamentos belongsTo
-        if (!empty($config['foreignKeys'])) {
+        if (isset($config['foreignKeys'])) {
             foreach ($config['foreignKeys'] as $fk) {
-                if ($fk['relation'] === 'belongsTo') {
-                    $foreignKeyField = Str::snake($fk['model']) . '_id';
-                    if (!in_array("'{$foreignKeyField}'", $fillable)) {
-                        $fillable[] = "'{$foreignKeyField}'";
-                    }
+                // Verifica se o modelo já está no fillable
+                if (!isset($fk['model'])) {
+                    warning("Não foi possível criar a chave estrangeira para o modelo: {$config['model']}, pois a model não foi especificada.");
+                    continue;
+                }
+
+                $foreignKeyField = Str::snake($fk['model']) . '_id';
+                if (!in_array("'{$foreignKeyField}'", $fillable)) {
+                    $fillable[] = "'{$foreignKeyField}'";
                 }
             }
         }

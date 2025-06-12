@@ -77,6 +77,14 @@ class MigrationGenerator
         // Processar chaves estrangeiras
         if (!empty($config['foreignKeys'])) {
             foreach ($config['foreignKeys'] as $fk) {
+                if (!isset($fk['model']) || !isset($fk['relation'])) {
+                    continue;
+                }
+
+                if (!isset($fk['required'])) {
+                    $fk['required'] = false; // Default to required if not specified
+                }
+
                 if ($fk['relation'] === 'hasOne' || $fk['relation'] === 'hasMany') {
                     $foreignKey = Str::snake($fk['model']) . '_id';
                     $line = "\$table->foreignUlid('{$foreignKey}')";

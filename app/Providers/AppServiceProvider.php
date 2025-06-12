@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Domains\Auth\Models\PersonalAccessToken;
 use App\Domains\Shared\Macros\BelongsToManyCreateUpdateOrDelete;
 use App\Domains\Shared\Macros\CreateUpdateOrDelete;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 use URL;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         URL::forceHttps();
+
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
         HasMany::macro('createUpdateOrDelete', function (iterable $records) {
             /** @var HasMany $hasMany */

@@ -118,7 +118,7 @@ class FormGenerator
         foreach ($foreignKeys as $fk) {
             $interfaceName = $fk['model'] . 'Interface';
             $domainKebab = Str::kebab($fk['domain']);
-            $imports[] = "import type { {$interfaceName} } from '@/pages/admin/{$domainKebab}/types'";
+            $imports[] = "import type { {$interfaceName} } from '@/pages/{$domainKebab}/types'";
         }
         return $imports;
     }

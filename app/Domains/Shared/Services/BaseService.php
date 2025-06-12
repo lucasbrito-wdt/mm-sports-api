@@ -27,9 +27,6 @@ class BaseService implements IService
     public function index(array $options = [], ?\Closure $builderCallback = null)
     {
         $query = $this->model
-            ->when(count($this->model->getList()) > 0, function (Builder $query) {
-                $query->select($this->model->getList());
-            })
             ->when(isset($options['sort_by']), function (Builder $query) use ($options) {
                 $query->orderBy($options['sort_by'], $options['sort_order'] ?? 'asc');
             });

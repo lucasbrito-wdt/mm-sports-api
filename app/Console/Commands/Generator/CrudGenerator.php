@@ -17,6 +17,7 @@ use App\Console\Commands\Generator\Generators\FrontEnd\StoreGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\TypesGenerator;
 use App\Console\Commands\Generator\Utils\AbilityManager;
 use App\Console\Commands\Generator\Utils\ModelRelationsManager;
+use App\Console\Commands\Generator\Utils\RollbackLogger;
 use App\Console\Commands\Generator\Utils\RouteManager;
 use App\Console\Commands\Generator\Utils\SummaryBuilder;
 use App\Console\Commands\Generator\Utils\TemplateManager;
@@ -43,6 +44,7 @@ class CrudGenerator extends Command
     private bool $isDomainGenerator = false;
     private string $rollbackLogPath = '';
     private array $rollbackLog = [];
+    private string $currentSessionId = '';
 
     public function __construct(
         private readonly TemplateManager $templateManager,
@@ -52,6 +54,7 @@ class CrudGenerator extends Command
         private readonly ModelRelationsManager $modelRelationsManager,
         private readonly AbilityManager $abilityManager,
         private readonly RouteManager $routeManager,
+        private readonly RollbackLogger $rollbackLogger,
     ) {
         parent::__construct();
     }
@@ -100,6 +103,18 @@ class CrudGenerator extends Command
             // Fallback: modo interativo ou default
             $this->gatherInput();
         }
+
+        // Iniciar sessão de rollback após o config ser carregado
+        $action = $this->isDomainGenerator ? 'generate_domain' : 'generate_crud';
+        $domain = $this->config['domain'] ?? 'unknown';
+
+        $this->currentSessionId = $this->rollbackLogger->startSession($action, $domain, [
+            'is_domain_generator' => $this->isDomainGenerator,
+            'skip_frontend' => $this->option('skip-frontend'),
+            'skip_backend' => $this->option('skip-backend'),
+            'with_tests' => $this->option('with-tests'),
+            'with_docs' => $this->option('with-docs'),
+        ]);
 
 
         if ($this->isDomainGenerator) {
@@ -151,6 +166,9 @@ class CrudGenerator extends Command
 
             $this->info('✅ CRUD gerado com sucesso!');
         }
+
+        // Finalizar sessão de rollback
+        $this->rollbackLogger->endSession($this->currentSessionId, 'completed');
 
         return CommandAlias::SUCCESS;
     }
@@ -1042,14 +1060,17 @@ class CrudGenerator extends Command
             return;
         }
         $this->info('🔄 Iniciando rollback das alterações/criações do gerador...');
-        $log = json_decode(file_get_contents($this->rollbackLogPath), true);
-        if (!$log || !is_array($log)) {
-            $this->error('Log de rollback corrompido ou inválido.');
+
+        // Carregar log usando o novo sistema
+        $legacyLog = $this->rollbackLogger->exportLegacyFormat();
+
+        if (empty($legacyLog['created']) && empty($legacyLog['modified']) && empty($legacyLog['directories'])) {
+            $this->error('Log de rollback está vazio ou corrompido.');
             return;
         }
 
         // Identificar e remover rotas de domínios criados
-        foreach ($log['created'] ?? [] as $file) {
+        foreach ($legacyLog['created'] ?? [] as $file) {
             // Verificar se é um arquivo de rotas de domínio
             if (str_contains($file, 'routes/domains/') && str_ends_with($file, '.php')) {
                 $domainName = basename($file, '.php');
@@ -1063,28 +1084,28 @@ class CrudGenerator extends Command
         }
 
         // Restaurar arquivos modificados
-        foreach ($log['modified'] ?? [] as $file => $backup) {
+        foreach ($legacyLog['modified'] ?? [] as $file => $backup) {
             if (file_exists($backup)) {
                 copy($backup, $file);
                 $this->info("  ✓ Arquivo restaurado: $file");
             }
         }
         // Remover arquivos criados
-        foreach ($log['created'] ?? [] as $file) {
+        foreach ($legacyLog['created'] ?? [] as $file) {
             if (file_exists($file)) {
                 unlink($file);
                 $this->info("  ✓ Arquivo removido: $file");
             }
         }
         // Remover diretórios criados (em ordem reversa para garantir remoção)
-        foreach (array_reverse($log['directories'] ?? []) as $dir) {
+        foreach (array_reverse($legacyLog['directories'] ?? []) as $dir) {
             if (is_dir($dir) && count(scandir($dir)) === 2) { // vazio
                 rmdir($dir);
                 $this->info("  ✓ Diretório removido: $dir");
             }
         }
         // Limpar log
-        unlink($this->rollbackLogPath);
+        $this->rollbackLogger->clearLog();
         $this->info('✅ Rollback concluído!');
     }
 
@@ -1093,8 +1114,7 @@ class CrudGenerator extends Command
      */
     private function logCreatedFile(string $file): void
     {
-        $this->rollbackLog['created'][] = $file;
-        $this->saveRollbackLog();
+        $this->rollbackLogger->logCreatedFile($file, $this->currentSessionId);
     }
 
     /**
@@ -1102,16 +1122,7 @@ class CrudGenerator extends Command
      */
     private function logModifiedFile(string $file): void
     {
-        $backupDir = storage_path('framework/rollback/backups');
-        if (!file_exists($backupDir)) {
-            mkdir($backupDir, 0755, true);
-        }
-        $backupFile = $backupDir . '/' . md5($file) . '_' . basename($file);
-        if (!isset($this->rollbackLog['modified'][$file]) && file_exists($file)) {
-            copy($file, $backupFile);
-            $this->rollbackLog['modified'][$file] = $backupFile;
-            $this->saveRollbackLog();
-        }
+        $this->rollbackLogger->logModifiedFile($file, $this->currentSessionId);
     }
 
     /**
@@ -1119,8 +1130,7 @@ class CrudGenerator extends Command
      */
     private function logCreatedDirectory(string $dir): void
     {
-        $this->rollbackLog['directories'][] = $dir;
-        $this->saveRollbackLog();
+        $this->rollbackLogger->logCreatedDirectory($dir, $this->currentSessionId);
     }
 
     /**

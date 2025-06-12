@@ -2,25 +2,15 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Seeder;
 use App\Domains\ACL\Seeders\RolesPermissionSeeder;
 use App\Domains\Auth\Seeders\AuthDomainDatabaseSeeder;
-use Illuminate\Database\Seeder;
-use App\Domains\TesteSegundo\Seeders\TesteSeeder;
-use App\Domains\Produto\Seeders\ProdutoSeeder;
-use App\Domains\Produto\Seeders\TesteFrontendSeeder;
-use App\Domains\TesteDomain\Seeders\TesteModelSeeder;
-use App\Domains\Produto\Seeders\TesteCompletoSeeder;
-use App\Domains\Catalog\Seeders\CategorySeeder;
-use App\Domains\Catalog\Seeders\ProductSeeder;
-use App\Domains\Library\Seeders\BookSeeder;
-use App\Domains\Library\Seeders\BookLoanSeeder;
-use App\Domains\TestMultiple\Seeders\ParentSeeder;
-use App\Domains\BlogSystem\Seeders\PostSeeder;
-use App\Domains\TestFinal\Seeders\MainModelSeeder;
-use App\Domains\TestFinal\Seeders\SubModelSeeder;
-use App\Domains\Teste\Seeders\TesteSeeder;
-use App\Domains\TestImprovements\Seeders\ArticleSeeder;
 use App\Domains\BlogComplete\Seeders\PostSeeder;
+use App\Domains\BlogComplete\Seeders\CommentSeeder;
+use App\Domains\BlogComplete\Seeders\TagSeeder;
+use App\Domains\BlogComplete\Seeders\CategorySeeder;
+
+
 
 class DatabaseSeeder extends Seeder
 {
@@ -28,8 +18,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RolesPermissionSeeder::class);
         $this->call(AuthDomainDatabaseSeeder::class);
-        $this->call(TesteSeeder::class);
-        $this->call(ArticleSeeder::class);
         $this->call(PostSeeder::class);
+        $this->call(CommentSeeder::class);
+        $this->call(TagSeeder::class);
+        $this->call(CategorySeeder::class);
     }
 }
