@@ -63,11 +63,11 @@ class BaseController extends Controller implements IController
      * @param  Request  $request  The incoming HTTP request.
      * @return JsonResponse The list of resources in a JSON response.
      */
-    public function index(Request $request)
+    public function index(Request $request, ?\Closure $builderCallback = null)
     {
         $options = $request->all();
 
-        return response()->json($this->getService()->index($options));
+        return response()->json($this->getService()->index($options, $builderCallback));
     }
 
     /**
@@ -149,15 +149,12 @@ class BaseController extends Controller implements IController
      * It can also handle searching within a related resource if the relation is provided.
      *
      * @param  Request  $request  The incoming HTTP request. The request data is used as options for the search.
-     * @param  string  $field  The field name to search by.
-     * @param  mixed  $value  The value to search for in the specified field.
-     * @param  string  $relation  (optional) The related resource to search within. Default is an empty string, which means no relation is used.
      * @return JsonResponse Returns a JSON response containing the search results.
      */
-    public function search(Request $request, string $field, mixed $value, string $relation = '')
+    public function search(Request $request, ?\Closure $builderCallback = null)
     {
         $options = $request->all();
 
-        return response()->json($this->getService()->search($field, $value, $relation, $options));
+        return response()->json($this->getService()->search($options, $builderCallback));
     }
 }

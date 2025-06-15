@@ -161,12 +161,12 @@ class FieldsGenerator
 
         // Adicionar validação de tamanho para campos string e text
         if (isset($fieldConfig['type']) && in_array(strtolower($fieldConfig['type']), ['string', 'text']) && isset($fieldConfig['max_length'])) {
-            $rules[] = "rules.maxLength({data.{$fieldConfig['name']},{$fieldConfig['max_length']})";
+            $rules[] = "rules.lengthValidator({data.{$fieldConfig['name']},{$fieldConfig['max_length']})";
         }
 
         // Adicionar validação de tamanho mínimo se especificado
         if (isset($fieldConfig['min_length'])) {
-            $rules[] = "rules.minLength({data.{$fieldConfig['name']},{$fieldConfig['min_length']})";
+            $rules[] = "rules.lengthValidator({data.{$fieldConfig['name']},{$fieldConfig['min_length']})";
         }
 
         return implode(', ', $rules);

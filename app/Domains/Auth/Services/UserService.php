@@ -20,20 +20,14 @@ class UserService extends BaseService
 
     public function index(array $options = [], ?\Closure $builderCallback = null)
     {
-        $data = $this->user
-            ->whereHas('belongsToManyRoles', function (Builder $query) {
+        return parent::index($options, function ($query) use ($options) {
+            $query->whereHas('belongsToManyRoles', function (Builder $query) {
                 $query->whereNot('slug', 'admin');
             })
-            ->when(isset($options['sort_by']), function (Builder $query) use ($options) {
-                $query->orderBy($options['sort_by'], $options['sort_order'] ?? 'asc');
-            })
-            ->paginate(IntHelper::tryParser($options['per_page'] ?? 15) ?? 15);
-
-        return [
-            'data' => $data->items(),
-            'total' => $data->total(),
-            'page' => $data->currentPage(),
-        ];
+                ->when(isset($options['sort_by']), function (Builder $query) use ($options) {
+                    $query->orderBy($options['sort_by'], $options['sort_order'] ?? 'asc');
+                });
+        });
     }
 
     public function store(array $data)

@@ -5,6 +5,7 @@ namespace App\Domains\Shared\Services;
 use App\Domains\Shared\Interfaces\IService;
 use App\Domains\Shared\Traits\Dependencies;
 use App\Domains\Shared\Utils\IntHelper;
+use App\Domains\Shared\Helpers\SortHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -26,15 +27,17 @@ class BaseService implements IService
      */
     public function index(array $options = [], ?\Closure $builderCallback = null)
     {
-        $query = $this->model
-            ->when(isset($options['sort_by']), function (Builder $query) use ($options) {
-                $query->orderBy($options['sort_by'], $options['sort_order'] ?? 'asc');
-            });
+        $query = $this->model->newQuery();
 
         // Permite modificar a query com operações adicionais
         if ($builderCallback !== null) {
             $builderCallback($query);
         }
+
+        $sortBy = $options['sort_by'] ?? 'id';
+        $sortOrder = $options['sort_order'] ?? 'desc';
+
+        $query = SortHelper::applySort($query, $sortBy, $sortOrder);
 
         $data = $query->paginate(IntHelper::tryParser($options['per_page'] ?? 15) ?? 15);
 
@@ -42,6 +45,8 @@ class BaseService implements IService
             'data' => $data->items(),
             'total' => $data->total(),
             'page' => $data->currentPage(),
+            'current_page' => $data->currentPage(),
+            'last_page' => $data->lastPage(),
         ];
     }
 
@@ -137,23 +142,18 @@ class BaseService implements IService
     /**
      * Searches for items based on a field and value.
      *
-     * @param  array|string  $field  The field(s) to search in.
-     * @param  mixed  $value  The value to search for.
-     * @param  string  $relation  An optional relation for the search.
      * @param  array  $options  An array of options for the search operation.
      * @return array The result of the search operation.
      */
     public function search(
-        array|string $field,
-        $value,
-        string $relation = '',
         array $options = [],
         ?\Closure $builderCallback = null,
     ) {
+        $field = $options['field'] ?? null;
+        $value = $options['value'] ?? null;
+        $relation = $options['relation'] ?? null;
+
         $query = $this->model
-            ->when(isset($options['sort_by']), function (Builder $query) use ($options) {
-                $query->orderBy($options['sort_by'], $options['sort_order'] ?? 'asc');
-            })
             ->when(! empty($relation), function (Builder $query) use ($field, $value, $relation) {
                 $query->whereHas($relation, function ($query) use ($value, $field) {
                     $query->where($field, 'like', "%$value%")->orderBy($field);
@@ -167,12 +167,17 @@ class BaseService implements IService
             $builderCallback($query);
         }
 
+        $sortBy = $options['sort_by'] ?? 'id';
+        $sortOrder = $options['sort_order'] ?? 'desc';
+        $query = SortHelper::applySort($query, $sortBy, $sortOrder);
+
         $data = $query->paginate(IntHelper::tryParser($options['per_page'] ?? 15) ?? 15);
 
         return [
             'data' => $data->items(),
             'total' => $data->total(),
             'page' => $data->currentPage(),
+            'last_page' => $data->lastPage(),
         ];
     }
 }

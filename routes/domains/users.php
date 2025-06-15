@@ -9,7 +9,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     */
     Route::apiResource('users', UserController::class);
     Route::group(['prefix' => 'users', 'as' => 'users'], function () {
-        Route::get('pesquisarpor/{field}/{value}/{relation?}', [UserController::class, 'search']);
+        Route::post('search', [UserController::class, 'search']);
         Route::get('list/roles', [UserController::class, 'roles']);
     });
 });

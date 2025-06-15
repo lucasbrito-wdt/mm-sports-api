@@ -13,5 +13,4 @@ class CategoryService extends BaseService
     }
 
     // 👉 methods
-    
 }

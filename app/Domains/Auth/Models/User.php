@@ -3,6 +3,7 @@
 namespace App\Domains\Auth\Models;
 
 use App\Casts\UploadCast;
+use App\Domains\ACL\Models\Role;
 use App\Domains\ACL\Traits\HasRoles;
 use App\Domains\Shared\Traits\TenantScope;
 use App\Domains\Auth\Notifications\ResetPasswordNotification;
@@ -130,7 +131,10 @@ class User extends Authenticatable
 
     //endregion
     //region Relations
-
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class);
+    }
     //endregion
     //region Methods
     public function sendPasswordResetNotification($token): void

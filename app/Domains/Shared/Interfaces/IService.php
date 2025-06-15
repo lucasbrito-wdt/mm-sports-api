@@ -41,13 +41,10 @@ interface IService
     /**
      * Search
      *
-     * @param string|array $field
-     * @param $value
+     * @param array $options
+     * @param \Closure|null $builderCallback
      */
     public function search(
-        array|string $field,
-        $value,
-        string $relation = '',
         array $options = [],
         ?\Closure $builderCallback = null
     );
