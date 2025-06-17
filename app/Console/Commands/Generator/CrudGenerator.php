@@ -680,42 +680,84 @@ class CrudGenerator extends Command
         $typesGenerator = app(TypesGenerator::class);
         if ($typesGenerator->generate($this->config)) {
             $this->info('  ✓ Types gerados com sucesso');
+
+            // Registrar arquivo gerado para rollback
+            $typesPath = $this->getFrontendPath() . "/pages/" . Str::kebab($this->config['domain']) . "/types.ts";
+            if (file_exists($typesPath)) {
+                $this->logCreatedFile($typesPath);
+            }
         }
 
         // Gerar Store
         $storeGenerator = app(StoreGenerator::class);
         if ($storeGenerator->generate($this->config)) {
             $this->info('  ✓ Store gerado com sucesso');
+
+            // Registrar arquivo gerado para rollback
+            $storePath = $this->getFrontendPath() . "/pages/" . Str::kebab($this->config['domain']) . "/store/use" . Str::camel($this->config['model']) . "Store.ts";
+            if (file_exists($storePath)) {
+                $this->logCreatedFile($storePath);
+            }
         }
 
         // Gerar Service
         $serviceGenerator = app(FrontEndServiceGenerator::class);
         if ($serviceGenerator->generate($this->config)) {
             $this->info('  ✓ Service gerado com sucesso');
+
+            // Registrar arquivo gerado para rollback
+            $servicePath = $this->getFrontendPath() . "/pages/" . Str::kebab($this->config['domain']) . "/services/" . Str::camel($this->config['model']) . "Service.ts";
+            if (file_exists($servicePath)) {
+                $this->logCreatedFile($servicePath);
+            }
         }
 
         // Gerar Form
         $formGenerator = app(FormGenerator::class);
         if ($formGenerator->generate($this->config)) {
             $this->info('  ✓ Formulário gerado com sucesso');
+
+            // Registrar arquivo gerado para rollback
+            $formPath = $this->getFrontendPath() . "/pages/" . Str::kebab($this->config['domain']) . "/components/{$this->config['model']}Form.vue";
+            if (file_exists($formPath)) {
+                $this->logCreatedFile($formPath);
+            }
         }
 
         // Gerar List
         $listGenerator = app(ListGenerator::class);
         if ($listGenerator->generate($this->config)) {
             $this->info('  ✓ Listagem gerada com sucesso');
+
+            // Registrar arquivo gerado para rollback
+            $listPath = $this->getFrontendPath() . "/pages/" . Str::kebab($this->config['domain']) . "/index.vue";
+            if (file_exists($listPath)) {
+                $this->logCreatedFile($listPath);
+            }
         }
 
         // Gerar Criar
         $criarGenerator = app(CriarGenerator::class);
         if ($criarGenerator->generate($this->config)) {
             $this->info('  ✓ Página de criação gerada com sucesso');
+
+            // Registrar arquivo gerado para rollback
+            $criarPath = $this->getFrontendPath() . "/pages/" . Str::kebab($this->config['domain']) . "/cadastrar/index.vue";
+            if (file_exists($criarPath)) {
+                $this->logCreatedFile($criarPath);
+            }
         }
 
         // Gerar Editar
         $editarGenerator = app(EditarGenerator::class);
         if ($editarGenerator->generate($this->config)) {
             $this->info('  ✓ Página de edição gerada com sucesso');
+
+            // Registrar arquivo gerado para rollback
+            $criarPath = $this->getFrontendPath() . "/pages/" . Str::kebab($this->config['domain']) . "/editar/index.vue";
+            if (file_exists($criarPath)) {
+                $this->logCreatedFile($criarPath);
+            }
         }
 
         // Executar ESLint
@@ -728,18 +770,12 @@ class CrudGenerator extends Command
     private function runEslint(): void
     {
         try {
+            $frontEndDir = str_replace('\\src', '', $this->getFrontendPath());
             $command = sprintf(
                 'cd %s && %s %s --fix',
-                $this->getFrontendPath(),
+                $frontEndDir,
                 '.\\node_modules\\.bin\\eslint',
-                './pages/' . Str::kebab(Str::plural($this->config['domain'])) . '/**/*.{ts,vue}'
-            );
-
-            info(
-                'cd %s && %s %s --fix',
-                $this->getFrontendPath(),
-                '.\\node_modules\\.bin\\eslint',
-                './pages/' . Str::kebab(Str::plural($this->config['domain'])) . '/**/*.{ts,vue}'
+                './src/pages/' . Str::kebab($this->config['domain']) . '/**/*.{ts,vue}'
             );
 
             $this->info('  🔸 Executando ESLint...');
