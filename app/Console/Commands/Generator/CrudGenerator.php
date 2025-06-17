@@ -822,6 +822,13 @@ class CrudGenerator extends Command
             $this->logModifiedFile($menuFilePath);
         }
 
+        $abilityFile = $this->getFrontendPath().'/configs/abilityConfig.ts';
+        if ($frontendUtilsGenerator->addAbility($this->config)) {
+            $this->info('  ✓ Abilities adicionadas com sucesso');
+
+            $this->logModifiedFile($abilityFile);
+        }
+
         // Executar ESLint
         $this->runEslint();
     }

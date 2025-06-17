@@ -154,8 +154,6 @@ class RollbackLogger
 
         $backupFile = $backupDir.'/'.md5($file).'_'.basename($file);
 
-        dump($backupFile);
-
         if (File::exists($file)) {
             File::copy($file, $backupFile);
 

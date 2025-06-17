@@ -16,30 +16,30 @@ class AbilityManager
         $configPath = config_path('permission_list.php');
 
         // Verificar se o arquivo existe
-        if (!File::exists($configPath)) {
+        if (! File::exists($configPath)) {
             throw new \Exception("Arquivo de configuração não encontrado: {$configPath}");
         }
 
         // Ler a configuração atual
         $config = require $configPath;
-        if (!is_array($config)) {
+        if (! is_array($config)) {
             $config = [];
         }
 
         $key = strtolower($domainName);
 
         // Inicializar o array para o domínio se não existir
-        if (!isset($config[$key])) {
+        if (! isset($config[$key])) {
             $config[$key] = [];
         }
 
         $permissionsAdded = [];
 
         foreach (collect(PermissionActionsEnum::cases())->except(['block', 'manage'])->toArray() as $action) {
-            $slug = $key . ' ' . $action->value;
+            $slug = $key.' '.$action->value;
 
             // Cria a permission no banco se não existir
-            if (!Permission::where('slug', $slug)->exists()) {
+            if (! Permission::where('slug', $slug)->exists()) {
                 Permission::create([
                     'name' => $domainName,
                     'slug' => $slug,
@@ -47,16 +47,16 @@ class AbilityManager
             }
 
             // Adiciona no config se não existir
-            if (!in_array($slug, $config[$key])) {
+            if (! in_array($slug, $config[$key])) {
                 $config[$key][] = $slug;
                 $permissionsAdded[] = $slug;
             }
         }
 
         // Só escreve o arquivo se houve mudanças
-        if (!empty($permissionsAdded)) {
+        if (! empty($permissionsAdded)) {
             $this->writeConfigFile($configPath, $config);
-            echo "✓ Abilities adicionadas para {$domainName}: " . implode(', ', $permissionsAdded) . "\n";
+            echo "✓ Abilities adicionadas para {$domainName}: ".implode(', ', $permissionsAdded)."\n";
         } else {
             echo "ℹ Todas as abilities para {$domainName} já existem no arquivo de configuração.\n";
         }
@@ -90,20 +90,20 @@ class AbilityManager
         $configPath = config_path('permission_list.php');
 
         // Verificar se o arquivo existe
-        if (!File::exists($configPath)) {
+        if (! File::exists($configPath)) {
             throw new \Exception("Arquivo de configuração não encontrado: {$configPath}");
         }
 
         // Ler a configuração atual
         $config = require $configPath;
-        if (!is_array($config)) {
+        if (! is_array($config)) {
             $config = [];
         }
 
         $key = strtolower($modelName);
 
         // Inicializar o array para o modelo se não existir
-        if (!isset($config[$key])) {
+        if (! isset($config[$key])) {
             $config[$key] = [];
         }
 
@@ -111,10 +111,10 @@ class AbilityManager
 
         // Gerar as permissões baseadas no enum
         foreach (collect(PermissionActionsEnum::cases())->except(['block', 'manage'])->toArray() as $action) {
-            $slug = $key . ' ' . $action->value;
+            $slug = $key.' '.$action->value;
 
             // Cria a permission no banco se não existir
-            if (!Permission::where('slug', $slug)->exists()) {
+            if (! Permission::where('slug', $slug)->exists()) {
                 Permission::create([
                     'name' => $modelName,
                     'slug' => $slug,
@@ -122,16 +122,16 @@ class AbilityManager
             }
 
             // Adiciona no config se não existir
-            if (!in_array($slug, $config[$key])) {
+            if (! in_array($slug, $config[$key])) {
                 $config[$key][] = $slug;
                 $permissionsAdded[] = $slug;
             }
         }
 
         // Só escreve o arquivo se houve mudanças
-        if (!empty($permissionsAdded)) {
+        if (! empty($permissionsAdded)) {
             $this->writeConfigFile($configPath, $config);
-            echo "✓ Abilities adicionadas para {$modelName}: " . implode(', ', $permissionsAdded) . "\n";
+            echo "✓ Abilities adicionadas para {$modelName}: ".implode(', ', $permissionsAdded)."\n";
         } else {
             echo "ℹ Todas as abilities para {$modelName} já existem no arquivo de configuração.\n";
         }
