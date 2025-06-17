@@ -11,6 +11,7 @@ class FormGenerator
     use FrontendPathTrait;
 
     private TemplateManager $templateManager;
+
     private FieldsGenerator $fieldsGenerator;
 
     public function __construct(TemplateManager $templateManager, FieldsGenerator $fieldsGenerator)
@@ -35,16 +36,16 @@ class FormGenerator
         );
 
         // Criar diretório se não existir
-        if (!File::exists($fullPath)) {
+        if (! File::exists($fullPath)) {
             File::makeDirectory($fullPath, 0755, true);
         }
 
         // Nome do arquivo seguindo padrão antigo
         $fileName = "{$modelName}Form.vue";
-        $filePath = $fullPath . '/' . $fileName;
+        $filePath = $fullPath.'/'.$fileName;
 
         // Verificar se o arquivo já existe
-        if (File::exists($filePath) && !($config['force'] ?? false)) {
+        if (File::exists($filePath) && ! ($config['force'] ?? false)) {
             return false;
         }
 
@@ -79,10 +80,10 @@ class FormGenerator
         $imports = $this->buildImports($foreignKeys);
 
         // Construir store name
-        $storeName = 'use' . $modelName . 'Store';
+        $storeName = 'use'.$modelName.'Store';
 
         // Construir interface name
-        $interfaceName = 'I' . $modelName;
+        $interfaceName = 'I'.$modelName;
 
         // Construir métodos fetchs
         $methodsFetchs = $this->buildFetchMethods($foreignKeys);
@@ -93,8 +94,11 @@ class FormGenerator
         // Construir métodos FK
         $fkMethods = $this->buildForeignKeyMethods($foreignKeys);
 
+        // Construir inputs de FK
+        $fkInputs = $this->buildFkInputs($foreignKeys);
+
         // Construir título do form
-        $formTitle = "isEditing ? 'Editar " . $modelName . "' : 'Novo " . $modelName . "'";
+        $formTitle = "isEditing ? 'Editar ".$modelName."' : 'Novo ".$modelName."'";
 
         // Gerar campos do formulário usando FieldsGenerator
         $formFields = $this->fieldsGenerator->generateFormFields($schema);
@@ -108,7 +112,7 @@ class FormGenerator
             '{{fk_methods}}' => implode(",\n  ", $fkMethods),
             '{{form_title}}' => $formTitle,
             '{{fields}}' => $formFields,
-            '{{fk_inputs}}' => '', // TODO: Implementar inputs específicos para FK
+            '{{fk_inputs}}' => implode(",\n  ", $fkInputs),
             '{{entity_singular_var}}' => Str::kebab($domain),
         ];
     }
@@ -117,10 +121,11 @@ class FormGenerator
     {
         $imports = [];
         foreach ($foreignKeys as $fk) {
-            $interfaceName = $fk['model'] . 'Interface';
+            $interfaceName = 'I'.$fk['model'];
             $domainKebab = Str::kebab($fk['domain']);
             $imports[] = "import type { {$interfaceName} } from '@/pages/{$domainKebab}/types'";
         }
+
         return $imports;
     }
 
@@ -128,9 +133,10 @@ class FormGenerator
     {
         $methods = [];
         foreach ($foreignKeys as $fk) {
-            $methodName = 'fetch' . Str::plural($fk['model']);
+            $methodName = 'fetch'.Str::plural($fk['model']);
             $methods[] = "  {$methodName}()";
         }
+
         return $methods;
     }
 
@@ -141,6 +147,7 @@ class FormGenerator
             $pluralName = Str::plural(strtolower($fk['model']));
             $refs[] = "{$pluralName}";
         }
+
         return $refs;
     }
 
@@ -148,9 +155,10 @@ class FormGenerator
     {
         $methods = [];
         foreach ($foreignKeys as $fk) {
-            $methodName = 'fetch' . Str::plural($fk['model']);
+            $methodName = 'fetch'.Str::plural($fk['model']);
             $methods[] = "{$methodName}";
         }
+
         return $methods;
     }
 
@@ -166,7 +174,7 @@ class FormGenerator
             @[$field, $params] = explode('=', $column);
             @[$type, $option1, $option2, $required] = explode(',', $params ?? '');
 
-            if (!$field) {
+            if (! $field) {
                 continue;
             }
 
@@ -188,5 +196,43 @@ class FormGenerator
         }
 
         return $fields;
+    }
+
+    public function buildFkInputs(array $foreignKeys): array
+    {
+        $inputs = [];
+        foreach ($foreignKeys as $fk) {
+            $dataName = Str::lower("{$fk['domain']}");
+            $itemsName = Str::plural(Str::lower("{$fk['domain']}"));
+            $loading = Str::lower("{$fk['domain']}");
+            $fetchName = Str::camel("fetch{$fk['domain']}");
+            $rules = $fk['required'] ?? false ? '[rules.requiredValidator]' : '[]';
+
+            $inputs[] = <<<EOT
+            <AppAutocomplete
+              v-model="data.{$dataName}_id"
+              v-debounce:900="$fetchName"
+              :items="$itemsName"
+              label="{$fk['domain']}"
+              :return-object="false"
+              :loading="loading.$loading"
+              :rules="$rules"
+              item-value="id"
+            >
+                <template #clear>
+                    <button
+                      @click="() => {
+                        $fetchName()
+                        blurHandler()
+                      }"
+                    >
+                      <VIcon icon="tabler-x" />
+                    </button>
+                </template>
+            </AppAutocomplete>
+            EOT;
+        }
+
+        return $inputs;
     }
 }
