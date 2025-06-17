@@ -4,7 +4,7 @@ import type { ComputedRef } from 'vue'
 import type { ITerm } from '@codifytech/types/globalTypes'
 import type { IHeader, ITableAction } from '@codifytech/types/layoutTable'
 
-import { {{store_name}} } from './store/{{store_name}}'
+import { {{store_name}} } from './stores/{{store_name}}'
 import type { {{interface_name}} } from './types'
 
 withDefaults(defineProps<{

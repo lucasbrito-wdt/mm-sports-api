@@ -30,7 +30,7 @@ class StoreGenerator
             $frontEndAbsoluteDir,
             'pages',
             Str::snake($domain, '-'),
-            "store"
+            "stores"
         );
 
         // Criar diretório se não existir

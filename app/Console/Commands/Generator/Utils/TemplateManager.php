@@ -29,7 +29,7 @@ class TemplateManager
         return $content;
     }
 
-    public function customizeStubs(string $stubsPath = null): void
+    public function customizeStubs(?string $stubsPath): void
     {
         $defaultPath = app_path('Domains/Shared/Stubs/');
         $stubsPath = $stubsPath ?? $defaultPath;

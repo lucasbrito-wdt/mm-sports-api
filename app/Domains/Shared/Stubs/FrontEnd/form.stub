@@ -4,7 +4,7 @@ import * as rules from '@/validators/cdf-rules'
 import { blurHandler } from '@/utils/generals'
 {{imports}}
 
-import { {{store_name}} } from '../store/{{store_name}}'
+import { {{store_name}} } from '../stores/{{store_name}}'
 import type { {{interface_name}} } from '../types'
 
 withDefaults(defineProps<{

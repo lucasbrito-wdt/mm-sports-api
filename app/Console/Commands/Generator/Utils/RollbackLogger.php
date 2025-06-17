@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 class RollbackLogger
 {
     private string $rollbackLogPath;
+
     private array $rollbackLog = [];
 
     public function __construct()
@@ -22,7 +23,7 @@ class RollbackLogger
      */
     private function initializeLog(): void
     {
-        if (!file_exists($this->rollbackLogPath)) {
+        if (! file_exists($this->rollbackLogPath)) {
             $this->createNewLog();
         } else {
             $this->loadExistingLog();
@@ -38,7 +39,7 @@ class RollbackLogger
             'version' => '2.0',
             'created_at' => Carbon::now()->toISOString(),
             'user' => $this->getCurrentUser(),
-            'sessions' => []
+            'sessions' => [],
         ];
         $this->saveLog();
     }
@@ -52,7 +53,7 @@ class RollbackLogger
         $this->rollbackLog = json_decode($content, true) ?: [];
 
         // Migrar log antigo se necessário
-        if (!isset($this->rollbackLog['version'])) {
+        if (! isset($this->rollbackLog['version'])) {
             $this->migrateOldLog();
         }
     }
@@ -77,10 +78,10 @@ class RollbackLogger
                     'modified' => $oldLog['modified'] ?? [],
                     'directories' => $oldLog['directories'] ?? [],
                     'metadata' => [
-                        'migrated' => true
-                    ]
-                ]
-            ]
+                        'migrated' => true,
+                    ],
+                ],
+            ],
         ];
         $this->saveLog();
     }
@@ -105,7 +106,7 @@ class RollbackLogger
                 'php_version' => PHP_VERSION,
                 'laravel_version' => app()->version(),
             ], $metadata),
-            'status' => 'active'
+            'status' => 'active',
         ];
 
         $this->rollbackLog['sessions'][] = $session;
@@ -132,7 +133,7 @@ class RollbackLogger
     /**
      * Registra um arquivo criado
      */
-    public function logCreatedFile(string $file, string $sessionId = null): void
+    public function logCreatedFile(string $file, ?string $sessionId): void
     {
         if ($sessionId) {
             $this->addToSession($sessionId, 'created', $file);
@@ -144,22 +145,30 @@ class RollbackLogger
     /**
      * Registra um arquivo modificado
      */
-    public function logModifiedFile(string $file, string $sessionId = null): void
+    public function logModifiedFile(string $file, ?string $sessionId): void
     {
         $backupDir = storage_path('framework/rollback/backups');
-        if (!file_exists($backupDir)) {
-            mkdir($backupDir, 0755, true);
+        if (! File::exists($backupDir)) {
+            File::makeDirectory($backupDir, 0755, true);
         }
 
-        $backupFile = $backupDir . '/' . md5($file) . '_' . basename($file);
+        $backupFile = $backupDir.'/'.md5($file).'_'.basename($file);
 
-        if (file_exists($file)) {
-            copy($file, $backupFile);
+        dump($backupFile);
+
+        if (File::exists($file)) {
+            File::copy($file, $backupFile);
 
             if ($sessionId) {
-                $this->addToSession($sessionId, 'modified', [$file => $backupFile]);
+                $this->addToSession($sessionId, 'modified', [
+                    'file' => $file,
+                    'backup' => $backupFile,
+                ]);
             } else {
-                $this->addToActiveSession('modified', [$file => $backupFile]);
+                $this->addToActiveSession('modified', [
+                    'file' => $file,
+                    'backup' => $backupFile,
+                ]);
             }
         }
     }
@@ -167,7 +176,7 @@ class RollbackLogger
     /**
      * Registra um diretório criado
      */
-    public function logCreatedDirectory(string $directory, string $sessionId = null): void
+    public function logCreatedDirectory(string $directory, ?string $sessionId): void
     {
         if ($sessionId) {
             $this->addToSession($sessionId, 'directories', $directory);
@@ -183,11 +192,7 @@ class RollbackLogger
     {
         foreach ($this->rollbackLog['sessions'] as &$session) {
             if ($session['id'] === $sessionId) {
-                if ($type === 'modified' && is_array($item)) {
-                    $session[$type] = array_merge($session[$type] ?? [], $item);
-                } else {
-                    $session[$type][] = $item;
-                }
+                $session[$type][] = $item;
                 break;
             }
         }
@@ -215,6 +220,7 @@ class RollbackLogger
                 return $session;
             }
         }
+
         return null;
     }
 
@@ -236,6 +242,7 @@ class RollbackLogger
                 return $session;
             }
         }
+
         return null;
     }
 
@@ -265,6 +272,7 @@ class RollbackLogger
 
         if (count($this->rollbackLog['sessions']) < $originalCount) {
             $this->saveLog();
+
             return true;
         }
 
@@ -351,16 +359,16 @@ class RollbackLogger
             $stats['total_directories_created'] += count($session['directories'] ?? []);
 
             // Domínios
-            if (!in_array($session['domain'], $stats['domains'])) {
+            if (! in_array($session['domain'], $stats['domains'])) {
                 $stats['domains'][] = $session['domain'];
             }
 
             // Datas
             $sessionDate = $session['timestamp'];
-            if (!$stats['oldest_session'] || $sessionDate < $stats['oldest_session']) {
+            if (! $stats['oldest_session'] || $sessionDate < $stats['oldest_session']) {
                 $stats['oldest_session'] = $sessionDate;
             }
-            if (!$stats['newest_session'] || $sessionDate > $stats['newest_session']) {
+            if (! $stats['newest_session'] || $sessionDate > $stats['newest_session']) {
                 $stats['newest_session'] = $sessionDate;
             }
         }
@@ -374,7 +382,7 @@ class RollbackLogger
     public function saveLog(): void
     {
         $dir = dirname($this->rollbackLogPath);
-        if (!file_exists($dir)) {
+        if (! file_exists($dir)) {
             mkdir($dir, 0755, true);
         }
 
@@ -411,7 +419,7 @@ class RollbackLogger
         $legacy = [
             'created' => [],
             'modified' => [],
-            'directories' => []
+            'directories' => [],
         ];
 
         foreach ($this->rollbackLog['sessions'] as $session) {
