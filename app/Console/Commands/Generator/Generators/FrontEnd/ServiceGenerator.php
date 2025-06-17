@@ -70,7 +70,7 @@ class ServiceGenerator
         $foreignKeys = $config['foreignKeys'] ?? [];
 
         // Construir endpoint
-        $endpoint = Str::snake($domain, '-') . '/' . Str::kebab(Str::plural($modelName));
+        $endpoint = Str::kebab(Str::plural($modelName));
 
         // Construir métodos FK
         $methodsFk = $this->buildForeignKeyMethods($foreignKeys);

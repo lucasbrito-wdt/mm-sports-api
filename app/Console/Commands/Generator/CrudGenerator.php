@@ -36,6 +36,7 @@ use function Laravel\Prompts\text;
 class CrudGenerator extends Command
 {
     use FrontendPathTrait;
+
     protected $signature = 'generate:crud {--force} {--skip-frontend} {--skip-backend} {--with-tests} {--with-docs} {--config=} {--domain : Gera um domínio em vez de um CRUD} {--rollback : Desfaz todas as alterações/criações feitas pelo gerador}';
     protected $description = 'Gera um CRUD completo com backend e frontend ou um domínio completo';
 
@@ -727,12 +728,18 @@ class CrudGenerator extends Command
     private function runEslint(): void
     {
         try {
-            $frontEndDir = env('CDF_DIR_FRONT_END', '../frontend');
             $command = sprintf(
                 'cd %s && %s %s --fix',
-                realpath(dirname(base_path()) . DIRECTORY_SEPARATOR . $frontEndDir),
+                $this->getFrontendPath(),
                 '.\\node_modules\\.bin\\eslint',
-                './src/pages/' . Str::kebab(Str::plural($this->config['domain'])) . '/**/*.{ts,vue}'
+                './pages/' . Str::kebab(Str::plural($this->config['domain'])) . '/**/*.{ts,vue}'
+            );
+
+            info(
+                'cd %s && %s %s --fix',
+                $this->getFrontendPath(),
+                '.\\node_modules\\.bin\\eslint',
+                './pages/' . Str::kebab(Str::plural($this->config['domain'])) . '/**/*.{ts,vue}'
             );
 
             $this->info('  🔸 Executando ESLint...');
@@ -898,23 +905,6 @@ class CrudGenerator extends Command
             $this->info('  ✓ Service base gerado com sucesso');
             if (file_exists($servicePath)) {
                 $this->logCreatedFile($servicePath);
-            }
-
-            // Gerar rotas automaticamente após o controller base
-            if ($this->routeManager->createDomainRoutes($domainName, $modelName)) {
-                $this->info('  ✓ Rotas base geradas automaticamente');
-                // Registrar arquivos de rotas criados para rollback
-                $routeFilePath = base_path('routes/domains/' . \Illuminate\Support\Str::kebab($domainName) . '.php');
-                if (file_exists($routeFilePath)) {
-                    $this->logCreatedFile($routeFilePath);
-                }
-                // Registrar modificação do api.php para rollback
-                $apiRoutesPath = base_path('routes/api.php');
-                if (file_exists($apiRoutesPath)) {
-                    $this->logModifiedFile($apiRoutesPath);
-                }
-            } else {
-                $this->error('  ✗ Falha ao gerar rotas base automaticamente');
             }
         }
     }
@@ -1260,7 +1250,7 @@ class CrudGenerator extends Command
             $this->info("      ✓ Types TypeScript geradas");
 
             // Registrar arquivo gerado para rollback
-            $typesPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/types/{$config['model']}.ts";
+            $typesPath = $this->getFrontendPath() . "/pages/" . Str::kebab($config['domain']) . "/types/{$config['model']}.ts";
             if (file_exists($typesPath)) {
                 $this->logCreatedFile($typesPath);
             }
@@ -1272,7 +1262,7 @@ class CrudGenerator extends Command
             $this->info("      ✓ Store Pinia gerada");
 
             // Registrar arquivo gerado para rollback
-            $storePath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/stores/" . Str::camel($config['model']) . "Store.ts";
+            $storePath = $this->getFrontendPath() . "/pages/" . Str::kebab($config['domain']) . "/stores/" . Str::camel($config['model']) . "Store.ts";
             if (file_exists($storePath)) {
                 $this->logCreatedFile($storePath);
             }
@@ -1284,7 +1274,7 @@ class CrudGenerator extends Command
             $this->info("      ✓ Service do frontend gerado");
 
             // Registrar arquivo gerado para rollback
-            $servicePath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/services/" . Str::camel($config['model']) . "Service.ts";
+            $servicePath = $this->getFrontendPath() . "/pages/" . Str::kebab($config['domain']) . "/services/" . Str::camel($config['model']) . "Service.ts";
             if (file_exists($servicePath)) {
                 $this->logCreatedFile($servicePath);
             }
@@ -1296,7 +1286,7 @@ class CrudGenerator extends Command
             $this->info("      ✓ Componente Form gerado");
 
             // Registrar arquivo gerado para rollback
-            $formPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/components/{$config['model']}Form.vue";
+            $formPath = $this->getFrontendPath() . "/pages/" . Str::kebab($config['domain']) . "/components/{$config['model']}Form.vue";
             if (file_exists($formPath)) {
                 $this->logCreatedFile($formPath);
             }
@@ -1308,7 +1298,7 @@ class CrudGenerator extends Command
             $this->info("      ✓ Componente List gerado");
 
             // Registrar arquivo gerado para rollback
-            $listPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/components/{$config['model']}List.vue";
+            $listPath = $this->getFrontendPath() . "/pages/" . Str::kebab($config['domain']) . "/components/{$config['model']}List.vue";
             if (file_exists($listPath)) {
                 $this->logCreatedFile($listPath);
             }
@@ -1320,7 +1310,7 @@ class CrudGenerator extends Command
             $this->info("      ✓ Componente Criar gerado");
 
             // Registrar arquivo gerado para rollback
-            $criarPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/components/Criar{$config['model']}.vue";
+            $criarPath = $this->getFrontendPath() . "/pages/" . Str::kebab($config['domain']) . "/components/Criar{$config['model']}.vue";
             if (file_exists($criarPath)) {
                 $this->logCreatedFile($criarPath);
             }
@@ -1332,7 +1322,7 @@ class CrudGenerator extends Command
             $this->info("      ✓ Componente Editar gerado");
 
             // Registrar arquivo gerado para rollback
-            $editarPath = $this->getFrontendPath() . "/src/domains/" . Str::kebab($config['domain']) . "/components/Editar{$config['model']}.vue";
+            $editarPath = $this->getFrontendPath() . "/pages/" . Str::kebab($config['domain']) . "/components/Editar{$config['model']}.vue";
             if (file_exists($editarPath)) {
                 $this->logCreatedFile($editarPath);
             }

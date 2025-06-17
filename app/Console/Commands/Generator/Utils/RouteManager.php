@@ -148,7 +148,7 @@ Route::group([
 ], function () {
 
     // {$modelName} Routes
-    Route::apiResource('" . Str::kebab($modelName) . "', {$controllerName}::class);{$fkRoutes}
+    Route::apiResource('" . Str::kebab(Str::plural($modelName)) . "', {$controllerName}::class);{$fkRoutes}
 
 });
 ";
@@ -170,6 +170,13 @@ Route::group([
         $controllerNamespace = "App\\Domains\\{$domainName}\\Controllers";
         $controllerName = "{$modelName}Controller";
         $foreignKeys = $options['foreignKeys'] ?? [];
+
+        // Verificar se as rotas do modelo já existem
+        $routePattern = "Route::apiResource('" . Str::kebab(Str::plural($modelName)) . "', {$controllerName}::class)";
+        if (str_contains($content, $routePattern)) {
+            // Rotas já existem, não adicionar novamente
+            return;
+        }
 
         // Adiciona o use statement se não existir
         if (!str_contains($content, "use {$controllerNamespace}\\{$controllerName};")) {
