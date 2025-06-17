@@ -754,7 +754,7 @@ class CrudGenerator extends Command
             $this->info('  ✓ Página de edição gerada com sucesso');
 
             // Registrar arquivo gerado para rollback
-            $criarPath = $this->getFrontendPath() . "/pages/" . Str::kebab($this->config['domain']) . "/editar/index.vue";
+            $criarPath = $this->getFrontendPath() . "/pages/" . Str::kebab($this->config['domain']) . "/editar/[id].vue";
             if (file_exists($criarPath)) {
                 $this->logCreatedFile($criarPath);
             }
