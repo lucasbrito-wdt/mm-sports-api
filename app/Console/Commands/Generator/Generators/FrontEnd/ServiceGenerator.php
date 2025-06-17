@@ -6,8 +6,6 @@ use App\Console\Commands\Generator\Utils\TemplateManager;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
-use function Laravel\Prompts\error;
-
 class ServiceGenerator
 {
     use FrontendPathTrait;
@@ -28,10 +26,11 @@ class ServiceGenerator
         $frontEndAbsoluteDir = $this->getFrontendPath();
 
         $fullPath = sprintf(
-            '%s/%s/%s',
+            '%s/%s/%s/%s',
             $frontEndAbsoluteDir,
             'pages',
-            Str::snake($domain, '-')
+            Str::snake($domain, '-'),
+            'services'
         );
 
         // Criar diretório se não existir

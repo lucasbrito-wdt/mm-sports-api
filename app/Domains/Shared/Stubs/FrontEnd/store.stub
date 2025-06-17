@@ -1,29 +1,18 @@
-import { defineStore } from 'pinia'
-import type { VForm } from 'vuetify/components/VForm'
-import type { StateHandler } from 'v3-infinite-loading/lib/types'
-import { handleError } from '@/services/error-handling'
-import type { ISearch } from '@/components/CDF/SearchBar.vue'
-import type { IOrderBy } from '@/pages/types/layoutTable.types'
-
 import {{service_name}} from '../services/{{service_name}}'
 import type { {{interface_name}} } from '../types'
 
 const defaultValue = {
-    id: null,
     {{attributes}}
 } as Partial<{{interface_name}}>
 
-export const {{store_name}} = defineStore('crud/{{entity_singular_var}}', {
+export const {{store_name}} = defineStore('{{entity_singular_var}}', {
   state: () => ({
-    serviceName: '{{service_name}}',
-    sortKeyDefault: '{{orderKeyDefault}}',
+    _crud: true,
+    apiService: {{service_name}},
+    defaultSortKey: '{{orderKeyDefault}}',
     defaultValue,
     {{fk_states}}
     loading: {
-      save: false,
-      item: false,
-      items: false,
-      destroy: false,
       {{fk_loadings}}
     },
   }),

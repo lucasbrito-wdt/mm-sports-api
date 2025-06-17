@@ -1,4 +1,4 @@
-import ApiService from '@/services/ApiService'
+import { ApiService } from '@codifytech/services/ApiService'
 
 class {{service_name}} extends ApiService {
  // 👉 methods

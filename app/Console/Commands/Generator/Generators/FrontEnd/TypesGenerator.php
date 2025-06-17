@@ -54,7 +54,7 @@ class TypesGenerator
         $typesContent = $this->templateManager->processStub(
             'FrontEnd/types.stub',
             [
-                '{{interface_name}}' => $modelName . 'Interface',
+                '{{interface_name}}' => 'I' . $modelName,
                 '{{attributes}}' => $attributes,
             ]
         );
@@ -71,7 +71,7 @@ class TypesGenerator
         $columns = explode(';', rtrim($schema, ';'));
 
         // Adicionar ID primeiro
-        $attributes[] = "    id?: number";
+        $attributes[] = "    id: string";
 
         // Processar campos do schema
         foreach ($columns as $column) {
@@ -100,17 +100,17 @@ class TypesGenerator
                 if ($fk['relation'] === 'belongsTo') {
                     $foreignKey = Str::snake($fk['model']) . '_id';
                     $isOptional = !($fk['required'] ?? false) ? '?' : '';
-                    $attributes[] = "    {$foreignKey}{$isOptional}: number";
+                    $attributes[] = "    {$foreignKey}{$isOptional}: string";
 
                     // Adicionar o objeto relacionado
                     $relationName = lcfirst($fk['model']);
-                    $attributes[] = "    {$relationName}?: {$fk['model']}Interface";
+                    $attributes[] = "    {$relationName}?: I{$fk['model']}";
                 } else if ($fk['relation'] === 'hasMany') {
                     $relationName = Str::camel(Str::plural($fk['model']));
-                    $attributes[] = "    {$relationName}?: {$fk['model']}Interface[]";
+                    $attributes[] = "    {$relationName}?: I{$fk['model']}[]";
                 } else if ($fk['relation'] === 'belongsToMany') {
                     $relationName = Str::camel(Str::plural($fk['model']));
-                    $attributes[] = "    {$relationName}?: {$fk['model']}Interface[]";
+                    $attributes[] = "    {$relationName}?: I{$fk['model']}[]";
                 }
             }
         }

@@ -9,6 +9,7 @@ use App\Domains\BlogComplete\Seeders\PostSeeder;
 use App\Domains\BlogComplete\Seeders\CommentSeeder;
 use App\Domains\BlogComplete\Seeders\TagSeeder;
 use App\Domains\BlogComplete\Seeders\CategorySeeder;
+use App\Domains\Cliente\Seeders\ClienteSeeder;
 
 
 
@@ -22,5 +23,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CommentSeeder::class);
         $this->call(TagSeeder::class);
         $this->call(CategorySeeder::class);
+        $this->call(ClienteSeeder::class);
     }
 }

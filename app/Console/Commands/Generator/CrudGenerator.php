@@ -718,7 +718,7 @@ class CrudGenerator extends Command
         }
 
         // Executar ESLint
-        /* $this->runEslint(); */
+        $this->runEslint();
     }
 
     /**

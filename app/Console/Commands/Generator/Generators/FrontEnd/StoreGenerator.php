@@ -26,10 +26,11 @@ class StoreGenerator
         $frontEndAbsoluteDir = $this->getFrontendPath();
 
         $fullPath = sprintf(
-            '%s/%s/%s',
+            '%s/%s/%s/%s',
             $frontEndAbsoluteDir,
             'pages',
-            Str::snake($domain, '-')
+            Str::snake($domain, '-'),
+            "store"
         );
 
         // Criar diretório se não existir
@@ -86,7 +87,7 @@ class StoreGenerator
         return [
             '{{store_name}}' => $storeName,
             '{{service_name}}' => $serviceName,
-            '{{interface_name}}' => $modelName . 'Interface',
+            '{{interface_name}}' => 'I' . $modelName,
             '{{crud_name}}' => $modelName,
             '{{entity_singular_var}}' => strtolower(Str::singular($domain)),
             '{{attributes}}' => $attributes,
@@ -165,7 +166,7 @@ class StoreGenerator
 
             if ($relatedModelName) {
                 $pluralName = Str::plural(strtolower($relatedModelName));
-                $states[] = "    {$pluralName}: [] as {$relatedModelName}Interface[],";
+                $states[] = "    {$pluralName}: [] as I{$relatedModelName}[],";
             }
         }
         return $states;

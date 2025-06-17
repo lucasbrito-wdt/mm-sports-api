@@ -35,6 +35,7 @@ class FieldsGenerator
     public function __construct(
         private readonly TemplateManager $templateManager
     ) {}
+
     /**
      * Gera o campo baseado no tipo e configuração
      */
@@ -52,7 +53,12 @@ class FieldsGenerator
 
         $variables = $this->buildFieldVariables($fieldConfig);
 
-        return $this->templateManager->processStub($stubPath, $variables);
+        return $this->generateColField($this->templateManager->processStub($stubPath, $variables));
+    }
+
+    public function generateColField(string $field): string
+    {
+        return "<VCol cols=\"12\" md=\"6\" lg=\"4\" xl=\"3\">$field</VCol>";
     }
 
     /**
@@ -161,12 +167,12 @@ class FieldsGenerator
 
         // Adicionar validação de tamanho para campos string e text
         if (isset($fieldConfig['type']) && in_array(strtolower($fieldConfig['type']), ['string', 'text']) && isset($fieldConfig['max_length'])) {
-            $rules[] = "rules.lengthValidator({data.{$fieldConfig['name']},{$fieldConfig['max_length']})";
+            $rules[] = "rules.maxLengthValidator(data.{$fieldConfig['name']},{$fieldConfig['max_length']})";
         }
 
         // Adicionar validação de tamanho mínimo se especificado
         if (isset($fieldConfig['min_length'])) {
-            $rules[] = "rules.lengthValidator({data.{$fieldConfig['name']},{$fieldConfig['min_length']})";
+            $rules[] = "rules.maxLengthValidator(data.{$fieldConfig['name']},{$fieldConfig['min_length']})";
         }
 
         return implode(', ', $rules);

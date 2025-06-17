@@ -72,7 +72,7 @@ class ListGenerator
         $storeName = 'use' . $modelName . 'Store';
 
         // Construir interface name
-        $interfaceName = $modelName . 'Interface';
+        $interfaceName = "I$modelName";
 
         // Construir entity singular var
         $entitySingularVar = strtolower(Str::singular($domain));

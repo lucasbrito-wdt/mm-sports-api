@@ -143,12 +143,12 @@ use Illuminate\\Support\\Facades\\Route;
 */
 
 Route::group([
-    'prefix' => '{$prefix}',
     'middleware' => [{$middlewareString}],
+    'as' => '" . Str::kebab($modelName) . "'
 ], function () {
 
     // {$modelName} Routes
-    Route::apiResource('" . Str::kebab(Str::plural($modelName)) . "', {$controllerName}::class);{$fkRoutes}
+    Route::apiResource('" . Str::kebab($modelName) . "', {$controllerName}::class);{$fkRoutes}
 
 });
 ";

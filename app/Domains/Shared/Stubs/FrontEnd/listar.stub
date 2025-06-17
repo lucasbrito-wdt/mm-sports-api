@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import type { ComputedRef } from 'vue'
-import LayoutTable from '@/components/CDF/LayoutTable.vue'
-import type { ITerm } from '@/components/CDF/SearchBar.vue'
-import type { IHeader, ITableAction } from '@/pages/types/layoutTable.types'
+import type { ITerm } from '@codifytech/types/globalTypes'
+import type { IHeader, ITableAction } from '@codifytech/types/layoutTable'
 
 import { {{store_name}} } from './store/{{store_name}}'
 import type { {{interface_name}} } from './types'
@@ -25,21 +24,21 @@ const store = {{store_name}}()
 
 const {
   items,
-  itemsPerPage,
-  page,
-  loading,
-  searchTerm,
   isSearching,
+  perPage,
+  currentPage,
+  total,
+  crudLoading,
+  stateHandler,
+  stateHandlerKey,
 } = storeToRefs(store)
 
 const {
   loadMore,
-  search: onSearch,
-  searchAgain: onSearchAgain,
-  resetSearch,
+  setSearchParams,
+  reset,
   destroy,
   onOrderBy,
-  dialogDestroy,
 } = store
 
 const headers: ComputedRef<IHeader[]> = computed(() => {
@@ -67,7 +66,7 @@ const actions: ITableAction[] = [
       action: 'delete',
       subject: '{{entity_singular_var}}',
     },
-    onClick: (item: {{interface_name}}) => dialogDestroy(item.id),
+    onClick: (item: {{interface_name}}) => destroy(item.id),
   },
 ]
 
@@ -78,26 +77,26 @@ onBeforeRouteLeave(() => {
 
 <template>
   <LayoutTable
-    v-model:items="items"
-    v-model:loading="loading.items"
-    v-model:loading-destroy="loading.destroy"
-    v-model:search="searchTerm"
+    v-model:loading="crudLoading.items"
+    v-model:loading-destroy="crudLoading.delete"
     v-model:is-searching="isSearching"
-    :destroy="destroy"
+    v-model:state-handler="stateHandler"
+    v-model:state-handler-key="stateHandlerKey"
+    :items="items || []"
     :is-header="isHeader"
-    :title="{{list_title}}"
-
-    new-item="/cadastrar"
+    :destroy="destroy"
+    title="{{list_title}}"
+    new-item="/{{entity_singular_var}}/cadastrar"
     :headers="headers"
     :actions="actions"
-    :items-per-page="itemsPerPage"
-    :page="page"
-
+    :items-per-page="perPage"
+    :items-length="total || 0"
+    :page="currentPage"
     :load-more="loadMore"
     :terms-search="terms"
-    :on-search="onSearch"
-    :on-search-again="onSearchAgain"
-    :on-reset="resetSearch"
+    :set-search-params="setSearchParams"
+    :on-reset="reset"
     :on-order-by="onOrderBy"
+    @update:searching="setSearchParams"
   />
 </template>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import LayoutForms from '@/components/CDF/LayoutForms.vue'
 import * as rules from '@/validators/cdf-rules'
 import { blurHandler } from '@/utils/generals'
 {{imports}}
@@ -25,14 +24,14 @@ onMounted(() => {
 
 const {
   form,
+  formKey,
   data,
-  loading,
-  messages,
+  crudLoading,
   {{fk_refs_state}}
 } = storeToRefs(store)
 
 const {
-  save,
+  create,
   update,
   resetForm,
   {{fk_methods}}
@@ -46,13 +45,14 @@ onBeforeRouteLeave(() => {
 <template>
   <LayoutForms
     v-model:form="form"
-    v-model:loading="loading.save"
+    v-model:form-key="formKey"
+    v-model:loading="crudLoading.save"
     :title="{{form_title}}"
     :is-editing="isEditing"
     :is-header="isHeader"
     :actions="{
       save: {
-        method: () => save(),
+        method: () => create(),
       },
       update: {
         method: () => update(),

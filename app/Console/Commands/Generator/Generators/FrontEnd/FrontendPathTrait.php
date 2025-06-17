@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands\Generator\Generators\FrontEnd;
 
-use Illuminate\Support\Facades\File;
-
 trait FrontendPathTrait
 {
     /**
@@ -16,28 +14,34 @@ trait FrontendPathTrait
 
         // Construir o caminho correto
         if (str_starts_with($projectDir, '..')) {
-            // Caminho relativo como "../template-exemple"
-            $frontEndPath = dirname($basePath) . DIRECTORY_SEPARATOR . ltrim($projectDir, './\\');
+            // Contar quantos níveis precisamos subir
+            $levels = substr_count($projectDir, '../');
+
+            // Começar do diretório base e subir os níveis necessários
+            $currentPath = $basePath;
+            for ($i = 0; $i < $levels; $i++) {
+                $currentPath = dirname($currentPath);
+            }
+
+            // Remover todos os ../ do início e pegar apenas o resto do caminho
+            $remainingPath = preg_replace('/^(\.\.\/)+/', '', $projectDir);
+
+            // Se ainda houver caminho restante, adicionar
+            if (!empty($remainingPath)) {
+                $frontEndPath = $currentPath . str_replace('/', DIRECTORY_SEPARATOR, $remainingPath);
+            } else {
+                $frontEndPath = $currentPath;
+            }
         } else {
             // Caminho absoluto ou relativo simples
-            $frontEndPath = $projectDir;
+            $frontEndPath = $basePath . DIRECTORY_SEPARATOR . $projectDir;
         }
-
-        $frontEndAbsoluteDir = realpath($frontEndPath);
-
-        // Se realpath falhar, usar o caminho direto
-        if (!$frontEndAbsoluteDir) {
-            $frontEndAbsoluteDir = $frontEndPath;
-        }
-
-        // Normalizar o caminho
-        $frontEndAbsoluteDir = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $frontEndAbsoluteDir);
 
         // Verificar se o diretório existe
-        if (!is_dir($frontEndAbsoluteDir)) {
-            throw new \Exception("Frontend directory not found: {$frontEndAbsoluteDir}");
+        if (!is_dir($frontEndPath)) {
+            throw new \Exception("Frontend directory not found: {$frontEndPath}");
         }
 
-        return $frontEndAbsoluteDir;
+        return $frontEndPath;
     }
 }

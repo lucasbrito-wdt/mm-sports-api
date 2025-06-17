@@ -27,10 +27,11 @@ class FormGenerator
         $frontEndAbsoluteDir = $this->getFrontendPath();
 
         $fullPath = sprintf(
-            '%s/%s/%s',
+            '%s/%s/%s/%s',
             $frontEndAbsoluteDir,
             'pages',
-            Str::snake($domain, '-')
+            Str::snake($domain, '-'),
+            'components'
         );
 
         // Criar diretório se não existir
@@ -81,7 +82,7 @@ class FormGenerator
         $storeName = 'use' . $modelName . 'Store';
 
         // Construir interface name
-        $interfaceName = $modelName . 'Interface';
+        $interfaceName = 'I' . $modelName;
 
         // Construir métodos fetchs
         $methodsFetchs = $this->buildFetchMethods($foreignKeys);
