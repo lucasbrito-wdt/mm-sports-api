@@ -695,15 +695,6 @@ class CrudGenerator extends Command
         $directories = $this->getFrontendDirectoryStructure();
         $baseCrudPath = $this->getFrontendPath().'/pages/'.Str::kebab($domainName);
 
-        $this->info("Directory Base Crud: {$baseCrudPath}");
-
-        // Verificar se o diretório já existe
-        if (file_exists($baseCrudPath)) {
-            $this->error("O domínio {$domainName} já existe!");
-
-            return;
-        }
-
         // Criar diretórios base
         if (! File::exists($baseCrudPath)) {
             if (File::makeDirectory($baseCrudPath, 0755, true)) {
@@ -1058,7 +1049,9 @@ class CrudGenerator extends Command
             }
 
             // Gerar rotas automaticamente após o controller base
-            if ($this->routeManager->createDomainRoutes($domainName, $modelName)) {
+            if ($this->routeManager->createDomainRoutes($domainName, $modelName, [
+                'foreignKeys' => $this->config['foreignKeys'] ?? [],
+            ])) {
                 $this->info('  ✓ Rotas base geradas automaticamente');
                 // Registrar arquivos de rotas criados para rollback
                 $routeFilePath = base_path('routes/domains/'.\Illuminate\Support\Str::kebab($domainName).'.php');

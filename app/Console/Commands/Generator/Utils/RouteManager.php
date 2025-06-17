@@ -15,10 +15,9 @@ class RouteManager
     /**
      * Cria automaticamente as rotas para um domínio gerado.
      *
-     * @param string $domainName Nome do domínio
-     * @param string $modelName Nome do modelo/controller
-     * @param array $options Opções adicionais (middleware, prefix, etc.)
-     * @return bool
+     * @param  string  $domainName  Nome do domínio
+     * @param  string  $modelName  Nome do modelo/controller
+     * @param  array  $options  Opções adicionais (middleware, prefix, etc.)
      */
     public function createDomainRoutes(string $domainName, string $modelName, array $options = []): bool
     {
@@ -27,10 +26,10 @@ class RouteManager
             $this->ensureRoutesStructure();
 
             // Gera o arquivo de rotas para o domínio
-            $routeFilePath = base_path(self::ROUTES_BASE_PATH . '/domains/' . Str::kebab($domainName) . '.php');
+            $routeFilePath = base_path(self::ROUTES_BASE_PATH.'/domains/'.Str::kebab($domainName).'.php');
 
             // Se o arquivo não existe, cria novo
-            if (!File::exists($routeFilePath)) {
+            if (! File::exists($routeFilePath)) {
                 $this->createNewDomainRouteFile($domainName, $modelName, $routeFilePath, $options);
             } else {
                 // Se existe, adiciona as rotas do novo modelo
@@ -49,17 +48,16 @@ class RouteManager
     /**
      * Remove as rotas de um domínio (usado no rollback).
      *
-     * @param string $domainName Nome do domínio
-     * @param string|null $modelName Nome do modelo (opcional, se não informado remove o arquivo inteiro)
-     * @return bool
+     * @param  string  $domainName  Nome do domínio
+     * @param  string|null  $modelName  Nome do modelo (opcional, se não informado remove o arquivo inteiro)
      */
     public function removeDomainRoutes(string $domainName, ?string $modelName = null): bool
     {
         try {
             // Gera o caminho do arquivo de rotas
-            $routeFilePath = base_path(self::ROUTES_BASE_PATH . '/domains/' . Str::kebab($domainName) . '.php');
+            $routeFilePath = base_path(self::ROUTES_BASE_PATH.'/domains/'.Str::kebab($domainName).'.php');
 
-            if (!File::exists($routeFilePath)) {
+            if (! File::exists($routeFilePath)) {
                 return true; // Arquivo não existe, nada para remover
             }
 
@@ -86,15 +84,15 @@ class RouteManager
     protected function ensureRoutesStructure(): void
     {
         $routesPath = base_path(self::ROUTES_BASE_PATH);
-        $domainsPath = $routesPath . '/domains';
+        $domainsPath = $routesPath.'/domains';
 
         // Cria diretório routes se não existir
-        if (!File::exists($routesPath)) {
+        if (! File::exists($routesPath)) {
             File::makeDirectory($routesPath, 0755, true);
         }
 
         // Cria diretório domains dentro de routes
-        if (!File::exists($domainsPath)) {
+        if (! File::exists($domainsPath)) {
             File::makeDirectory($domainsPath, 0755, true);
         }
     }
@@ -102,10 +100,10 @@ class RouteManager
     /**
      * Cria um novo arquivo de rotas para o domínio.
      *
-     * @param string $domainName Nome do domínio
-     * @param string $modelName Nome do modelo
-     * @param string $filePath Caminho do arquivo a ser criado
-     * @param array $options Opções adicionais
+     * @param  string  $domainName  Nome do domínio
+     * @param  string  $modelName  Nome do modelo
+     * @param  string  $filePath  Caminho do arquivo a ser criado
+     * @param  array  $options  Opções adicionais
      */
     protected function createNewDomainRouteFile(string $domainName, string $modelName, string $filePath, array $options = []): void
     {
@@ -115,16 +113,13 @@ class RouteManager
         $controllerName = "{$modelName}Controller";
         $foreignKeys = $options['foreignKeys'] ?? [];
 
-        $middlewareString = "'" . implode("', '", $middleware) . "'";
+        $middlewareString = "'".implode("', '", $middleware)."'";
 
         // Gerar rotas FK se existirem
         $fkRoutes = '';
-        if (!empty($foreignKeys)) {
+        if (! empty($foreignKeys)) {
             foreach ($foreignKeys as $fk) {
-                if ($fk['relation'] === 'belongsTo') {
-                    // CORREÇÃO: Usar nome da rota correto baseado no modelName
-                    $fkRoutes .= "\n    " . $this->createFKRoutes(Str::kebab(Str::plural($modelName)), $fk['model'], $controllerName);
-                }
+                $fkRoutes .= "\n    ".$this->createFKRoutes($fk['model'], $controllerName);
             }
         }
 
@@ -144,11 +139,11 @@ use Illuminate\\Support\\Facades\\Route;
 
 Route::group([
     'middleware' => [{$middlewareString}],
-    'as' => '" . Str::kebab($modelName) . "'
+    'as' => '".Str::kebab($modelName)."'
 ], function () {
 
     // {$modelName} Routes
-    Route::apiResource('" . Str::kebab(Str::plural($modelName)) . "', {$controllerName}::class);{$fkRoutes}
+    Route::apiResource('".Str::kebab(Str::plural($modelName))."', {$controllerName}::class);{$fkRoutes}
 
 });
 ";
@@ -159,10 +154,10 @@ Route::group([
     /**
      * Adiciona rotas de um novo modelo a um arquivo de domínio existente.
      *
-     * @param string $domainName Nome do domínio
-     * @param string $modelName Nome do modelo
-     * @param string $filePath Caminho do arquivo
-     * @param array $options Opções adicionais
+     * @param  string  $domainName  Nome do domínio
+     * @param  string  $modelName  Nome do modelo
+     * @param  string  $filePath  Caminho do arquivo
+     * @param  array  $options  Opções adicionais
      */
     protected function addRoutesToExistingFile(string $domainName, string $modelName, string $filePath, array $options = []): void
     {
@@ -172,17 +167,17 @@ Route::group([
         $foreignKeys = $options['foreignKeys'] ?? [];
 
         // Verificar se as rotas do modelo já existem
-        $routePattern = "Route::apiResource('" . Str::kebab(Str::plural($modelName)) . "', {$controllerName}::class)";
+        $routePattern = "Route::apiResource('".Str::kebab(Str::plural($modelName))."', {$controllerName}::class)";
         if (str_contains($content, $routePattern)) {
             // Rotas já existem, não adicionar novamente
             return;
         }
 
         // Adiciona o use statement se não existir
-        if (!str_contains($content, "use {$controllerNamespace}\\{$controllerName};")) {
+        if (! str_contains($content, "use {$controllerNamespace}\\{$controllerName};")) {
             $useStatement = "use {$controllerNamespace}\\{$controllerName};";
             $content = str_replace(
-                "use Illuminate\\Support\\Facades\\Route;",
+                'use Illuminate\\Support\\Facades\\Route;',
                 "use {$controllerNamespace}\\{$controllerName};\nuse Illuminate\\Support\\Facades\\Route;",
                 $content
             );
@@ -190,22 +185,19 @@ Route::group([
 
         // Gerar rotas FK se existirem
         $fkRoutes = '';
-        if (!empty($foreignKeys)) {
+        if (! empty($foreignKeys)) {
             foreach ($foreignKeys as $fk) {
-                if ($fk['relation'] === 'belongsTo') {
-                    // CORREÇÃO: Usar nome da rota correto baseado no modelName
-                    $fkRoutes .= "\n    " . $this->createFKRoutes(Str::kebab(Str::plural($modelName)), $fk['model'], $controllerName);
-                }
+                $fkRoutes .= "\n    ".$this->createFKRoutes($fk['model'], $controllerName);
             }
         }
 
         // Adiciona as rotas antes do fechamento do grupo
         $newRoutes = "
     // {$modelName} Routes
-    Route::apiResource('" . Str::kebab(Str::plural($modelName)) . "', {$controllerName}::class);{$fkRoutes}
+    Route::apiResource('".Str::kebab(Str::plural($modelName))."', {$controllerName}::class);{$fkRoutes}
     ";
 
-        $content = str_replace('});', $newRoutes . '});', $content);
+        $content = str_replace('});', $newRoutes.'});', $content);
 
         File::put($filePath, $content);
     }
@@ -213,18 +205,18 @@ Route::group([
     /**
      * Atualiza o arquivo principal de rotas (api.php ou web.php) para incluir o domínio.
      *
-     * @param string $domainName Nome do domínio
+     * @param  string  $domainName  Nome do domínio
      */
     protected function updateMainRoutesFile(string $domainName): void
     {
         $apiRoutesPath = base_path('routes/api.php');
 
-        if (!File::exists($apiRoutesPath)) {
+        if (! File::exists($apiRoutesPath)) {
             return;
         }
 
         $content = File::get($apiRoutesPath);
-        $domainRoute = "require __DIR__.'/domains/" . Str::kebab($domainName) . ".php';";
+        $domainRoute = "require __DIR__.'/domains/".Str::kebab($domainName).".php';";
 
         // Verifica se a inclusão já existe
         if (str_contains($content, $domainRoute)) {
@@ -232,7 +224,7 @@ Route::group([
         }
 
         // Adiciona no final do arquivo
-        $content = rtrim($content) . "\n\n// {$domainName} Domain Routes\n{$domainRoute}\n";
+        $content = rtrim($content)."\n\n// {$domainName} Domain Routes\n{$domainRoute}\n";
 
         File::put($apiRoutesPath, $content);
     }
@@ -240,18 +232,18 @@ Route::group([
     /**
      * Remove referência do domínio do arquivo principal de rotas.
      *
-     * @param string $domainName Nome do domínio
+     * @param  string  $domainName  Nome do domínio
      */
     protected function removeFromMainRoutesFile(string $domainName): void
     {
         $apiRoutesPath = base_path('routes/api.php');
 
-        if (!File::exists($apiRoutesPath)) {
+        if (! File::exists($apiRoutesPath)) {
             return;
         }
 
         $content = File::get($apiRoutesPath);
-        $domainRoute = "require __DIR__.'/domains/" . Str::kebab($domainName) . ".php';";
+        $domainRoute = "require __DIR__.'/domains/".Str::kebab($domainName).".php';";
 
         // Remove a linha de inclusão e o comentário
         $pattern = "/\n\/\/ {$domainName} Domain Routes\n{$domainRoute}/";
@@ -263,8 +255,8 @@ Route::group([
     /**
      * Remove rotas de um modelo específico de um arquivo de domínio.
      *
-     * @param string $filePath Caminho do arquivo
-     * @param string $modelName Nome do modelo
+     * @param  string  $filePath  Caminho do arquivo
+     * @param  string  $modelName  Nome do modelo
      */
     protected function removeModelRoutesFromFile(string $filePath, string $modelName): void
     {
@@ -285,9 +277,9 @@ Route::group([
     /**
      * Gera rotas customizadas para relacionamentos.
      *
-     * @param string $domainName Nome do domínio
-     * @param string $modelName Nome do modelo
-     * @param array $foreignKeys Array de chaves estrangeiras
+     * @param  string  $domainName  Nome do domínio
+     * @param  string  $modelName  Nome do modelo
+     * @param  array  $foreignKeys  Array de chaves estrangeiras
      * @return string Código das rotas adicionais
      */
     public function generateRelationshipRoutes(string $domainName, string $modelName, array $foreignKeys): string
@@ -302,7 +294,7 @@ Route::group([
             if ($fk['relation'] === 'belongsTo') {
                 $relatedModelPlural = Str::kebab(Str::plural($fk['model']));
                 $currentModelPlural = Str::kebab(Str::plural($modelName));
-                $methodName = 'list' . Str::studly(Str::plural($fk['model']));
+                $methodName = 'list'.Str::studly(Str::plural($fk['model']));
 
                 $routes .= "    Route::get('{$currentModelPlural}/list-{$relatedModelPlural}', [{$modelName}Controller::class, '{$methodName}']);\n";
             }
@@ -314,12 +306,12 @@ Route::group([
     /**
      * Verifica se as rotas de um domínio existem.
      *
-     * @param string $domainName Nome do domínio
-     * @return bool
+     * @param  string  $domainName  Nome do domínio
      */
     public function domainRoutesExist(string $domainName): bool
     {
-        $routeFilePath = base_path(self::ROUTES_BASE_PATH . '/domains/' . Str::kebab($domainName) . '.php');
+        $routeFilePath = base_path(self::ROUTES_BASE_PATH.'/domains/'.Str::kebab($domainName).'.php');
+
         return File::exists($routeFilePath);
     }
 
@@ -330,9 +322,9 @@ Route::group([
      */
     public function listDomainRoutes(): array
     {
-        $domainsPath = base_path(self::ROUTES_BASE_PATH . '/domains');
+        $domainsPath = base_path(self::ROUTES_BASE_PATH.'/domains');
 
-        if (!File::exists($domainsPath)) {
+        if (! File::exists($domainsPath)) {
             return [];
         }
 
@@ -350,13 +342,13 @@ Route::group([
     /**
      * Gera rotas com middleware customizado.
      *
-     * @param string $domainName Nome do domínio
-     * @param array $middlewares Array de middlewares
+     * @param  string  $domainName  Nome do domínio
+     * @param  array  $middlewares  Array de middlewares
      * @return string Template das rotas com middleware
      */
     public function generateRoutesWithMiddleware(string $domainName, array $middlewares): string
     {
-        $middlewareString = "'" . implode("', '", $middlewares) . "'";
+        $middlewareString = "'".implode("', '", $middlewares)."'";
         $prefix = Str::kebab($domainName);
 
         return "
@@ -372,9 +364,9 @@ Route::group([
     /**
      * Adiciona rotas de permissão para um domínio.
      *
-     * @param string $domainName Nome do domínio
-     * @param string $modelName Nome do modelo
-     * @param string $filePath Caminho do arquivo de rotas
+     * @param  string  $domainName  Nome do domínio
+     * @param  string  $modelName  Nome do modelo
+     * @param  string  $filePath  Caminho do arquivo de rotas
      */
     public function addPermissionRoutes(string $domainName, string $modelName, string $filePath): void
     {
@@ -384,24 +376,24 @@ Route::group([
         $permissionRoutes = "
     // Permission-based routes for {$modelName}
     Route::middleware('can:view,{$modelName}')->group(function () {
-        Route::get('" . Str::kebab(Str::plural($modelName)) . "', [{$controllerName}::class, 'index']);
-        Route::get('" . Str::kebab(Str::plural($modelName)) . "/{id}', [{$controllerName}::class, 'show']);
+        Route::get('".Str::kebab(Str::plural($modelName))."', [{$controllerName}::class, 'index']);
+        Route::get('".Str::kebab(Str::plural($modelName))."/{id}', [{$controllerName}::class, 'show']);
     });
 
     Route::middleware('can:create,{$modelName}')->group(function () {
-        Route::post('" . Str::kebab(Str::plural($modelName)) . "', [{$controllerName}::class, 'store']);
+        Route::post('".Str::kebab(Str::plural($modelName))."', [{$controllerName}::class, 'store']);
     });
 
     Route::middleware('can:update,{$modelName}')->group(function () {
-        Route::put('" . Str::kebab(Str::plural($modelName)) . "/{id}', [{$controllerName}::class, 'update']);
+        Route::put('".Str::kebab(Str::plural($modelName))."/{id}', [{$controllerName}::class, 'update']);
     });
 
     Route::middleware('can:delete,{$modelName}')->group(function () {
-        Route::delete('" . Str::kebab(Str::plural($modelName)) . "/{id}', [{$controllerName}::class, 'destroy']);
+        Route::delete('".Str::kebab(Str::plural($modelName))."/{id}', [{$controllerName}::class, 'destroy']);
     });
     ";
 
-        $content = str_replace('});', $permissionRoutes . '});', $content);
+        $content = str_replace('});', $permissionRoutes.'});', $content);
 
         File::put($filePath, $content);
     }
@@ -409,46 +401,46 @@ Route::group([
     /**
      * Adiciona rotas para um modelo a um arquivo de domínio existente.
      *
-     * @param array $config Configuração do modelo
-     * @return bool
+     * @param  array  $config  Configuração do modelo
      */
     public function addRoutes(array $config): bool
     {
         $domainName = $config['domain'];
         $modelName = $config['model'];
-        $routeFilePath = base_path(self::ROUTES_BASE_PATH . '/domains/' . Str::kebab($domainName) . '.php');
+        $routeFilePath = base_path(self::ROUTES_BASE_PATH.'/domains/'.Str::kebab($domainName).'.php');
 
-        if (!File::exists($routeFilePath)) {
+        if (! File::exists($routeFilePath)) {
             // Se o arquivo não existe, cria um novo
             return $this->createDomainRoutes($domainName, $modelName, $config);
         }
 
         // Se existe, adiciona as rotas ao arquivo existente
         $this->addRoutesToExistingFile($domainName, $modelName, $routeFilePath, $config);
+
         return true;
     }
 
     /**
      * Cria rotas para Foreign Keys (FK).
      *
-     * @param string $routeName Nome da rota (baseado no modelo atual)
-     * @param string $fkName Nome da FK (modelo relacionado)
-     * @param string $controllerName Nome completo do controller
+     * @param  string  $routeName  Nome da rota (baseado no modelo atual)
+     * @param  string  $fkName  Nome da FK (modelo relacionado)
+     * @param  string  $controllerName  Nome completo do controller
      * @return string Código da rota FK
      */
-    public function createFKRoutes(string $routeName, string $fkName, string $controllerName): string
+    public function createFKRoutes(string $fkName, string $controllerName): string
     {
         $fkNameCamel = Str::camel("listar{$fkName}");
         $fkNameSlug = Str::slug($fkName);
-        $fkRouteTemplate = "Route::get('%s/listar/%s', [%s::class, '%s']);";
+        $fkRouteTemplate = "Route::get('listar/%s', [%s::class, '%s']);";
 
-        return sprintf($fkRouteTemplate, $routeName, $fkNameSlug, $controllerName, $fkNameCamel);
+        return sprintf($fkRouteTemplate, $fkNameSlug, $controllerName, $fkNameCamel);
     }
 
     /**
      * Cria conteúdo de método de controller para Foreign Keys (FK).
      *
-     * @param string $fkName Nome da FK (modelo relacionado)
+     * @param  string  $fkName  Nome da FK (modelo relacionado)
      * @return string Código do método do controller
      */
     public function createFKControllerContent(string $fkName): string
@@ -461,8 +453,8 @@ Route::group([
     /**
      * Cria conteúdo de método de service para Foreign Keys (FK).
      *
-     * @param string $fkName Nome da FK (modelo relacionado)
-     * @param string $namespaceFk Namespace completo do modelo FK
+     * @param  string  $fkName  Nome da FK (modelo relacionado)
+     * @param  string  $namespaceFk  Namespace completo do modelo FK
      * @return string Código do método do service
      */
     public function createFKServiceContent(string $fkName, string $namespaceFk): string

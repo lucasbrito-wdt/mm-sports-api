@@ -147,6 +147,7 @@ class FormGenerator
             $pluralName = Str::plural(strtolower($fk['model']));
             $refs[] = "{$pluralName}";
         }
+        $refs[] = 'loading';
 
         return $refs;
     }
@@ -205,31 +206,20 @@ class FormGenerator
             $dataName = Str::lower("{$fk['domain']}");
             $itemsName = Str::plural(Str::lower("{$fk['domain']}"));
             $loading = Str::lower("{$fk['domain']}");
-            $fetchName = Str::camel("fetch{$fk['domain']}");
             $rules = $fk['required'] ?? false ? '[rules.requiredValidator]' : '[]';
 
             $inputs[] = <<<EOT
-            <AppAutocomplete
-              v-model="data.{$dataName}_id"
-              v-debounce:900="$fetchName"
-              :items="$itemsName"
-              label="{$fk['domain']}"
-              :return-object="false"
-              :loading="loading.$loading"
-              :rules="$rules"
-              item-value="id"
-            >
-                <template #clear>
-                    <button
-                      @click="() => {
-                        $fetchName()
-                        blurHandler()
-                      }"
-                    >
-                      <VIcon icon="tabler-x" />
-                    </button>
-                </template>
-            </AppAutocomplete>
+            <VCol cols="12" md="6" lg="4" xl="3">
+                <AppAutocomplete
+                    v-model="data.{$dataName}_id"
+                    :items="$itemsName"
+                    label="{$fk['domain']}"
+                    :return-object="false"
+                    :loading="loading.$loading"
+                    :rules="$rules"
+                    item-value="id"
+                />
+            </VCol>
             EOT;
         }
 

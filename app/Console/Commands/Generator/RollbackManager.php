@@ -7,6 +7,7 @@ use App\Console\Commands\Generator\Utils\FrontendRollbackHandler;
 use App\Console\Commands\Generator\Utils\IntegrityValidator;
 use App\Console\Commands\Generator\Utils\RouteManager;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -14,20 +15,27 @@ use Illuminate\Support\Str;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 
 use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\select;
 use function Laravel\Prompts\multiselect;
+use function Laravel\Prompts\select;
 
 class RollbackManager extends Command
 {
     use FrontendPathTrait;
 
     protected $signature = 'rollback:manager {--domain=} {--interactive} {--frontend-only} {--backend-only} {--dry-run} {--force}';
+
     protected $description = 'Gerenciador avançado de rollback com seleção de domínios e frontend/backend';
+
     private RouteManager $routeManager;
+
     private FrontendRollbackHandler $frontendHandler;
+
     // private IntegrityValidator $integrityValidator;
     private string $rollbackLogPath;
-    private array $rollbackLog = [];
+
+    private Collection $rollbackLog;
+
+    private array $rollbackDomain = [];
 
     public function __construct(RouteManager $routeManager)
     {
@@ -42,17 +50,21 @@ class RollbackManager extends Command
     {
         $this->info('🔄 Gerenciador Avançado de Rollback');
 
-        if (!file_exists($this->rollbackLogPath)) {
+        if (! file_exists($this->rollbackLogPath)) {
             $this->error('❌ Nenhum log de rollback encontrado. Nada a desfazer.');
+
             return CommandAlias::FAILURE;
         }
 
         // Carregar log de rollback
-        $this->rollbackLog = json_decode(file_get_contents($this->rollbackLogPath), true);
-        if (!$this->rollbackLog || !is_array($this->rollbackLog)) {
+        $this->rollbackLog = collect(json_decode(file_get_contents($this->rollbackLogPath), true)['sessions']);
+        if (! $this->rollbackLog || ! is_array($this->rollbackLog->toArray())) {
             $this->error('❌ Log de rollback corrompido ou inválido.');
+
             return CommandAlias::FAILURE;
         }
+
+        $this->rollbackDomain = $this->rollbackLog->where('domain', $this->option('domain'))->values()->first();
 
         // Mostrar resumo do que será desfeito
         $this->showRollbackSummary();
@@ -74,9 +86,9 @@ class RollbackManager extends Command
     {
         $this->info('📋 Resumo do que será desfeito:');
 
-        $createdFiles = count($this->rollbackLog['created'] ?? []);
-        $modifiedFiles = count($this->rollbackLog['modified'] ?? []);
-        $directories = count($this->rollbackLog['directories'] ?? []);
+        $createdFiles = count($this->rollbackDomain['created'] ?? []);
+        $modifiedFiles = count($this->rollbackDomain['modified'] ?? []);
+        $directories = count($this->rollbackDomain['directories'] ?? []);
 
         $this->line("  📁 Arquivos criados: {$createdFiles}");
         $this->line("  📝 Arquivos modificados: {$modifiedFiles}");
@@ -84,7 +96,7 @@ class RollbackManager extends Command
 
         // Análise por domínios
         $domains = $this->extractDomainsFromLog();
-        if (!empty($domains)) {
+        if (! empty($domains)) {
             $this->line("\n🏗️ Domínios afetados:");
             foreach ($domains as $domain) {
                 $this->line("  • {$domain}");
@@ -108,7 +120,7 @@ class RollbackManager extends Command
             'selective' => '🎯 Rollback Seletivo por Domínio',
             'frontend' => '🎨 Apenas Frontend',
             'backend' => '🔧 Apenas Backend',
-            'files' => '📁 Seleção Manual de Arquivos'
+            'files' => '📁 Seleção Manual de Arquivos',
         ];
 
         $choice = select(
@@ -138,27 +150,30 @@ class RollbackManager extends Command
 
         if (empty($domains)) {
             $this->error('❌ Nenhum domínio identificado no log.');
+
             return CommandAlias::FAILURE;
         }
 
         $selectedDomain = $this->option('domain');
 
-        if (!$selectedDomain) {
+        if (! $selectedDomain) {
             $selectedDomain = select(
                 label: 'Selecione o domínio para rollback:',
                 options: array_combine($domains, $domains)
             );
         }
 
-        if (!in_array($selectedDomain, $domains)) {
+        if (! in_array($selectedDomain, $domains)) {
             $this->error("❌ Domínio '{$selectedDomain}' não encontrado no log.");
+
             return CommandAlias::FAILURE;
         }
 
         $this->info("🎯 Executando rollback para o domínio: {$selectedDomain}");
 
-        if (!$this->option('force') && !confirm("Confirma o rollback do domínio '{$selectedDomain}'?", false)) {
+        if (! $this->option('force') && ! confirm("Confirma o rollback do domínio '{$selectedDomain}'?", false)) {
             $this->info('❌ Operação cancelada.');
+
             return CommandAlias::SUCCESS;
         }
 
@@ -170,11 +185,13 @@ class RollbackManager extends Command
         if ($this->option('dry-run')) {
             $this->info('🔍 Simulação de rollback completo (dry-run):');
             $this->simulateRollback();
+
             return CommandAlias::SUCCESS;
         }
 
-        if (!$this->option('force') && !confirm('⚠️ Confirma o rollback COMPLETO? Esta ação não pode ser desfeita.', false)) {
+        if (! $this->option('force') && ! confirm('⚠️ Confirma o rollback COMPLETO? Esta ação não pode ser desfeita.', false)) {
             $this->info('❌ Operação cancelada.');
+
             return CommandAlias::SUCCESS;
         }
 
@@ -190,8 +207,10 @@ class RollbackManager extends Command
         $this->performIntegrityCheck();
 
         $this->info('✅ Rollback completo executado com sucesso!');
+
         return CommandAlias::SUCCESS;
     }
+
     private function handleFrontendOnlyRollback(): int
     {
         $this->info('🎨 Executando rollback apenas do frontend...');
@@ -199,12 +218,12 @@ class RollbackManager extends Command
         // Oferecer opção de rollback por domínio específico
         $domains = $this->extractDomainsFromLog();
 
-        if (!empty($domains) && count($domains) > 1) {
+        if (! empty($domains) && count($domains) > 1) {
             $choice = select(
                 label: 'Escolha o escopo do rollback de frontend:',
                 options: [
                     'all' => '🔄 Todo o frontend',
-                    'domain' => '🎯 Domínio específico'
+                    'domain' => '🎯 Domínio específico',
                 ]
             );
 
@@ -214,8 +233,9 @@ class RollbackManager extends Command
                     options: array_combine($domains, $domains)
                 );
 
-                if (!$this->option('force') && !confirm("Confirma o rollback do domínio '{$selectedDomain}' apenas no frontend?", true)) {
+                if (! $this->option('force') && ! confirm("Confirma o rollback do domínio '{$selectedDomain}' apenas no frontend?", true)) {
                     $this->info('❌ Operação cancelada.');
+
                     return CommandAlias::SUCCESS;
                 }
                 $this->executeDomainFrontendRollback($selectedDomain);
@@ -224,12 +244,14 @@ class RollbackManager extends Command
                 $this->performFrontendIntegrityCheck();
 
                 $this->info("✅ Rollback do domínio '{$selectedDomain}' no frontend executado com sucesso!");
+
                 return CommandAlias::SUCCESS;
             }
         }
 
-        if (!$this->option('force') && !confirm('Confirma o rollback de todo o frontend?', true)) {
+        if (! $this->option('force') && ! confirm('Confirma o rollback de todo o frontend?', true)) {
             $this->info('❌ Operação cancelada.');
+
             return CommandAlias::SUCCESS;
         }
         $this->executeFrontendRollback();
@@ -238,6 +260,7 @@ class RollbackManager extends Command
         $this->performFrontendIntegrityCheck();
 
         $this->info('✅ Rollback do frontend executado com sucesso!');
+
         return CommandAlias::SUCCESS;
     }
 
@@ -245,8 +268,9 @@ class RollbackManager extends Command
     {
         $this->info('🔧 Executando rollback apenas do backend...');
 
-        if (!$this->option('force') && !confirm('Confirma o rollback apenas do backend?', true)) {
+        if (! $this->option('force') && ! confirm('Confirma o rollback apenas do backend?', true)) {
             $this->info('❌ Operação cancelada.');
+
             return CommandAlias::SUCCESS;
         }
         $this->executeBackendRollback();
@@ -255,6 +279,7 @@ class RollbackManager extends Command
         $this->performBackendIntegrityCheck();
 
         $this->info('✅ Rollback do backend executado com sucesso!');
+
         return CommandAlias::SUCCESS;
     }
 
@@ -267,6 +292,7 @@ class RollbackManager extends Command
 
         if (empty($allFiles)) {
             $this->error('❌ Nenhum arquivo encontrado para rollback.');
+
             return CommandAlias::FAILURE;
         }
 
@@ -283,20 +309,24 @@ class RollbackManager extends Command
 
         if (empty($selectedFiles)) {
             $this->info('❌ Nenhum arquivo selecionado.');
+
             return CommandAlias::SUCCESS;
         }
 
         $this->executeFileSpecificRollback($selectedFiles);
 
         $this->info('✅ Rollback dos arquivos selecionados executado com sucesso!');
+
         return CommandAlias::SUCCESS;
     }
+
     private function executeDomainRollback(string $domain): int
     {
         $domainFiles = $this->getDomainFiles($domain);
 
         if (empty($domainFiles['created']) && empty($domainFiles['modified'])) {
             $this->warn("⚠️ Nenhum arquivo encontrado para o domínio '{$domain}'.");
+
             return CommandAlias::SUCCESS;
         }
 
@@ -326,13 +356,13 @@ class RollbackManager extends Command
         }
 
         // Executar rollback de frontend usando o FrontendRollbackHandler
-        if (!empty($frontendFiles) && !$this->option('backend-only')) {
+        if (! empty($frontendFiles) && ! $this->option('backend-only')) {
             $this->executeDomainFrontendRollback($domain);
         }
 
         // Executar rollback de backend
-        if (!empty($backendFiles) && !$this->option('frontend-only')) {
-            $this->info("🔧 Processando arquivos de backend do domínio...");
+        if (! empty($backendFiles) && ! $this->option('frontend-only')) {
+            $this->info('🔧 Processando arquivos de backend do domínio...');
 
             foreach ($backendFiles as $fileData) {
                 $file = $fileData['file'];
@@ -341,11 +371,11 @@ class RollbackManager extends Command
                 if ($backup && file_exists($backup)) {
                     // Restaurar arquivo modificado
                     copy($backup, $file);
-                    $this->info("  ✓ Arquivo restaurado: " . basename($file));
-                } elseif (!$backup && file_exists($file)) {
+                    $this->info('  ✓ Arquivo restaurado: '.basename($file));
+                } elseif (! $backup && file_exists($file)) {
                     // Remover arquivo criado
                     unlink($file);
-                    $this->info("  ✓ Arquivo removido: " . basename($file));
+                    $this->info('  ✓ Arquivo removido: '.basename($file));
                 }
             }
         }
@@ -360,8 +390,10 @@ class RollbackManager extends Command
         $this->performIntegrityCheck();
 
         $this->info("✅ Rollback do domínio '$domain' concluído com sucesso!");
+
         return CommandAlias::SUCCESS;
     }
+
     private function executeFullRollback(): void
     {
         $frontendPath = $this->getFrontendPath();
@@ -392,15 +424,15 @@ class RollbackManager extends Command
         }
 
         // Processar arquivos de frontend com handler especializado
-        if (!empty($frontendFiles)) {
-            $this->info("🎨 Processando arquivos de frontend...");
+        if (! empty($frontendFiles)) {
+            $this->info('🎨 Processando arquivos de frontend...');
             $frontendResults = $this->frontendHandler->rollbackFrontendFiles($frontendFiles);
             $this->line($this->frontendHandler->generateFrontendRollbackReport($frontendResults));
         }
 
         // Restaurar arquivos modificados (exceto frontend já processado)
         foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
-            if (!str_starts_with($file, $frontendPath) && file_exists($backup)) {
+            if (! str_starts_with($file, $frontendPath) && file_exists($backup)) {
                 copy($backup, $file);
                 $this->info("  ✓ Arquivo restaurado: {$file}");
             }
@@ -408,7 +440,7 @@ class RollbackManager extends Command
 
         // Remover arquivos criados (exceto frontend já processado)
         foreach ($this->rollbackLog['created'] ?? [] as $file) {
-            if (!str_starts_with($file, $frontendPath) && file_exists($file)) {
+            if (! str_starts_with($file, $frontendPath) && file_exists($file)) {
                 unlink($file);
                 $this->info("  ✓ Arquivo removido: {$file}");
             }
@@ -431,6 +463,7 @@ class RollbackManager extends Command
             File::deleteDirectory($backupDir);
         }
     }
+
     private function executeFrontendRollback(): void
     {
         $frontendPath = $this->getFrontendPath();
@@ -452,8 +485,8 @@ class RollbackManager extends Command
             }
         }
 
-        if (!empty($frontendFiles)) {
-            $this->info("🎨 Processando " . count($frontendFiles) . " arquivos de frontend...");
+        if (! empty($frontendFiles)) {
+            $this->info('🎨 Processando '.count($frontendFiles).' arquivos de frontend...');
 
             // Usar o FrontendRollbackHandler para processamento específico
             $results = $this->frontendHandler->rollbackFrontendFiles($frontendFiles);
@@ -462,14 +495,14 @@ class RollbackManager extends Command
             $report = $this->frontendHandler->generateFrontendRollbackReport($results);
             $this->line($report);
         } else {
-            $this->warn("⚠️ Nenhum arquivo de frontend encontrado para rollback.");
+            $this->warn('⚠️ Nenhum arquivo de frontend encontrado para rollback.');
         }
 
         // Remover diretórios vazios do frontend
         foreach (array_reverse($this->rollbackLog['directories'] ?? []) as $dir) {
             if (str_starts_with($dir, $frontendPath) && is_dir($dir) && count(scandir($dir)) === 2) {
                 rmdir($dir);
-                $this->info("  ✓ Diretório frontend removido: " . basename($dir));
+                $this->info('  ✓ Diretório frontend removido: '.basename($dir));
             }
         }
     }
@@ -489,6 +522,7 @@ class RollbackManager extends Command
 
         if (empty($results['success']) && empty($results['failed'])) {
             $this->warn("  ⚠️  Nenhum arquivo de frontend encontrado para o domínio '$domain'");
+
             return;
         }
 
@@ -533,40 +567,43 @@ class RollbackManager extends Command
         $domainLower = strtolower($domain);
 
         $possibleDirs = [
-            $frontendPath . '/src/components/' . $domain,
-            $frontendPath . '/src/components/' . $domainLower,
-            $frontendPath . '/src/pages/' . $domain,
-            $frontendPath . '/src/pages/' . $domainLower,
-            $frontendPath . '/src/views/' . $domain,
-            $frontendPath . '/src/views/' . $domainLower,
+            $frontendPath.'/src/components/'.$domain,
+            $frontendPath.'/src/components/'.$domainLower,
+            $frontendPath.'/src/pages/'.$domain,
+            $frontendPath.'/src/pages/'.$domainLower,
+            $frontendPath.'/src/views/'.$domain,
+            $frontendPath.'/src/views/'.$domainLower,
         ];
 
         foreach ($possibleDirs as $dir) {
             if (is_dir($dir) && $this->isDirectoryEmpty($dir)) {
                 rmdir($dir);
-                $this->info("  🗂️  Diretório do domínio removido: " . basename($dir));
+                $this->info('  🗂️  Diretório do domínio removido: '.basename($dir));
             }
         }
     }
+
     /**
      * Verifica se um diretório está vazio
      */
     private function isDirectoryEmpty(string $dir): bool
     {
         $items = scandir($dir);
+
         return count($items) === 2; // apenas . e ..
     }
+
     /**
      * Executa verificação de integridade do projeto
      */
     private function performIntegrityCheck(): void
     {
-        $this->info("🔍 Verificando integridade do projeto...");
+        $this->info('🔍 Verificando integridade do projeto...');
 
         // Temporariamente desabilitado - será reativado quando IntegrityValidator for corrigido
         // $issues = $this->integrityValidator->validateCompleteIntegrity();
 
-        $this->info("✅ Verificação de integridade temporariamente desabilitada");
+        $this->info('✅ Verificação de integridade temporariamente desabilitada');
     }
 
     /**
@@ -574,15 +611,15 @@ class RollbackManager extends Command
      */
     private function performFrontendIntegrityCheck(): void
     {
-        $this->info("🔍 Verificando integridade do frontend...");
+        $this->info('🔍 Verificando integridade do frontend...');
 
         // Usar o método do FrontendRollbackHandler
         $issues = $this->frontendHandler->verifyFrontendIntegrity();
 
         if (empty($issues)) {
-            $this->info("✅ Integridade do frontend verificada com sucesso!");
+            $this->info('✅ Integridade do frontend verificada com sucesso!');
         } else {
-            $this->warn("⚠️  Problemas de integridade no frontend:");
+            $this->warn('⚠️  Problemas de integridade no frontend:');
             foreach ($issues as $issue) {
                 $this->line("  - $issue");
             }
@@ -594,27 +631,27 @@ class RollbackManager extends Command
      */
     private function performBackendIntegrityCheck(): void
     {
-        $this->info("🔍 Verificando integridade do backend...");
+        $this->info('🔍 Verificando integridade do backend...');
 
         // Verificação básica do backend
         $issues = [];
 
         // Verificar se controllers básicos existem
         $controllersPath = app_path('Http/Controllers');
-        if (!is_dir($controllersPath)) {
-            $issues[] = "Diretório de controllers não encontrado";
+        if (! is_dir($controllersPath)) {
+            $issues[] = 'Diretório de controllers não encontrado';
         }
 
         // Verificar se models básicos existem
         $domainsPath = app_path('Domains');
-        if (!is_dir($domainsPath)) {
-            $issues[] = "Diretório de domínios não encontrado";
+        if (! is_dir($domainsPath)) {
+            $issues[] = 'Diretório de domínios não encontrado';
         }
 
         if (empty($issues)) {
-            $this->info("✅ Integridade do backend verificada com sucesso!");
+            $this->info('✅ Integridade do backend verificada com sucesso!');
         } else {
-            $this->warn("⚠️  Problemas de integridade no backend:");
+            $this->warn('⚠️  Problemas de integridade no backend:');
             foreach ($issues as $issue) {
                 $this->line("  - $issue");
             }
@@ -627,25 +664,25 @@ class RollbackManager extends Command
 
         // Restaurar arquivos modificados do backend
         foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
-            if (!str_starts_with($file, $frontendPath) && file_exists($backup)) {
+            if (! str_starts_with($file, $frontendPath) && file_exists($backup)) {
                 copy($backup, $file);
-                $this->info("  ✓ Arquivo backend restaurado: " . str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file));
+                $this->info('  ✓ Arquivo backend restaurado: '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $file));
             }
         }
 
         // Remover arquivos criados do backend
         foreach ($this->rollbackLog['created'] ?? [] as $file) {
-            if (!str_starts_with($file, $frontendPath) && file_exists($file)) {
+            if (! str_starts_with($file, $frontendPath) && file_exists($file)) {
                 unlink($file);
-                $this->info("  ✓ Arquivo backend removido: " . str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file));
+                $this->info('  ✓ Arquivo backend removido: '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $file));
             }
         }
 
         // Remover diretórios vazios do backend
         foreach (array_reverse($this->rollbackLog['directories'] ?? []) as $dir) {
-            if (!str_starts_with($dir, $frontendPath) && is_dir($dir) && count(scandir($dir)) === 2) {
+            if (! str_starts_with($dir, $frontendPath) && is_dir($dir) && count(scandir($dir)) === 2) {
                 rmdir($dir);
-                $this->info("  ✓ Diretório backend removido: " . str_replace(base_path() . DIRECTORY_SEPARATOR, '', $dir));
+                $this->info('  ✓ Diretório backend removido: '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $dir));
             }
         }
     }
@@ -658,7 +695,7 @@ class RollbackManager extends Command
                 $backup = $this->rollbackLog['modified'][$file];
                 if (file_exists($backup)) {
                     copy($backup, $file);
-                    $this->info("  ✓ Arquivo restaurado: " . basename($file));
+                    $this->info('  ✓ Arquivo restaurado: '.basename($file));
                 }
             }
 
@@ -666,7 +703,7 @@ class RollbackManager extends Command
             if (in_array($file, $this->rollbackLog['created'] ?? [])) {
                 if (file_exists($file)) {
                     unlink($file);
-                    $this->info("  ✓ Arquivo removido: " . basename($file));
+                    $this->info('  ✓ Arquivo removido: '.basename($file));
                 }
             }
         }
@@ -690,7 +727,7 @@ class RollbackManager extends Command
                 }
             }
 
-            if (!empty($migrations)) {
+            if (! empty($migrations)) {
                 foreach ($migrations as $table) {
                     if (DB::getSchemaBuilder()->hasTable($table)) {
                         Artisan::call('migrate:rollback', ['--step' => 1]);
@@ -699,7 +736,7 @@ class RollbackManager extends Command
                 }
             }
         } catch (\Exception $e) {
-            $this->warn("⚠️ Erro no rollback de migrations: " . $e->getMessage());
+            $this->warn('⚠️ Erro no rollback de migrations: '.$e->getMessage());
         }
     }
 
@@ -707,17 +744,17 @@ class RollbackManager extends Command
     {
         $this->line('📁 Arquivos que seriam restaurados:');
         foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
-            $this->line("  • " . str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file));
+            $this->line('  • '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $file));
         }
 
         $this->line('\n🗑️ Arquivos que seriam removidos:');
         foreach ($this->rollbackLog['created'] ?? [] as $file) {
-            $this->line("  • " . str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file));
+            $this->line('  • '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $file));
         }
 
         $this->line('\n📂 Diretórios que seriam removidos:');
         foreach (array_reverse($this->rollbackLog['directories'] ?? []) as $dir) {
-            $this->line("  • " . str_replace(base_path() . DIRECTORY_SEPARATOR, '', $dir));
+            $this->line('  • '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $dir));
         }
     }
 
@@ -787,7 +824,7 @@ class RollbackManager extends Command
             $subdirs = ['Controllers', 'Models', 'Services', 'Requests', 'Migrations', 'Seeders'];
 
             foreach ($subdirs as $subdir) {
-                $fullPath = $domainPath . DIRECTORY_SEPARATOR . $subdir;
+                $fullPath = $domainPath.DIRECTORY_SEPARATOR.$subdir;
                 if (is_dir($fullPath) && count(scandir($fullPath)) === 2) {
                     rmdir($fullPath);
                     $this->info("  ✓ Diretório removido: {$subdir}");

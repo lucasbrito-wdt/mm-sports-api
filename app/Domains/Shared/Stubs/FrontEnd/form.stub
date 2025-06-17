@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import * as rules from '@/validators/cdf-rules'
-import { blurHandler } from '@/utils/generals'
 {{imports}}
 
 import { {{store_name}} } from '../stores/{{store_name}}'
