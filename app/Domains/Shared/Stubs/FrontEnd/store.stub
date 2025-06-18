@@ -1,5 +1,6 @@
 import {{service_name}} from '../services/{{service_name}}'
 import type { {{interface_name}} } from '../types'
+{{imports}}
 
 const defaultValue = {
     {{attributes}}
@@ -12,9 +13,7 @@ export const {{store_name}} = defineStore('{{entity_singular_var}}', {
     defaultSortKey: '{{orderKeyDefault}}',
     defaultValue,
     {{fk_states}}
-    loading: {
-      {{fk_loadings}}
-    },
+    {{fk_loadings}}
   }),
   actions: {
       // 👉 methods

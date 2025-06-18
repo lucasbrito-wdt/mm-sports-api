@@ -147,7 +147,9 @@ class FormGenerator
             $pluralName = Str::plural(strtolower($fk['model']));
             $refs[] = "{$pluralName}";
         }
-        $refs[] = 'loading';
+        if (! empty($refs)) {
+            $refs[] = 'loading';
+        }
 
         return $refs;
     }

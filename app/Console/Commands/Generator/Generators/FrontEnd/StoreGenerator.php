@@ -12,6 +12,8 @@ class StoreGenerator
 
     private TemplateManager $templateManager;
 
+    private array $imports = [];
+
     public function __construct(TemplateManager $templateManager)
     {
         $this->templateManager = $templateManager;
@@ -30,21 +32,21 @@ class StoreGenerator
             $frontEndAbsoluteDir,
             'pages',
             Str::snake($domain, '-'),
-            "stores"
+            'stores'
         );
 
         // Criar diretório se não existir
-        if (!File::exists($fullPath)) {
+        if (! File::exists($fullPath)) {
             File::makeDirectory($fullPath, 0755, true);
         }
 
         // Nome do arquivo seguindo padrão antigo
-        $storeName = 'use' . $modelName . 'Store';
-        $fileName = $storeName . '.ts';
-        $filePath = $fullPath . '/' . $fileName;
+        $storeName = 'use'.$modelName.'Store';
+        $fileName = $storeName.'.ts';
+        $filePath = $fullPath.'/'.$fileName;
 
         // Verificar se o arquivo já existe
-        if (File::exists($filePath) && !($config['force'] ?? false)) {
+        if (File::exists($filePath) && ! ($config['force'] ?? false)) {
             return false;
         }
 
@@ -74,7 +76,7 @@ class StoreGenerator
         $attributes = $this->buildDefaultAttributes($schema, $foreignKeys);
 
         // Construir nome do serviço
-        $serviceName = $modelName . 'Service';
+        $serviceName = $modelName.'Service';
 
         // Construir chave de ordenação padrão (primeiro campo do schema)
         $orderKeyDefault = $this->getDefaultOrderKey($schema);
@@ -82,12 +84,12 @@ class StoreGenerator
         // Construir FK states, loadings, fetchs
         $fkStates = $this->buildForeignKeyStates($foreignKeys);
         $fkLoadings = $this->buildForeignKeyLoadings($foreignKeys);
-        $fkFetchs = $this->buildForeignKeyFetchs($foreignKeys);
+        $fkFetchs = $this->buildForeignKeyFetchs($config, $foreignKeys);
 
         return [
             '{{store_name}}' => $storeName,
             '{{service_name}}' => $serviceName,
-            '{{interface_name}}' => 'I' . $modelName,
+            '{{interface_name}}' => 'I'.$modelName,
             '{{crud_name}}' => $modelName,
             '{{entity_singular_var}}' => strtolower(Str::singular($domain)),
             '{{attributes}}' => $attributes,
@@ -95,6 +97,7 @@ class StoreGenerator
             '{{fk_fetchs}}' => implode("\n", $fkFetchs),
             '{{fk_states}}' => implode("\n", $fkStates),
             '{{fk_loadings}}' => implode("\n", $fkLoadings),
+            '{{imports}}' => implode("\n", $this->imports),
         ];
     }
 
@@ -108,7 +111,7 @@ class StoreGenerator
             @[$field, $params] = explode('=', $column);
             @[$type, $option, $required] = explode(',', $params ?? '');
 
-            if (!$field) {
+            if (! $field) {
                 continue;
             }
 
@@ -125,7 +128,7 @@ class StoreGenerator
                 $foreignTable = $fk['foreignTable'] ?? '';
                 $localKey = $fk['localKey'] ?? '';
                 $relatedModelName = $fk['model'] ?? Str::studly(Str::singular($foreignTable));
-                $foreignKey = $localKey ?: (Str::snake($relatedModelName) . '_id');
+                $foreignKey = $localKey ?: (Str::snake($relatedModelName).'_id');
 
                 $attributes[] = "    {$foreignKey}: null,";
             }
@@ -149,10 +152,12 @@ class StoreGenerator
     private function getDefaultOrderKey(string $schema): string
     {
         $columns = explode(';', rtrim($schema, ';'));
-        if (!empty($columns)) {
+        if (! empty($columns)) {
             @[$field] = explode('=', $columns[0]);
+
             return $field ?: 'id';
         }
+
         return 'id';
     }
 
@@ -169,49 +174,56 @@ class StoreGenerator
                 $states[] = "    {$pluralName}: [] as I{$relatedModelName}[],";
             }
         }
+
         return $states;
     }
 
     private function buildForeignKeyLoadings(array $foreignKeys): array
     {
-        $loadings = [];
-        foreach ($foreignKeys as $fk) {
-            // Inferir informações se não estiverem definidas
-            $foreignTable = $fk['foreignTable'] ?? '';
-            $relatedModelName = $fk['model'] ?? Str::studly(Str::singular($foreignTable));
-
-            if ($relatedModelName) {
-                $pluralName = Str::plural(strtolower($relatedModelName));
-                $loadings[] = "      {$pluralName}: false,";
-            }
+        if (empty($foreignKeys)) {
+            return [];
         }
+
+        $loadings = [];
+        $loadings[] = '      loading: {';
+        $loadings[] = '        '.implode(",\n        ", array_map(fn ($fk) => Str::plural(strtolower($fk['model'] ?? '')).': false', $foreignKeys)).'';
+        $loadings[] = '      },';
+
         return $loadings;
     }
 
-    private function buildForeignKeyFetchs(array $foreignKeys): array
+    private function buildForeignKeyFetchs(array $config, array $foreignKeys): array
     {
+        if (! empty($foreignKeys)) {
+            $this->imports[] = "import { handleError } from '@codifytech/services/error-handling'";
+        }
+
         $fetchs = [];
         foreach ($foreignKeys as $fk) {
             // Inferir informações se não estiverem definidas
             $foreignTable = $fk['foreignTable'] ?? '';
             $relatedModelName = $fk['model'] ?? Str::studly(Str::singular($foreignTable));
+            $modelName = Str::studly(Str::singular($config['model']));
+
+            $this->imports[] = "import type { I{$relatedModelName} } from '@/pages/".Str::lower($fk['model'])."/types'";
 
             if ($relatedModelName) {
                 $pluralName = Str::plural(strtolower($relatedModelName));
-                $methodName = 'fetch' . Str::plural($relatedModelName);
+                $methodName = 'fetch'.Str::plural($relatedModelName);
                 $fetchs[] = "    async {$methodName}() {";
                 $fetchs[] = "      this.loading.{$pluralName} = true";
-                $fetchs[] = "      try {";
-                $fetchs[] = "        const response = await {$relatedModelName}Service.getAll()";
-                $fetchs[] = "        this.{$pluralName} = response.data";
-                $fetchs[] = "      } catch (error) {";
-                $fetchs[] = "        handleError(error)";
-                $fetchs[] = "      } finally {";
+                $fetchs[] = '      try {';
+                $fetchs[] = "        const data = await {$modelName}Service.get<{$relatedModelName}[]>({}, 'listar/".Str::lower($relatedModelName)."')";
+                $fetchs[] = "        this.{$pluralName} = data";
+                $fetchs[] = '      } catch (error) {';
+                $fetchs[] = '        handleError(error)';
+                $fetchs[] = '      } finally {';
                 $fetchs[] = "        this.loading.{$pluralName} = false";
-                $fetchs[] = "      }";
-                $fetchs[] = "    },";
+                $fetchs[] = '      }';
+                $fetchs[] = '    },';
             }
         }
+
         return $fetchs;
     }
 }

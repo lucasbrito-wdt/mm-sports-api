@@ -1,3 +1,5 @@
+{{imports}}
+
 export interface {{interface_name}} {
     {{attributes}}
 }

@@ -7,19 +7,18 @@ import { {{store_name}} } from '../stores/{{store_name}}'
 import type { {{interface_name}} } from '../types'
 
 withDefaults(defineProps<{
-  isEditing: boolean
-  isHeader: boolean
+  isEditing?: boolean
+  isHeader?: boolean
+  isActions?: boolean
+  isReadOnly?: boolean
 }>(), {
   isEditing: false,
   isHeader: true,
+  isActions: true,
+  isReadOnly: false,
 })
 
 const store = {{store_name}}()
-
-onMounted(() => {
-    // 👉 methods
-   {{methods_fetchs}}
-})
 
 const {
   form,
@@ -36,6 +35,11 @@ const {
   {{fk_methods}}
 } = store
 
+onMounted(() => {
+    // 👉 methods
+   {{methods_fetchs}}
+})
+
 onBeforeRouteLeave(() => {
   resetForm()
 })
@@ -49,6 +53,8 @@ onBeforeRouteLeave(() => {
     :title="{{form_title}}"
     :is-editing="isEditing"
     :is-header="isHeader"
+    :is-actions="isActions"
+    :is-read-only="isReadOnly"
     :actions="{
       save: {
         method: () => create(),
