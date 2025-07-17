@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Domains\ACL\Controllers\RoleController;
 
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+Route::middleware(['auth:api', 'verified'])->group(function () {
     /*
      * Roles
     */

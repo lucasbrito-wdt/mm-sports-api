@@ -31,7 +31,7 @@ Route::group(['prefix' => 'auth', 'as' => 'auth', 'controller' => AuthController
 Route::group([
     'prefix' => 'auth',
     'as' => 'auth',
-    'middleware' => ['auth:sanctum', 'verified'],
+    'middleware' => ['auth:api', 'verified'],
     'controller' => AuthController::class,
 ], function () {
     Route::get('profile', 'profile');

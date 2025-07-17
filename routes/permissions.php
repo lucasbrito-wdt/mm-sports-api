@@ -4,7 +4,7 @@
 use App\Domains\ACL\Controllers\PermissionController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+Route::middleware(['auth:api', 'verified'])->group(function () {
     /*
      * Permissions
      */

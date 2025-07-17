@@ -25,7 +25,7 @@ class BaseController extends Controller implements IController
     /**
      * BaseController constructor.
      *
-     * Applies the 'auth:sanctum' middleware to all routes except 'login', 'register', 'forgotPassword', and 'resetPassword'.
+     * Applies the 'auth:api' middleware to all routes except 'login', 'register', 'forgotPassword', and 'resetPassword'.
      *
      * @throws Exception
      */

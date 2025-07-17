@@ -12,13 +12,22 @@ trait HasRoles
 {
     public function belongsToManyRoles()
     {
-        return $this->belongsToMany(Role::class);
+        return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
     }
 
     protected function cachedRoles()
     {
+        if (!$this->exists || !$this->id) {
+            return collect();
+        }
+
         return Cache::remember("user_{$this->id}_roles", 3600, function () {
-            return $this->belongsToManyRoles()->get(['id', 'name', 'slug']);
+            try {
+                return $this->belongsToManyRoles()->get(['id', 'name', 'slug']);
+            } catch (\Exception $e) {
+                \Log::error('Error in cachedRoles: ' . $e->getMessage());
+                return collect();
+            }
         });
     }
 
@@ -35,15 +44,31 @@ trait HasRoles
      */
     public function permissions()
     {
-        if (! isset($this->role)) {
-            throw new Exception('Usuário não possuí uma role');
+        $roles = $this->cachedRoles();
+
+        if ($roles->isEmpty()) {
+            throw new Exception('Usuário não possui nenhuma role');
         }
 
-        return $this->cachedRoles()
-            ->where('slug', '===', $this->role['slug'])
-            ->first()
-            ->permissions
-            ->select(['name', 'slug'])
+        // Obtém todas as permissões de todas as roles do usuário
+        $permissions = collect();
+
+        foreach ($roles as $role) {
+            $rolePermissions = $role->permissions;
+            if ($rolePermissions) {
+                $permissions = $permissions->merge($rolePermissions);
+            }
+        }
+
+        return $permissions
+            ->unique('id')
+            ->map(function ($permission) {
+                return [
+                    'name' => $permission->name,
+                    'slug' => $permission->slug,
+                ];
+            })
+            ->values()
             ->toArray();
     }
 
@@ -63,6 +88,25 @@ trait HasRoles
         $this->belongsToManyRoles()->attach($role);
 
         event(new RoleAssigned($this, $role));
+    }
+
+    /**
+     * Obtém a primeira role do usuário para compatibilidade
+     */
+    public function getFirstRole()
+    {
+        $roles = $this->cachedRoles();
+        $firstRole = $roles->first();
+
+        if ($firstRole) {
+            return [
+                'id' => $firstRole->id,
+                'name' => $firstRole->name,
+                'slug' => $firstRole->slug,
+            ];
+        }
+
+        return null;
     }
 
     /**
@@ -141,6 +185,8 @@ trait HasRoles
 
     protected function clearRolesCache(): void
     {
-        Cache::forget("user_{$this->id}_roles");
+        if ($this->id) {
+            Cache::forget("user_{$this->id}_roles");
+        }
     }
 }

@@ -2,31 +2,35 @@
 
 namespace App\Domains\Auth\Services;
 
-use App\Domains\Auth\Requests\ForgotPasswordRequest;
-use App\Domains\Auth\Requests\ResetPasswordRequest;
+use Str;
 use App\Domains\Auth\Models\User;
-use App\Domains\Auth\Requests\LoginRequest;
-use App\Domains\Auth\Requests\RegisterRequest;
-use App\Domains\Shared\Services\BaseService;
-use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\PasswordReset;
+use App\Domains\Auth\Requests\LoginRequest;
+use App\Domains\Shared\Services\BaseService;
+use App\Domains\Auth\Requests\RegisterRequest;
 use Illuminate\Validation\ValidationException;
-use Str;
+use App\Domains\Auth\Requests\ResetPasswordRequest;
+use App\Domains\Auth\Requests\ForgotPasswordRequest;
 
 class AuthService extends BaseService
 {
+    private string $token;
+
     public function __construct(private User $user) {}
 
     /**
      * @throws \Exception
      */
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request)
     {
-        $this->user = $this->validateCredentials($request);
-
-        $this->deletePreviousAccessTokensOnLogin($this->user);
+        $this->token = $this->validateCredentials($request);
+        $this->user = Auth::user();
 
         $ACL = collect($this->user->permissions())
             ->reduce(function ($ACL, $permission) {
@@ -40,17 +44,15 @@ class AuthService extends BaseService
                 return $ACL;
             }, []);
 
-        $authorization = $this->respondWithToken($this->user, 'cdf-api-token', [
-            'role' => $this->user->role['slug'],
-            'permissions' => $ACL['permissions'] ?? [],
-            'subjects' => array_unique($ACL['subjects'], SORT_REGULAR) ?? [],
-        ]);
-
-        auth()->setUser($this->user);
-
         return response()->json([
             'user' => $this->user,
-            'authorization' => $authorization,
+            'authorization' => [
+                'token' => $this->token,
+                'type' => 'Bearer',
+                'expires_in' => $this->getTTLInSeconds(),
+                'subjects' => $ACL['subjects'],
+                'permissions' => $ACL['permissions'],
+            ],
         ]);
     }
 
@@ -129,39 +131,73 @@ class AuthService extends BaseService
         return response()->json(auth()->user());
     }
 
-    public function logout(): JsonResponse
+    /**
+     * Refresh a token.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refresh()
     {
-        auth()->user()?->currentAccessToken()?->delete();
+        return $this->respondWithToken(Auth::refresh());
+    }
 
-        return response()->json([
-            'message' => 'Desconectado com sucesso.',
-        ]);
+
+    public function logout()
+    {
+        try {
+            Auth::logout();
+        } catch (\Exception $e) {
+            // Se o token já expirou ou é inválido, ainda consideramos logout bem-sucedido
+            Log::info('Logout realizado com token expirado/inválido: ' . $e->getMessage());
+        }
     }
 
     /**
      * Get the token array structure.
+     *
+     * @param  string $token
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
-    protected function respondWithToken(User $user, $name, array $abilities = ['*']): array
+    protected function respondWithToken($token)
     {
-        $authorization = $user->createToken($name, $abilities);
-
         return [
-            'token' => $authorization->plainTextToken,
-            'abilities' => $authorization->accessToken->abilities,
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => $this->getTTLInSeconds()
         ];
     }
 
-    protected function validateCredentials(LoginRequest $request): User
+    protected function validateCredentials(LoginRequest $request)
     {
-        $credentials = $this->user->where('email', $request->email)->first();
+        $token = Auth::attempt($request->only('email', 'password'));
 
-        if (! $credentials || ! Hash::check($request->password, $credentials->password)) {
+        if (!$token) {
             throw ValidationException::withMessages([
                 'email' => ['As credenciais fornecidas estão incorretas.'],
             ]);
         }
 
-        return $credentials;
+        if (!Auth::user()->ativo) {
+            throw ValidationException::withMessages([
+                'email' => ['O seu usuário não está ativo. Por favor, entre em contato com o suporte para solicitar a ativação da sua conta.'],
+            ]);
+        }
+
+        return $token;
+    }
+
+    /**
+     * Get TTL in seconds with fallback
+     */
+    private function getTTLInSeconds(): int
+    {
+        try {
+            return JWTAuth::factory()->getTTL() * 60;
+        } catch (\Exception $e) {
+            // Fallback para config direto
+            return config('jwt.ttl', 60) * 60;
+        }
     }
 
     protected function deletePreviousAccessTokensOnLogin(User $credentials): void

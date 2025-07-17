@@ -14,7 +14,7 @@
         "coduo/php-humanizer": "^5.0",
         "intervention/image": "*",
         "laravel/framework": "^12.0",
-        "laravel/sanctum": "^4.0",
+        "tymon/jwt-auth": "^2.2",
         "laravel/telescope": "*",
         "laravel/tinker": "^2.10.1"
     },
@@ -46,14 +46,16 @@
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi",
             "@php artisan ide-helper:generate",
-            "@php artisan ide-helper:meta",
-            "@php artisan ide-helper:models -RW"
+            "@php artisan ide-helper:models --write",
+            "@php artisan ide-helper:eloquent",
+            "@php artisan ide-helper:meta"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
             "@php artisan ide-helper:generate",
-            "@php artisan ide-helper:meta",
-            "@php artisan ide-helper:models -RW"
+            "@php artisan ide-helper:models --write",
+            "@php artisan ide-helper:eloquent",
+            "@php artisan ide-helper:meta"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""

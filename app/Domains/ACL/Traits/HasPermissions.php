@@ -16,7 +16,11 @@ trait HasPermissions
 
     protected function cachedPermissions()
     {
-        return Cache::remember('permissions', 3600, function () {
+        if (!$this->exists || !$this->id) {
+            return collect();
+        }
+
+        return Cache::remember("role_{$this->id}_permissions", 3600, function () {
             return $this->belongsToManyPermissions()->get();
         });
     }
@@ -93,6 +97,8 @@ trait HasPermissions
 
     protected function clearPermissionsCache(): void
     {
-        Cache::delete('permissions');
+        if ($this->id) {
+            Cache::forget("role_{$this->id}_permissions");
+        }
     }
 }

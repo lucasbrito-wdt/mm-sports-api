@@ -14,10 +14,10 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
- *
+ * 
  *
  * @property string $id
  * @property string $name
@@ -51,11 +51,13 @@ use Laravel\Sanctum\HasApiTokens;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTermos($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Role> $roles
+ * @property-read int|null $roles_count
  * @mixin \Eloquent
  */
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, HasRoles, HasUlids, MustVerifyEmail, Notifiable, TenantScope;
+    use HasFactory, HasRoles, HasUlids, MustVerifyEmail, Notifiable, TenantScope;
 
     /**
      * The attributes that are mass assignable.
@@ -116,11 +118,11 @@ class User extends Authenticatable
     {
         return Attribute::make(
             get: function () {
-                $role = $this->roles()->first();
+                $role = $this->getFirstRole();
                 if ($role) {
                     return [
-                        'name' => $role?->name,
-                        'slug' => $role?->slug,
+                        'name' => $role['name'] ?? 'N/A',
+                        'slug' => $role['slug'] ?? 'N/A',
                     ];
                 }
 
@@ -128,7 +130,21 @@ class User extends Authenticatable
             },
         );
     }
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     */
+    public function getJWTIdentifier(): mixed
+    {
+        return $this->getKey();
+    }
 
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     */
+    public function getJWTCustomClaims(): array
+    {
+        return [];
+    }
     //endregion
     //region Relations
     public function roles()
