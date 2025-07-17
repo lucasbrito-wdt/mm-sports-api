@@ -119,7 +119,7 @@ class RouteManager
         $fkRoutes = '';
         if (! empty($foreignKeys)) {
             foreach ($foreignKeys as $fk) {
-                $fkRoutes .= "\n    " . $this->createFKRoutes($fk['model'], $controllerName);
+                $fkRoutes .= "\n    " . $this->createFKRoutes($domainName, $fk['model'], $controllerName);
             }
         }
 
@@ -187,7 +187,7 @@ Route::group([
         $fkRoutes = '';
         if (! empty($foreignKeys)) {
             foreach ($foreignKeys as $fk) {
-                $fkRoutes .= "\n    " . $this->createFKRoutes($fk['model'], $controllerName);
+                $fkRoutes .= "\n    " . $this->createFKRoutes($domainName, $fk['model'], $controllerName);
             }
         }
 
@@ -272,35 +272,6 @@ Route::group([
         $content = preg_replace($routePattern, '', $content);
 
         File::put($filePath, $content);
-    }
-
-    /**
-     * Gera rotas customizadas para relacionamentos.
-     *
-     * @param  string  $domainName  Nome do domínio
-     * @param  string  $modelName  Nome do modelo
-     * @param  array  $foreignKeys  Array de chaves estrangeiras
-     * @return string Código das rotas adicionais
-     */
-    public function generateRelationshipRoutes(string $domainName, string $modelName, array $foreignKeys): string
-    {
-        if (empty($foreignKeys)) {
-            return '';
-        }
-
-        $routes = "\n    // Relationship Routes for {$modelName}\n";
-
-        foreach ($foreignKeys as $fk) {
-            if ($fk['relation'] === 'belongsTo') {
-                $relatedModelPlural = Str::kebab(Str::plural($fk['model']));
-                $currentModelPlural = Str::kebab(Str::plural($modelName));
-                $methodName = 'list' . Str::studly(Str::plural($fk['model']));
-
-                $routes .= "    Route::get('{$currentModelPlural}/list-{$relatedModelPlural}', [{$modelName}Controller::class, '{$methodName}']);\n";
-            }
-        }
-
-        return $routes;
     }
 
     /**
@@ -428,13 +399,14 @@ Route::group([
      * @param  string  $controllerName  Nome completo do controller
      * @return string Código da rota FK
      */
-    public function createFKRoutes(string $fkName, string $controllerName): string
+    public function createFKRoutes(string $domainName, string $fkName, string $controllerName): string
     {
+        $domainName = Str::kebab($domainName);
         $fkNameCamel = Str::camel("listar{$fkName}");
         $fkNameSlug = Str::slug($fkName);
-        $fkRouteTemplate = "Route::get('listar/%s', [%s::class, '%s']);";
+        $fkRouteTemplate = "Route::get('%s/listar/%s', [%s::class, '%s']);";
 
-        return sprintf($fkRouteTemplate, $fkNameSlug, $controllerName, $fkNameCamel);
+        return sprintf($fkRouteTemplate, $domainName, $fkNameSlug, $controllerName, $fkNameCamel);
     }
 
     /**
