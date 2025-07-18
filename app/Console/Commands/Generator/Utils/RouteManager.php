@@ -401,7 +401,7 @@ Route::group([
      */
     public function createFKRoutes(string $domainName, string $fkName, string $controllerName): string
     {
-        $domainName = Str::kebab($domainName);
+        $domainName = Str::kebab(Str::plural($modelName));
         $fkNameCamel = Str::camel("listar{$fkName}");
         $fkNameSlug = Str::slug($fkName);
         $fkRouteTemplate = "Route::get('%s/listar/%s', [%s::class, '%s']);";

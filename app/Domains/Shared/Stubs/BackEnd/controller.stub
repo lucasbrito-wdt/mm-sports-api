@@ -3,6 +3,8 @@
 namespace {{namespace}};
 
 use App\Domains\Shared\Controller\BaseController;
+use Illuminate\Http\Request;
+
 use {{serviceNamespace}};
 use {{requestNamespace}};
 

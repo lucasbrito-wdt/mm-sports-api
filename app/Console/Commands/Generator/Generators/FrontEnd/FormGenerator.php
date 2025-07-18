@@ -219,7 +219,7 @@ class FormGenerator
                     :return-object="false"
                     :loading="loading.$loading"
                     :rules="$rules"
-                    item-title="id
+                    item-title="id"
                     item-value="id"
                 />
             </VCol>
