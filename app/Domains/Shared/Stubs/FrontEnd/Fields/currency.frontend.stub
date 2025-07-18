@@ -1,1 +1,1 @@
-<InputDinheiro v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" prepend-inner-icon="tabler-currency-real" :rules="[{{rules}}]" />
+<CDFMoneyInput v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" prepend-inner-icon="tabler-currency-real" :rules="[{{rules}}]" />

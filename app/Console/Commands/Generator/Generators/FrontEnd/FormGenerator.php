@@ -42,7 +42,7 @@ class FormGenerator
 
         // Nome do arquivo seguindo padrão antigo
         $fileName = "{$modelName}Form.vue";
-        $filePath = $fullPath.'/'.$fileName;
+        $filePath = $fullPath . '/' . $fileName;
 
         // Verificar se o arquivo já existe
         if (File::exists($filePath) && ! ($config['force'] ?? false)) {
@@ -80,10 +80,10 @@ class FormGenerator
         $imports = $this->buildImports($foreignKeys);
 
         // Construir store name
-        $storeName = 'use'.$modelName.'Store';
+        $storeName = 'use' . $modelName . 'Store';
 
         // Construir interface name
-        $interfaceName = 'I'.$modelName;
+        $interfaceName = 'I' . $modelName;
 
         // Construir métodos fetchs
         $methodsFetchs = $this->buildFetchMethods($foreignKeys);
@@ -98,7 +98,7 @@ class FormGenerator
         $fkInputs = $this->buildFkInputs($foreignKeys);
 
         // Construir título do form
-        $formTitle = "isEditing ? 'Editar ".$modelName."' : 'Novo ".$modelName."'";
+        $formTitle = "isEditing ? 'Editar " . $modelName . "' : 'Novo " . $modelName . "'";
 
         // Gerar campos do formulário usando FieldsGenerator
         $formFields = $this->fieldsGenerator->generateFormFields($schema);
@@ -121,7 +121,7 @@ class FormGenerator
     {
         $imports = [];
         foreach ($foreignKeys as $fk) {
-            $interfaceName = 'I'.$fk['model'];
+            $interfaceName = 'I' . $fk['model'];
             $domainKebab = Str::kebab($fk['domain']);
             $imports[] = "import type { {$interfaceName} } from '@/pages/{$domainKebab}/types'";
         }
@@ -133,7 +133,7 @@ class FormGenerator
     {
         $methods = [];
         foreach ($foreignKeys as $fk) {
-            $methodName = 'fetch'.Str::plural($fk['model']);
+            $methodName = 'fetch' . Str::plural($fk['model']);
             $methods[] = "  {$methodName}()";
         }
 
@@ -158,7 +158,7 @@ class FormGenerator
     {
         $methods = [];
         foreach ($foreignKeys as $fk) {
-            $methodName = 'fetch'.Str::plural($fk['model']);
+            $methodName = 'fetch' . Str::plural($fk['model']);
             $methods[] = "{$methodName}";
         }
 
@@ -219,6 +219,7 @@ class FormGenerator
                     :return-object="false"
                     :loading="loading.$loading"
                     :rules="$rules"
+                    item-title="id
                     item-value="id"
                 />
             </VCol>
