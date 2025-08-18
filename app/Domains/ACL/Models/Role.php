@@ -9,7 +9,7 @@ use App\Domains\Shared\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * 
+ *
  *
  * @property string $id
  * @property string $name
