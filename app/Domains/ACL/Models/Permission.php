@@ -9,8 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Str;
 
 /**
- * 
- *
  * @property string $id
  * @property string $name
  * @property string $slug
