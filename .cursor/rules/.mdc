@@ -1,0 +1,527 @@
+# Gerador CRUD Laravel 12 - Contexto Arquitetural
+
+## 🏗️ Visão Geral da Arquitetura
+
+Este é um **gerador automático de CRUD completo** para Laravel 12 com arquitetura Domain-Driven Design (DDD), que gera tanto backend (Laravel API) quanto frontend (Vue.js/Nuxt).
+
+### Características Principais:
+- ✅ Geração de domínios completos ou CRUDs individuais
+- ✅ Sistema de rollback avançado com sessões
+- ✅ Suporte a relacionamentos complexos (belongsTo, hasMany, etc.)
+- ✅ Templates customizáveis via sistema .stub
+- ✅ Modo interativo e modo config-driven (JSON)
+- ✅ Validação robusta de schemas e relacionamentos
+
+## 📁 Estrutura de Arquivos
+
+```
+app/Console/Commands/Generator/
+├── CrudGenerator.php              # 🎯 Comando principal (1513 linhas - PRECISA REFATORAR)
+├── GenerateCrudFromSchema.php     # Schema simplificado para múltiplos CRUDs
+├── RollbackManager.php            # Sistema de rollback com interface web
+├── Generators/
+│   ├── BackEnd/                   # Geradores Laravel (API)
+│   │   ├── ControllerGenerator.php # Controllers com injeção de Services
+│   │   ├── ModelGenerator.php      # Models Eloquent + relacionamentos
+│   │   ├── MigrationGenerator.php  # Migrations com FK e constraints
+│   │   ├── ServiceGenerator.php    # Services (padrão Repository)
+│   │   └── SeederGenerator.php     # Seeders com Factory integration
+│   └── FrontEnd/                   # Geradores Vue.js/Nuxt
+│       ├── FormGenerator.php       # Formulários Vue com validação
+│       ├── ListGenerator.php       # Listagens com paginação/filtros
+│       ├── TypesGenerator.php      # Interfaces TypeScript
+│       ├── StoreGenerator.php      # Stores Pinia (estado reativo)
+│       └── ServiceGenerator.php    # Services para API calls
+├── Utils/                          # Utilitários e Managers
+│   ├── TemplateManager.php         # Processamento de templates .stub
+│   ├── RollbackLogger.php          # Log estruturado para rollback
+│   ├── ModelRelationsManager.php   # Relacionamentos bidirecionais
+│   ├── RouteManager.php            # Rotas automáticas por domínio
+│   ├── AbilityManager.php          # Permissões ACL automáticas
+│   └── SummaryBuilder.php          # Resumos para confirmação
+└── Validators/
+    ├── SchemaValidator.php         # Validação de sintaxe do schema
+    └── RelationshipValidator.php   # Validação de relacionamentos FK
+```
+
+## 🎯 Responsabilidades dos Componentes
+
+### CrudGenerator (Orquestrador Principal)
+**Arquivo**: `CrudGenerator.php` (1513 linhas - ⚠️ VIOLA SRP)
+
+**Responsabilidades**:
+- Orquestração completa do processo de geração
+- Interface interativa com usuário (Laravel Prompts)
+- Processamento de configuração JSON externa
+- Coordenação entre geradores BackEnd e FrontEnd
+- Integração com sistema de rollback
+
+**Padrões Utilizados**:
+- Command Pattern (Illuminate\Console\Command)
+- Dependency Injection (Constructor injection)
+- Factory Pattern (app() helper para geradores)
+
+### Sistema de Templates (.stub)
+**Localização**: `app/Domains/Shared/Stubs/`
+
+**TemplateManager** processa placeholders:
+```php
+// Exemplo de processamento
+$content = str_replace([
+    '{{namespace}}' => "App\\Domains\\{$domain}\\Models",
+    '{{modelName}}' => $modelName,
+    '{{fillable}}' => $this->buildFillable($config),
+    '{{relationships}}' => $this->buildRelationships($config)
+], $stubContent);
+```
+
+### Sistema de Rollback Avançado
+**RollbackLogger** mantém sessões estruturadas:
+
+```json
+{
+  "version": "2.0",
+  "sessions": [{
+    "id": "unique_session_id",
+    "timestamp": "2024-01-01T10:00:00Z",
+    "action": "generate_crud|generate_domain",
+    "domain": "Products",
+    "created": ["path/to/file.php"],
+    "modified": [{"file": "path", "backup": "backup_path"}],
+    "directories": ["path/to/dir"],
+    "metadata": {"php_version": "8.3", "laravel_version": "12.0"}
+  }]
+}
+```
+
+## 📝 Formato de Schema
+
+### Sintaxe Básica:
+```
+campo=tipo,tamanho,req;campo2=tipo2,tamanho2;campo3=tipo3,req
+```
+
+### Exemplos Práticos:
+```php
+// Schema para produto
+"name=string,100,req;description=text,1000;price=decimal,10,2,req;active=boolean,,req"
+
+// Schema para usuário
+"name=string,255,req;email=string,255,req;birth_date=date;is_admin=boolean"
+
+// Schema com relacionamentos
+"title=string,200,req;content=text,5000,req;category_id=integer,req" // FK para categories
+```
+
+### Tipos Suportados:
+- `string`, `text` (com tamanho opcional)
+- `integer`, `bigInteger`, `decimal`, `float`
+- `boolean`, `date`, `dateTime`, `timestamp`
+- `json`, `uuid`, `enum`
+
+## 🔗 Sistema de Relacionamentos
+
+### Tipos Suportados:
+- **belongsTo**: Modelo pertence a outro (FK no modelo atual)
+- **hasMany**: Modelo possui muitos (FK no modelo relacionado)
+- **hasOne**: Modelo possui um (FK no modelo relacionado)
+- **belongsToMany**: Relacionamento N:N (tabela pivot)
+
+### Processamento Automático:
+**ModelRelationsManager** cria relacionamentos bidirecionais automaticamente.
+
+## 🚨 Problemas Identificados (CRÍTICOS)
+
+### 1. Violações SOLID Graves
+
+#### Single Responsibility Principle (SRP)
+- ❌ **CrudGenerator**: 1513 linhas, múltiplas responsabilidades
+- ❌ **FormGenerator**: Gera forms + processa attachs + valida relacionamentos
+
+#### Dependency Inversion Principle (DIP)
+- ❌ Dependências concretas: `app(ModelGenerator::class)` em vez de interfaces
+- ❌ Acoplamento direto com Illuminate\Support\Facades
+
+#### Open/Closed Principle (OCP)
+- ❌ Difícil extensão: adicionar novo gerador requer modificar CrudGenerator
+- ❌ Hardcoded: tipos de campo, validações, templates
+
+### 2. Code Smells Críticos
+
+#### Métodos Gigantes
+```php
+// CrudGenerator::handle() - 118 linhas
+// CrudGenerator::gatherCrudInput() - 77 linhas
+// CrudGenerator::generateCrud() - 117 linhas
+```
+
+#### Duplicação de Código
+- Lógica de validação repetida entre geradores
+- Processamento de schema duplicado
+- Construção de paths repetitiva
+
+#### Magic Numbers/Strings
+```php
+// Hardcoded em vários lugares
+if (count(scandir($dir)) === 2) { // 2 é magic number
+'create_' . Str::snake(Str::plural($modelName)) . '_table' // String mágica
+```
+
+### 3. Problemas de Performance
+
+#### I/O Síncrono
+- Múltiplas operações `File::put()` sequenciais
+- Sem cache para templates processados
+- Rollback processa arquivos um por vez
+
+#### Memory Usage
+- Carregamento completo de templates em memória
+- Arrays grandes para configuração não otimizados
+
+### 4. Questões de Segurança
+
+#### Validação Insuficiente
+```php
+// Path traversal possível
+$filePath = $this->option('file'); // Não validado
+File::exists($filePath); // Pode acessar qualquer arquivo
+
+// Command injection possível
+exec($command, $output, $returnCode); // Em runEslint()
+```
+
+#### Sanitização de Input
+- Schema não validado contra SQL injection
+- Nomes de domínio/modelo não sanitizados adequadamente
+
+## 🎯 Padrões de Refatoração (OBRIGATÓRIOS)
+
+### 1. Command Pattern Melhorado
+```php
+interface GeneratorCommandInterface
+{
+    public function execute(GenerationContext $context): GenerationResult;
+    public function validate(GenerationContext $context): ValidationResult;
+    public function canRollback(): bool;
+    public function rollback(RollbackContext $context): RollbackResult;
+}
+
+class GenerateModelCommand implements GeneratorCommandInterface
+{
+    public function __construct(
+        private TemplateManager $templateManager,
+        private ModelValidator $validator
+    ) {}
+}
+```
+
+### 2. Strategy Pattern para Geradores
+```php
+interface GeneratorStrategyInterface
+{
+    public function supports(string $type): bool;
+    public function generate(GenerationConfig $config): GenerationResult;
+    public function getPriority(): int;
+}
+
+class BackEndGeneratorStrategy implements GeneratorStrategyInterface
+{
+    public function supports(string $type): bool
+    {
+        return in_array($type, ['model', 'controller', 'service', 'migration']);
+    }
+}
+```
+
+### 3. Observer Pattern para Rollback
+```php
+interface RollbackObserverInterface
+{
+    public function onFileCreated(string $path, array $metadata = []): void;
+    public function onFileModified(string $path, string $backupPath): void;
+    public function onDirectoryCreated(string $path): void;
+}
+
+class FileSystemRollbackObserver implements RollbackObserverInterface
+{
+    public function __construct(private RollbackLogger $logger) {}
+}
+```
+
+### 4. Factory Pattern para Templates
+```php
+interface TemplateFactoryInterface
+{
+    public function createTemplate(TemplateType $type, array $config): TemplateInterface;
+    public function supports(TemplateType $type): bool;
+}
+
+enum TemplateType: string
+{
+    case MODEL = 'model';
+    case CONTROLLER = 'controller';
+    case MIGRATION = 'migration';
+    case VUE_FORM = 'vue_form';
+    case VUE_LIST = 'vue_list';
+}
+```
+
+## 📋 Convenções de Código (OBRIGATÓRIAS)
+
+### Naming Conventions
+```php
+// Classes: PascalCase
+class ModelGenerator implements GeneratorInterface {}
+
+// Métodos: camelCase
+public function generateModel(array $config): bool {}
+
+// Variáveis: camelCase
+$modelName = $config['model'];
+$domainPath = $this->buildDomainPath($domain);
+
+// Constantes: UPPER_SNAKE_CASE
+private const DEFAULT_TEMPLATE_PATH = 'app/Domains/Shared/Stubs';
+private const MAX_RETRY_ATTEMPTS = 3;
+
+// Arrays de configuração: snake_case keys
+$config = [
+    'model_name' => 'Product',
+    'domain_name' => 'Ecommerce',
+    'foreign_keys' => [],
+    'generate_tests' => true
+];
+```
+
+### File Structure (DDD)
+```php
+// Backend (Laravel)
+app/Domains/{Domain}/
+├── Controllers/{Model}Controller.php
+├── Models/{Model}.php
+├── Services/{Model}Service.php
+├── Requests/{Model}Request.php
+├── Migrations/YYYY_MM_DD_HHMMSS_create_{table}_table.php
+└── Seeders/{Model}Seeder.php
+
+// Frontend (Vue.js/Nuxt)
+pages/{domain-kebab}/
+├── index.vue                    # Lista
+├── cadastrar/index.vue          # Criar
+├── editar/[id].vue             # Editar
+├── components/{Model}Form.vue   # Formulário
+├── services/{model}Service.ts   # API calls
+├── stores/use{Model}Store.ts    # Pinia store
+└── types.ts                     # TypeScript interfaces
+```
+
+### Error Handling (OBRIGATÓRIO)
+```php
+// Sempre usar try-catch para operações críticas
+try {
+    $result = $this->generator->generate($config);
+    $this->rollbackLogger->logSuccess($result);
+} catch (GeneratorException $e) {
+    $this->rollbackLogger->logError($e);
+    $this->error("Falha na geração: " . $e->getMessage());
+    return CommandAlias::FAILURE;
+} catch (ValidationException $e) {
+    $this->warn("Validação falhou: " . $e->getMessage());
+    return CommandAlias::INVALID;
+}
+
+// Logging estruturado
+Log::info('Geração iniciada', [
+    'domain' => $config['domain'],
+    'model' => $config['model'],
+    'user' => auth()->user()?->id,
+    'session_id' => $sessionId
+]);
+```
+
+### Validation (OBRIGATÓRIA)
+```php
+// Sempre validar inputs
+private function validateConfig(array $config): ValidationResult
+{
+    $validator = Validator::make($config, [
+        'domain' => 'required|string|alpha',
+        'model' => 'required|string|alpha',
+        'schema' => 'required|string',
+        'foreign_keys' => 'array',
+        'foreign_keys.*.model' => 'required_with:foreign_keys|string|alpha',
+        'foreign_keys.*.domain' => 'required_with:foreign_keys|string|alpha',
+        'foreign_keys.*.relation' => 'required_with:foreign_keys|in:belongsTo,hasMany,hasOne,belongsToMany'
+    ]);
+
+    return $validator->fails()
+        ? ValidationResult::failed($validator->errors())
+        : ValidationResult::success();
+}
+
+// Sanitizar paths
+private function sanitizePath(string $path): string
+{
+    // Remover path traversal
+    $path = str_replace(['../', '..\\'], '', $path);
+
+    // Validar contra whitelist
+    if (!preg_match('/^[a-zA-Z0-9\/_-]+$/', $path)) {
+        throw new InvalidPathException("Path inválido: {$path}");
+    }
+
+    return $path;
+}
+```
+
+## 🔍 Debugging e Logs
+
+### Structured Logging
+```php
+// Usar sempre contexto estruturado
+Log::channel('generator')->info('Model generated', [
+    'domain' => $domain,
+    'model' => $model,
+    'file_path' => $modelPath,
+    'execution_time_ms' => $executionTime,
+    'memory_usage_mb' => memory_get_peak_usage(true) / 1024 / 1024
+]);
+
+// Console output padronizado
+$this->info("✅ {$component} gerado com sucesso");
+$this->warn("⚠️  {$warning}");
+$this->error("❌ {$error}");
+```
+
+### Performance Monitoring
+```php
+// Sempre medir performance de operações críticas
+$startTime = microtime(true);
+$startMemory = memory_get_usage(true);
+
+$result = $this->performOperation();
+
+$executionTime = (microtime(true) - $startTime) * 1000; // ms
+$memoryUsed = (memory_get_usage(true) - $startMemory) / 1024 / 1024; // MB
+
+Log::performance('Operation completed', [
+    'operation' => 'model_generation',
+    'execution_time_ms' => $executionTime,
+    'memory_used_mb' => $memoryUsed,
+    'files_created' => count($result->getCreatedFiles())
+]);
+```
+
+## 🚀 Extensibilidade (Como Adicionar Novos Geradores)
+
+### 1. Implementar Interface
+```php
+class CustomGenerator implements GeneratorInterface
+{
+    public function generate(GenerationConfig $config): GenerationResult
+    {
+        // Implementação específica
+    }
+
+    public function supports(string $type): bool
+    {
+        return $type === 'custom_component';
+    }
+}
+```
+
+### 2. Registrar no Service Container
+```php
+// AppServiceProvider
+$this->app->bind(GeneratorInterface::class, CustomGenerator::class);
+$this->app->tag([CustomGenerator::class], 'generators');
+```
+
+### 3. Criar Template .stub
+```php
+// app/Domains/Shared/Stubs/Custom/custom.stub
+<?php
+
+namespace {{namespace}};
+
+class {{className}}
+{
+    // Template content with placeholders
+}
+```
+
+### 4. Implementar Rollback
+```php
+class CustomGenerator implements GeneratorInterface, RollbackableInterface
+{
+    public function rollback(RollbackContext $context): RollbackResult
+    {
+        // Lógica específica de rollback
+    }
+}
+```
+
+## 📚 Dependencies e Versões
+
+### Laravel 12 Dependencies
+- `illuminate/console`: ^12.0 (Commands)
+- `illuminate/support`: ^12.0 (Helpers, Collections)
+- `illuminate/filesystem`: ^12.0 (File operations)
+- `illuminate/validation`: ^12.0 (Input validation)
+
+### Development Dependencies
+- `laravel/prompts`: ^0.3 (Interactive CLI)
+- `phpunit/phpunit`: ^11.0 (Testing)
+- `larastan/larastan`: ^2.9 (Static analysis)
+
+### Frontend Integration
+- **Vue.js 3**: Composition API
+- **Nuxt 3**: SSR/SPA framework
+- **TypeScript**: Type safety
+- **Pinia**: State management
+- **Vuelidate**: Form validation
+
+## ⚡ Performance Benchmarks (Target)
+
+### Geração de CRUD Simples
+- **Target**: < 2 segundos
+- **Current**: ~5-8 segundos ⚠️
+
+### Geração de Domínio Completo
+- **Target**: < 10 segundos
+- **Current**: ~15-25 segundos ⚠️
+
+### Memory Usage
+- **Target**: < 50MB peak
+- **Current**: ~80-120MB ⚠️
+
+---
+
+## 🎯 REGRAS CRÍTICAS PARA IA
+
+### ❌ NUNCA FAÇA:
+1. **Não modifique CrudGenerator.php** sem quebrar em classes menores primeiro
+2. **Não adicione mais responsabilidades** aos geradores existentes
+3. **Não use app() helper** - sempre usar dependency injection
+4. **Não ignore validação** de inputs ou paths
+5. **Não faça operações I/O** sem tratamento de erro
+
+### ✅ SEMPRE FAÇA:
+1. **Implemente interfaces** antes de classes concretas
+2. **Valide e sanitize** todos os inputs
+3. **Use type hints** em todos os métodos
+4. **Implemente rollback** para operações destrutivas
+5. **Adicione logs estruturados** para debugging
+6. **Escreva testes** para funcionalidades críticas
+7. **Documente** mudanças arquiteturais
+
+### 🔧 REFATORAÇÃO PRIORITÁRIA:
+1. **Quebrar CrudGenerator** em Command + Handlers
+2. **Extrair interfaces** para todos os geradores
+3. **Implementar Strategy Pattern** para diferentes tipos
+4. **Adicionar cache** para templates
+5. **Otimizar I/O** com operações paralelas
+
+---
+
+**Esta documentação é o contexto fixo para todas as interações com este projeto. Sempre consulte antes de fazer mudanças arquiteturais.**

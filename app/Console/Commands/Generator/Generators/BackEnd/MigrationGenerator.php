@@ -82,21 +82,27 @@ class MigrationGenerator
                 }
 
                 if (!isset($fk['required'])) {
-                    $fk['required'] = false; // Default to required if not specified
+                    $fk['required'] = true; // Default to required if not specified
                 }
 
-                if ($fk['relation'] === 'hasOne' || $fk['relation'] === 'hasMany') {
+                if ($fk['relation'] === 'belongsTo') {
                     $foreignKey = Str::snake($fk['model']) . '_id';
                     $line = "\$table->foreignUlid('{$foreignKey}')";
+
+                    // Só adiciona nullable se NÃO for obrigatório
                     if (!$fk['required']) {
                         $line .= "->nullable()";
                     }
+
                     $line .= "->constrained('" . Str::snake(Str::plural($fk['model'])) . "')";
+
+                    // Define comportamento de delete baseado na obrigatoriedade
                     if ($fk['required']) {
                         $line .= "->onDelete('cascade');";
                     } else {
                         $line .= "->nullOnDelete();";
                     }
+
                     $fields[] = $line;
                 }
             }
@@ -110,6 +116,7 @@ class MigrationGenerator
 
     private function buildMigrationField(string $field, string $type, ?string $option1, ?string $option2, ?string $required): ?string
     {
+        // Determina se o campo é obrigatório baseado no parâmetro 'req'
         $isRequired = $required === 'req';
 
         switch (strtolower($type)) {
@@ -169,6 +176,7 @@ class MigrationGenerator
                 return null;
         }
 
+        // Só adiciona ->nullable() se o campo NÃO for obrigatório
         if (!$isRequired) {
             $result .= "->nullable()";
         }
