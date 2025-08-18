@@ -113,9 +113,6 @@ class ListGenerator
             $headers[] = $this->createStubHeaderItem($field);
         }
 
-        // Adicionar coluna de ações
-        $headers[] = "\n\t{\n\t\ttitle: 'Ações',\n\t\tkey: 'actions',\n\t\tsortable: false\n\t}";
-
         return '[' . implode(',', $headers) . "\n]";
     }
 

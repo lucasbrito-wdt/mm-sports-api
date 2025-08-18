@@ -1,0 +1,210 @@
+# Contexto do Gerador CRUD Laravel 12
+
+## Arquitetura do Sistema
+
+### 📁 Estrutura Principal
+O sistema é um **gerador automático de CRUD** para Laravel 12 com arquitetura Domain-Driven Design (DDD).
+
+```
+app/Console/Commands/Generator/
+├── CrudGenerator.php              # Comando principal - orquestra todo o processo
+├── GenerateCrudFromSchema.php     # Gerador baseado em schema simplificado
+├── RollbackManager.php            # Sistema de rollback completo
+├── Generators/
+│   ├── BackEnd/                   # Geradores para Laravel (API)
+│   │   ├── ControllerGenerator.php
+│   │   ├── ModelGenerator.php
+│   │   ├── MigrationGenerator.php
+│   │   ├── ServiceGenerator.php
+│   │   └── SeederGenerator.php
+│   └── FrontEnd/                  # Geradores para Vue.js/Nuxt
+│       ├── FormGenerator.php
+│       ├── ListGenerator.php
+│       ├── TypesGenerator.php
+│       ├── StoreGenerator.php (Pinia)
+│       └── ServiceGenerator.php
+├── Utils/                         # Utilitários e managers
+│   ├── TemplateManager.php        # Processa templates .stub
+│   ├── RollbackLogger.php         # Log de operações para rollback
+│   ├── ModelRelationsManager.php  # Gerencia relacionamentos entre models
+│   ├── RouteManager.php           # Gerencia rotas automáticas
+│   ├── AbilityManager.php         # Gerencia permissões (ACL)
+│   └── SummaryBuilder.php         # Constrói resumos para usuário
+└── Validators/
+    ├── SchemaValidator.php        # Valida sintaxe do schema
+    └── RelationshipValidator.php  # Valida relacionamentos FK
+```
+
+### 🎯 Responsabilidades dos Componentes
+
+#### CrudGenerator (Comando Principal)
+- **Responsabilidade**: Orquestrar todo o processo de geração
+- **Padrões**: Command Pattern, Dependency Injection, Factory Pattern
+- **Funcionalidades**:
+  - Modo interativo vs. modo config-driven (JSON)
+  - Geração de domínios completos vs. CRUDs individuais
+  - Sistema de rollback integrado
+  - Validação e confirmação antes da geração
+
+#### Geradores BackEnd
+- **ModelGenerator**: Cria models Eloquent com fillable, casts, traits
+- **ControllerGenerator**: Cria controllers com injeção de dependência para Services
+- **MigrationGenerator**: Cria migrations com FK, índices e constraints
+- **ServiceGenerator**: Cria services seguindo padrão Repository/Service
+- **SeederGenerator**: Cria seeders com dados fake usando Factories
+
+#### Geradores FrontEnd
+- **FormGenerator**: Cria componentes Vue.js com validação e autocomplete
+- **ListGenerator**: Cria listagens com paginação, filtros e ordenação
+- **TypesGenerator**: Cria interfaces TypeScript
+- **StoreGenerator**: Cria stores Pinia com estado reativo
+- **ServiceGenerator**: Cria services para API calls
+
+### 🔧 Sistema de Templates (.stub)
+Localização: `app/Domains/Shared/Stubs/`
+
+**TemplateManager** processa templates com placeholders:
+```php
+// Exemplo de placeholder
+'{{namespace}}' => "App\\Domains\\{$domain}\\Models"
+'{{modelName}}' => $modelName
+'{{fillable}}' => $fillable
+```
+
+### 🔄 Sistema de Rollback
+**RollbackLogger** mantém log detalhado de todas as operações:
+- Arquivos criados
+- Arquivos modificados (com backup)
+- Diretórios criados
+- Sessões com metadata
+
+### 📝 Schema Format
+```
+campo=tipo,tamanho,req;campo2=tipo2,...
+
+Exemplos:
+name=string,100,req;email=string,255,req;age=integer,,req
+price=decimal,10,2,req;description=text,1000
+```
+
+### 🔗 Sistema de Relacionamentos
+Suporta: `belongsTo`, `hasMany`, `hasOne`, `belongsToMany`
+
+**ModelRelationsManager** cria relacionamentos bidirecionais automaticamente.
+
+## 🚨 Pontos de Melhoria Identificados
+
+### 1. Violações SOLID
+- **SRP**: CrudGenerator faz muitas coisas (1513 linhas)
+- **DIP**: Dependências concretas em vários lugares
+- **OCP**: Difícil extensão sem modificar código existente
+
+### 2. Problemas de Performance
+- Operações síncronas sequenciais
+- Múltiplas operações de I/O sem otimização
+- Falta de cache para templates
+
+### 3. Questões de Segurança
+- Validação insuficiente de inputs
+- Paths não sanitizados adequadamente
+- Execução de comandos externos sem validação
+
+### 4. Code Smells
+- Métodos muito longos (>100 linhas)
+- Duplicação de código entre geradores
+- Magic numbers e strings hardcoded
+- Falta de type hints em alguns lugares
+
+### 5. Manutenibilidade
+- Acoplamento forte entre componentes
+- Falta de interfaces para abstração
+- Logs de erro inconsistentes
+- Documentação insuficiente
+
+## 🎯 Padrões de Refatoração Recomendados
+
+### 1. Command Pattern Melhorado
+```php
+interface GeneratorCommandInterface
+{
+    public function execute(GenerationContext $context): GenerationResult;
+    public function validate(GenerationContext $context): ValidationResult;
+    public function rollback(RollbackContext $context): bool;
+}
+```
+
+### 2. Strategy Pattern para Geradores
+```php
+interface GeneratorStrategyInterface
+{
+    public function supports(string $type): bool;
+    public function generate(array $config): GenerationResult;
+}
+```
+
+### 3. Observer Pattern para Rollback
+```php
+interface RollbackObserverInterface
+{
+    public function onFileCreated(string $path): void;
+    public function onFileModified(string $path, string $backup): void;
+}
+```
+
+### 4. Factory Pattern para Templates
+```php
+interface TemplateFactoryInterface
+{
+    public function createTemplate(string $type, array $config): TemplateInterface;
+}
+```
+
+## 📋 Convenções de Código
+
+### Naming Conventions
+- **Classes**: PascalCase (ex: `ModelGenerator`)
+- **Métodos**: camelCase (ex: `generateModel`)
+- **Variáveis**: camelCase (ex: `$modelName`)
+- **Constantes**: UPPER_SNAKE_CASE (ex: `DEFAULT_SCHEMA`)
+
+### File Structure
+- **Controllers**: `app/Domains/{Domain}/Controllers/`
+- **Models**: `app/Domains/{Domain}/Models/`
+- **Services**: `app/Domains/{Domain}/Services/`
+- **Migrations**: `app/Domains/{Domain}/Migrations/`
+
+### Error Handling
+```php
+// Usar sempre try-catch para operações críticas
+try {
+    $result = $this->generator->generate($config);
+} catch (GeneratorException $e) {
+    $this->error("Falha na geração: " . $e->getMessage());
+    return CommandAlias::FAILURE;
+}
+```
+
+## 🔍 Debugging e Logs
+- **RollbackLogger**: Logs estruturados para rollback
+- **Console Output**: Usar `$this->info()`, `$this->warn()`, `$this->error()`
+- **Exception Handling**: Capturar e logar erros específicos
+
+## 🚀 Extensibilidade
+Para adicionar novos geradores:
+
+1. Implementar interface apropriada
+2. Registrar no service container
+3. Adicionar validação específica
+4. Criar templates .stub correspondentes
+5. Implementar rollback específico
+
+## 📚 Dependencies
+- **Laravel 12**: Framework base
+- **Laravel Prompts**: Interface interativa
+- **Illuminate/Support**: Helpers e utilities
+- **Carbon**: Manipulação de datas
+- **PHPUnit**: Testes (quando habilitado)
+
+---
+
+**IMPORTANTE**: Sempre manter compatibilidade com o sistema de rollback e validar inputs antes de gerar código. O sistema deve ser robusto e recuperável em caso de falhas.
