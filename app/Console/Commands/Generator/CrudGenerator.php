@@ -897,11 +897,12 @@ class CrudGenerator extends Command
     {
         try {
             $frontEndDir = str_replace('\\src', '', $this->getFrontendPath());
+            dd($frontEndDir);
             $command = sprintf(
                 'cd %s && %s %s --fix',
                 $frontEndDir,
                 '.\\node_modules\\.bin\\eslint',
-                './src/pages/' . Str::kebab($this->config['domain']) . '/**/*.{ts,vue}'
+                '.\\src\\pages\\' . Str::kebab($this->config['domain']) . '\\**\\*.{ts,vue}'
             );
 
             $this->info('  🔸 Executando ESLint...');

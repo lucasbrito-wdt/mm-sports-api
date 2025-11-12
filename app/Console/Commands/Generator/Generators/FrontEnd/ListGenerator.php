@@ -75,7 +75,7 @@ class ListGenerator
         $interfaceName = "I$modelName";
 
         // Construir entity singular var
-        $entitySingularVar = strtolower(Str::singular($domain));
+        $entitySingularVar = Str::snake(strtolower(Str::singular($domain)));
 
         // Construir headers da tabela
         $headers = $this->buildTableHeaders($schema);

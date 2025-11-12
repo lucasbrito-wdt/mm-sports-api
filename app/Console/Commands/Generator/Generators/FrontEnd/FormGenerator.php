@@ -231,35 +231,61 @@ class FormGenerator
         $columns = explode(';', rtrim($schema, ';'));
 
         foreach ($columns as $column) {
-            @[$field, $params] = explode('=', $column);
-            @[$type, $option1, $option2, $required] = explode(',', $params ?? '');
+            @[$field, $params] = explode('=', $column, 2);
 
-            if (! $field) {
+            if (!$field || !$params) {
                 continue;
             }
 
-            if ($option1 === 'req') {
-                $required = true;
-                $option1 = null;
-            }
+            $paramParts = explode(',', $params);
+            $type = $paramParts[0] ?? 'string';
 
-            if ($option2 === 'req') {
-                $required = true;
-                $option2 = null;
+            $required = false;
+            $option1 = null;
+            $option2 = null;
+            $enumValues = [];
+
+            // Processar parâmetros
+            for ($i = 1; $i < count($paramParts); $i++) {
+                $part = $paramParts[$i];
+
+                // Verificar se é 'req'
+                if (strtolower(trim($part)) === 'req') {
+                    $required = true;
+                    continue;
+                }
+
+                // Verificar se contém valores de enum (com |)
+                if (str_contains($part, '|')) {
+                    $enumValues = array_map('trim', explode('|', $part));
+                    continue;
+                }
+
+                // Caso contrário, é uma opção
+                if (!$option1) {
+                    $option1 = $part;
+                } elseif (!$option2) {
+                    $option2 = $part;
+                }
             }
 
             $fieldData = [
                 'name' => $field,
-                'type' => $type ?? 'string',
-                'option1' => $option1 ?? null,
-                'option2' => $option2 ?? null,
-                'required' => $required ?? false,
+                'type' => $type,
+                'option1' => $option1,
+                'option2' => $option2,
+                'required' => $required,
                 'label' => Str::title(str_replace('_', ' ', $field)),
             ];
 
             // Adicionar informações de tamanho para campos string e text
             if (in_array(strtolower($type), ['string', 'text']) && $option1 && is_numeric($option1)) {
                 $fieldData['max_length'] = intval($option1);
+            }
+
+            // Adicionar valores de enum se existirem
+            if (!empty($enumValues)) {
+                $fieldData['enum_values'] = $enumValues;
             }
 
             $fields[] = $fieldData;

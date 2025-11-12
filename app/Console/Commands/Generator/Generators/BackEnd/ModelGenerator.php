@@ -115,7 +115,7 @@ class ModelGenerator
             'decimal' => 'decimal:2',
             'float' => 'float',
             'date' => 'date',
-            'dateTime' => 'datetime',
+            'datetime' => 'datetime',
             'json' => 'array',
         ];
 

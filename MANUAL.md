@@ -6,13 +6,13 @@ O Laravel CRUD Generator é um sistema completo para geração automática de op
 
 ### ✨ Principais Funcionalidades
 
-- 🔧 **Geração de CRUD Completo** - Backend e frontend em um comando
-- 🏗️ **Gerador de Domínios** - Criação de estruturas completas de domínios
-- 🔄 **Sistema de Rollback** - Desfazer alterações com segurança
-- 📝 **Configuração via JSON** - Automação através de arquivos de configuração
-- 🔗 **Relacionamentos** - Suporte completo a foreign keys e relacionamentos
-- 🧪 **Testes e Documentação** - Geração opcional de testes e docs
-- 🎨 **Frontend Moderno** - Componentes Vue.js com TypeScript
+-   🔧 **Geração de CRUD Completo** - Backend e frontend em um comando
+-   🏗️ **Gerador de Domínios** - Criação de estruturas completas de domínios
+-   🔄 **Sistema de Rollback** - Desfazer alterações com segurança
+-   📝 **Configuração via JSON** - Automação através de arquivos de configuração
+-   🔗 **Relacionamentos** - Suporte completo a foreign keys e relacionamentos
+-   🧪 **Testes e Documentação** - Geração opcional de testes e docs
+-   🎨 **Frontend Moderno** - Componentes Vue.js com TypeScript
 
 ---
 
@@ -20,10 +20,10 @@ O Laravel CRUD Generator é um sistema completo para geração automática de op
 
 ### Pré-requisitos
 
-- Laravel 10+
-- PHP 8.1+
-- Node.js 16+ (para frontend)
-- Composer
+-   Laravel 10+
+-   PHP 8.1+
+-   Node.js 16+ (para frontend)
+-   Composer
 
 ### Verificação da Instalação
 
@@ -45,16 +45,15 @@ php artisan generate:crud [opções]
 
 ### 🎛️ Opções Disponíveis
 
-
-| Opção           | Descrição                            | Exemplo                |
-| ----------------- | -------------------------------------- | ---------------------- |
+| Opção             | Descrição                            | Exemplo                |
+| ----------------- | ------------------------------------ | ---------------------- |
 | `--force`         | Executa sem confirmações interativas | `--force`              |
 | `--skip-frontend` | Pula a geração do frontend           | `--skip-frontend`      |
 | `--skip-backend`  | Pula a geração do backend            | `--skip-backend`       |
 | `--with-tests`    | Inclui geração de testes             | `--with-tests`         |
-| `--with-docs`     | Inclui geração de documentação     | `--with-docs`          |
+| `--with-docs`     | Inclui geração de documentação       | `--with-docs`          |
 | `--config=`       | Usa configuração via JSON            | `--config=config.json` |
-| `--domain`        | Gera um domínio completo              | `--domain`             |
+| `--domain`        | Gera um domínio completo             | `--domain`             |
 | `--rollback`      | Desfaz alterações anteriores         | `--rollback`           |
 
 ---
@@ -102,11 +101,11 @@ php artisan generate:crud --domain
 
 O sistema criará:
 
-- Estrutura de diretórios do domínio
-- Model base
-- Controller base
-- Service base
-- Arquivos de configuração
+-   Estrutura de diretórios do domínio
+-   Model base
+-   Controller base
+-   Service base
+-   Arquivos de configuração
 
 #### 🔗 Múltiplos CRUDs em um Domínio
 
@@ -114,28 +113,29 @@ O sistema criará:
 
 ```json
 {
-  "domain": "BlogSystem",
-  "model": "Post",
-  "schema": "title=string,200,req;content=text,req",
-  "generateCompleteStructure": true,
-  "crud": [
-    {
-      "model": "Comment",
-      "schema": "post_id=integer,req;author_name=string,100,req;comment_text=text,req"
-    },
-    {
-      "model": "Tag",
-      "schema": "name=string,50,req;slug=string,50,unique"
-    }
-  ]
+    "domain": "BlogSystem",
+    "model": "Post",
+    "schema": "title=string,200,req;content=text,req",
+    "generateCompleteStructure": true,
+    "crud": [
+        {
+            "model": "Comment",
+            "schema": "post_id=integer,req;author_name=string,100,req;comment_text=text,req"
+        },
+        {
+            "model": "Tag",
+            "schema": "name=string,50,req;slug=string,50,unique"
+        }
+    ]
 }
 ```
 
 Esta configuração gerará:
-- **CRUD Principal**: Post (Model, Controller, Service, Migration, Seeder, Frontend)
-- **CRUDs Adicionais**: Comment e Tag (todos os arquivos para cada um)
-- **Frontend Completo**: Components, Stores, Services para todos os modelos
-- **Rotas Organizadas**: Todas as rotas no mesmo arquivo de domínio
+
+-   **CRUD Principal**: Post (Model, Controller, Service, Migration, Seeder, Frontend)
+-   **CRUDs Adicionais**: Comment e Tag (todos os arquivos para cada um)
+-   **Frontend Completo**: Components, Stores, Services para todos os modelos
+-   **Rotas Organizadas**: Todas as rotas no mesmo arquivo de domínio
 
 ### 3. ⚡ Geração via Configuração JSON
 
@@ -169,22 +169,20 @@ Crie um arquivo `config.json`:
 
 #### 🏷️ Parâmetros Obrigatórios
 
-
 | Parâmetro | Tipo   | Descrição            | Exemplo                 |
-| ---------- | ------ | ---------------------- | ----------------------- |
-| `domain`   | String | Nome do domínio       | `"Products"`            |
-| `model`    | String | Nome da model          | `"Product"`             |
-| `schema`   | String | Definição dos campos | `"nome=string,100,req"` |
+| --------- | ------ | -------------------- | ----------------------- |
+| `domain`  | String | Nome do domínio      | `"Products"`            |
+| `model`   | String | Nome da model        | `"Product"`             |
+| `schema`  | String | Definição dos campos | `"nome=string,100,req"` |
 
 #### ⚙️ Parâmetros Opcionais
 
-
-| Parâmetro                  | Tipo    | Padrão | Descrição                  |
-| --------------------------- | ------- | ------- | ---------------------------- |
-| `foreignKeys`               | Array   | `[]`    | Lista de relacionamentos     |
-| `force`                     | Boolean | `false` | Execução sem confirmação |
-| `generateCompleteStructure` | Boolean | `false` | Gera estrutura de domínio   |
-| `generateTests`             | Boolean | `false` | Inclui testes                |
+| Parâmetro                   | Tipo    | Padrão  | Descrição                 |
+| --------------------------- | ------- | ------- | ------------------------- |
+| `foreignKeys`               | Array   | `[]`    | Lista de relacionamentos  |
+| `force`                     | Boolean | `false` | Execução sem confirmação  |
+| `generateCompleteStructure` | Boolean | `false` | Gera estrutura de domínio |
+| `generateTests`             | Boolean | `false` | Inclui testes             |
 
 ### 🔗 Configuração de Relacionamentos
 
@@ -238,26 +236,54 @@ campo=tipo[,tamanho][,precisao][,modificadores]
 
 ### 🔤 Tipos de Campo Suportados
 
+#### Tipos Básicos
 
-| Tipo        | Descrição       | Exemplo                              | MySQL Equivalente |
-| ----------- | ----------------- | ------------------------------------ | ----------------- |
-| `string`    | Texto curto       | `nome=string,100`                    | `VARCHAR(100)`    |
-| `text`      | Texto longo       | `descricao=text`                     | `TEXT`            |
-| `integer`   | Número inteiro   | `idade=integer`                      | `INT`             |
-| `decimal`   | Número decimal   | `preco=decimal,8,2`                  | `DECIMAL(8,2)`    |
-| `boolean`   | Verdadeiro/Falso  | `ativo=boolean`                      | `BOOLEAN`         |
-| `date`      | Data              | `nascimento=date`                    | `DATE`            |
-| `datetime`  | Data e hora       | `criado_em=datetime`                 | `DATETIME`        |
-| `timestamp` | Timestamp         | `atualizado=timestamp`               | `TIMESTAMP`       |
-| `foreign`   | Chave estrangeira | `categoria_id=foreign,categories,id` | `BIGINT UNSIGNED` |
+| Tipo        | Descrição         | Exemplo                              | MySQL Equivalente | Frontend       |
+| ----------- | ----------------- | ------------------------------------ | ----------------- | -------------- |
+| `string`    | Texto curto       | `nome=string,100`                    | `VARCHAR(100)`    | Input text     |
+| `text`      | Texto longo       | `descricao=text`                     | `TEXT`            | Textarea       |
+| `integer`   | Número inteiro    | `idade=integer`                      | `INT`             | Input number   |
+| `bigInteger`| Número grande     | `contador=bigInteger`                | `BIGINT`          | Input number   |
+| `decimal`   | Número decimal    | `preco=decimal,8,2`                  | `DECIMAL(8,2)`    | Input currency |
+| `float`     | Número flutuante  | `taxa=float`                         | `FLOAT`           | Input currency |
+| `double`    | Decimal duplo     | `valor=double`                       | `DOUBLE`          | Input currency |
+| `boolean`   | Verdadeiro/Falso  | `ativo=boolean`                      | `BOOLEAN`         | Switch         |
+| `date`      | Data              | `nascimento=date`                    | `DATE`            | Date picker    |
+| `datetime`  | Data e hora       | `criado_em=datetime`                 | `DATETIME`        | DateTime picker|
+| `timestamp` | Timestamp         | `atualizado=timestamp`               | `TIMESTAMP`       | DateTime picker|
+| `time`      | Hora              | `horario=time`                       | `TIME`            | Input text     |
+| `json`      | Dados JSON        | `metadata=json`                      | `JSON`            | Textarea       |
+| `enum`      | Lista de valores  | `status=enum,ativo\|inativo\|pendente` | `ENUM`          | Select         |
+| `foreign`   | Chave estrangeira | `categoria_id=foreign,categories,id` | `BIGINT UNSIGNED` | Autocomplete   |
+
+#### Tipos Especiais (Detectados pelo Nome do Campo)
+
+O sistema detecta automaticamente campos especiais baseado no **nome do campo** e aplica máscaras e validações apropriadas:
+
+| Padrão Nome | Tipo Gerado  | Frontend       | Validação         | Exemplo                    |
+| ----------- | ------------ | -------------- | ----------------- | -------------------------- |
+| `*cpf*`     | CPF          | Input com máscara CPF | Validador CPF  | `cpf=string,14,req`        |
+| `*cnpj*`    | CNPJ         | Input com máscara CNPJ| Validador CNPJ | `cnpj=string,18,req`       |
+| `*telefone*`| Telefone     | Input com máscara Tel | Validador Tel  | `telefone=string,15,req`   |
+| `*celular*` | Celular      | Input com máscara Cel | Validador Tel  | `celular=string,15,req`    |
+| `*mobile*`  | Celular      | Input com máscara Cel | Validador Tel  | `mobile=string,15,req`     |
+| `*preco*`   | Moeda        | Input currency | Numérico          | `preco=decimal,10,2,req`   |
+| `*valor*`   | Moeda        | Input currency | Numérico          | `valor_total=decimal,10,2` |
+| `*price*`   | Moeda        | Input currency | Numérico          | `price=decimal,10,2`       |
+| `*image*`   | Imagem       | Image uploader | Arquivo imagem    | `imagem=string,255`        |
+| `*foto*`    | Imagem       | Image uploader | Arquivo imagem    | `foto_perfil=string,255`   |
+| `*avatar*`  | Imagem       | Image uploader | Arquivo imagem    | `avatar=string,255`        |
+| `*file*`    | Arquivo      | File uploader  | Arquivo genérico  | `arquivo=string,255`       |
+| `*arquivo*` | Arquivo      | File uploader  | Arquivo genérico  | `arquivo_pdf=string,255`   |
+| `*document*`| Arquivo      | File uploader  | Arquivo genérico  | `document=string,255`      |
+| `*email*`   | Email        | Input email    | Validador email   | `email=string,100,req`     |
 
 ### 🏷️ Modificadores
 
-
-| Modificador | Descrição                   | Exemplo                   |
-| ----------- | ----------------------------- | ------------------------- |
+| Modificador | Descrição                    | Exemplo                   |
+| ----------- | ---------------------------- | ------------------------- |
 | `req`       | Campo obrigatório (NOT NULL) | `nome=string,100,req`     |
-| `null`      | Campo opcional (NULL)         | `descricao=text,null`     |
+| `null`      | Campo opcional (NULL)        | `descricao=text,null`     |
 | `unique`    | Valor único                  | `email=string,100,unique` |
 | `index`     | Criar índice                 | `codigo=string,50,index`  |
 
@@ -269,10 +295,16 @@ campo=tipo[,tamanho][,precisao][,modificadores]
 nome=string,100,req;preco=decimal,8,2,req;ativo=boolean
 ```
 
+#### Produto com Status (Enum)
+
+```
+nome=string,100,req;preco=decimal,10,2,req;status=enum,disponivel|esgotado|em_breve,req;descricao=text
+```
+
 #### Usuário Completo
 
 ```
-nome=string,100,req;email=string,100,req,unique;senha=string,255,req;nascimento=date,null;perfil_id=foreign,perfis,id
+nome=string,100,req;email=string,100,req,unique;senha=string,255,req;cpf=string,14,req;telefone=string,15;nascimento=date,null;perfil_id=foreign,perfis,id
 ```
 
 #### Post de Blog
@@ -280,6 +312,194 @@ nome=string,100,req;email=string,100,req,unique;senha=string,255,req;nascimento=
 ```
 titulo=string,200,req;conteudo=text,req;publicado=boolean;autor_id=foreign,users,id;categoria_id=foreign,categorias,id
 ```
+
+#### Cadastro de Pessoa Física
+
+```
+nome_completo=string,150,req;cpf=string,14,req,unique;email=string,100,req;telefone=string,15;celular=string,15,req;nascimento=date,req;foto_perfil=string,255
+```
+
+#### Produto E-commerce Completo
+
+```
+nome=string,200,req;descricao=text,req;preco=decimal,10,2,req;preco_promocional=decimal,10,2;estoque=integer,req;status=enum,ativo|inativo|esgotado,req;imagem_principal=string,255;categoria_id=foreign,categories,id
+```
+
+#### Pedido com Múltiplos Status
+
+```
+numero_pedido=string,50,req,unique;cliente_id=foreign,clients,id,req;valor_total=decimal,10,2,req;status=enum,pendente|processando|enviado|entregue|cancelado,req;data_pedido=datetime,req
+```
+
+#### Documento com Upload
+
+```
+titulo=string,200,req;descricao=text;arquivo_pdf=string,255,req;data_upload=datetime,req;categoria=enum,contrato|nota_fiscal|recibo|outros,req;usuario_id=foreign,users,id
+```
+
+---
+
+## 🎨 Detalhamento de Tipos de Campo
+
+### 📊 Campo Enum - Lista de Valores Predefinidos
+
+O campo `enum` permite criar campos com opções predefinidas, gerando automaticamente um **select dropdown** no frontend.
+
+#### Sintaxe
+
+```
+campo=enum,opcao1|opcao2|opcao3[,modificadores]
+```
+
+#### Características
+
+- **Backend**: Cria validação `in:opcao1,opcao2,opcao3`
+- **Frontend**: Gera componente `AppSelect` com as opções
+- **Separador**: Use `|` (pipe) para separar os valores
+- **Case Sensitive**: Os valores são sensíveis a maiúsculas/minúsculas
+
+#### Exemplos de Uso
+
+**Status de Produto**
+```
+status=enum,ativo|inativo|esgotado,req
+```
+
+**Prioridade de Tarefa**
+```
+prioridade=enum,baixa|média|alta|crítica,req
+```
+
+**Tipo de Pessoa**
+```
+tipo_pessoa=enum,física|jurídica,req
+```
+
+**Forma de Pagamento**
+```
+forma_pagamento=enum,dinheiro|cartão_crédito|cartão_débito|pix|boleto,req
+```
+
+**Estado Civil**
+```
+estado_civil=enum,solteiro|casado|divorciado|viúvo
+```
+
+#### Exemplo Completo em JSON
+
+```json
+{
+    "domain": "Orders",
+    "model": "Order",
+    "schema": "numero_pedido=string,50,req;cliente_id=foreign,clients,id;valor_total=decimal,10,2,req;status=enum,pendente|processando|enviado|entregue|cancelado,req;forma_pagamento=enum,dinheiro|cartão|pix|boleto,req;data_pedido=datetime,req",
+    "foreignKeys": [
+        {
+            "localKey": "cliente_id",
+            "foreignTable": "clients",
+            "foreignKey": "id",
+            "displayField": "nome"
+        }
+    ],
+    "force": true
+}
+```
+
+#### Validação Gerada
+
+No backend, o sistema gera automaticamente:
+
+```php
+'status' => ['required', 'in:pendente,processando,enviado,entregue,cancelado']
+```
+
+#### Frontend Gerado
+
+```vue
+<AppSelect
+  v-model="data.status"
+  label="Status"
+  placeholder="Selecione o status"
+  :items="[
+    { title: 'pendente', value: 'pendente' },
+    { title: 'processando', value: 'processando' },
+    { title: 'enviado', value: 'enviado' },
+    { title: 'entregue', value: 'entregue' },
+    { title: 'cancelado', value: 'cancelado' }
+  ]"
+  :rules="[rules.requiredValidator]"
+/>
+```
+
+### 💰 Campos Monetários (Currency)
+
+Campos detectados como valores monetários recebem formatação especial:
+
+**Nomes detectados**: `preco`, `valor`, `price`, `cost`, `custo`
+**Tipos**: `decimal`, `float`, `double`
+
+```
+preco=decimal,10,2,req
+valor_total=decimal,10,2
+preco_promocional=decimal,10,2
+```
+
+**Frontend**: Input com máscara de moeda (R$ 0.000,00)
+
+### 📱 Campos com Máscara
+
+#### CPF
+```
+cpf=string,14,req
+cpf_responsavel=string,14
+```
+**Máscara**: 000.000.000-00
+**Validação**: Validador de CPF
+
+#### CNPJ
+```
+cnpj=string,18,req
+cnpj_empresa=string,18
+```
+**Máscara**: 00.000.000/0000-00
+**Validação**: Validador de CNPJ
+
+#### Telefone/Celular
+```
+telefone=string,15
+celular=string,15,req
+telefone_comercial=string,15
+```
+**Máscara**: (00) 0000-0000 ou (00) 00000-0000
+**Validação**: Formato de telefone brasileiro
+
+### 📁 Campos de Upload
+
+#### Imagem
+```
+foto_perfil=string,255
+imagem_principal=string,255
+avatar=string,255
+```
+**Frontend**: Image uploader com preview
+**Validação**: Tipos de arquivo de imagem (jpg, png, gif, etc.)
+
+#### Arquivo Genérico
+```
+arquivo_pdf=string,255
+documento=string,255
+file_anexo=string,255
+```
+**Frontend**: File uploader
+**Validação**: Qualquer tipo de arquivo
+
+### 🔗 Campos de Relacionamento (Foreign Keys)
+
+```
+categoria_id=foreign,categories,id
+usuario_id=foreign,users,id
+```
+**Frontend**: Autocomplete com busca
+**Backend**: Validação de existência na tabela relacionada
 
 ---
 
@@ -320,8 +540,8 @@ Os relacionamentos são definidos em duas partes:
 
 O sistema automaticamente configura relacionamentos nos dois sentidos:
 
-- **belongsTo**: No model filho
-- **hasMany**: No model pai
+-   **belongsTo**: No model filho
+-   **hasMany**: No model pai
 
 ---
 
@@ -400,9 +620,7 @@ Estrutura do log:
         "app/Domains/Products/Models/Product.php",
         "database/migrations/2024_01_15_103000_create_products_table.php"
     ],
-    "files_updated": [
-        "routes/web.php"
-    ],
+    "files_updated": ["routes/web.php"],
     "frontend_files": [
         "resources/frontend/src/domains/products/types/Product.ts"
     ]
@@ -411,9 +629,9 @@ Estrutura do log:
 
 ### ⚠️ Cuidados com Rollback
 
-- Sempre fazer backup antes de executar rollback
-- Verificar se não há dados importantes nas tabelas
-- Rollback remove arquivos permanentemente
+-   Sempre fazer backup antes de executar rollback
+-   Verificar se não há dados importantes nas tabelas
+-   Rollback remove arquivos permanentemente
 
 ---
 
@@ -578,18 +796,18 @@ php artisan route:clear
 
 #### Padrões Recomendados
 
-- **Domínios**: PascalCase plural (`Products`, `Users`, `Orders`)
-- **Models**: PascalCase singular (`Product`, `User`, `Order`)
-- **Campos**: snake_case (`nome_completo`, `data_nascimento`)
-- **Tabelas**: snake_case plural (`products`, `users`, `orders`)
+-   **Domínios**: PascalCase plural (`Products`, `Users`, `Orders`)
+-   **Models**: PascalCase singular (`Product`, `User`, `Order`)
+-   **Campos**: snake_case (`nome_completo`, `data_nascimento`)
+-   **Tabelas**: snake_case plural (`products`, `users`, `orders`)
 
 #### Exemplos
 
 ```json
 {
-    "domain": "UserManagement",      // ✅ Correto
-    "model": "User",                 // ✅ Correto
-    "schema": "nome_completo=string,100,req"  // ✅ Correto
+    "domain": "UserManagement", // ✅ Correto
+    "model": "User", // ✅ Correto
+    "schema": "nome_completo=string,100,req" // ✅ Correto
 }
 ```
 
@@ -615,28 +833,28 @@ app/Domains/
 
 #### Foreign Keys
 
-- Sempre definir relacionamentos completos
-- Usar `ON DELETE CASCADE` quando apropriado
-- Validar integridade referencial
+-   Sempre definir relacionamentos completos
+-   Usar `ON DELETE CASCADE` quando apropriado
+-   Validar integridade referencial
 
 #### Validações
 
-- Usar `req` para campos obrigatórios
-- Implementar `unique` quando necessário
-- Definir tamanhos apropriados para strings
+-   Usar `req` para campos obrigatórios
+-   Implementar `unique` quando necessário
+-   Definir tamanhos apropriados para strings
 
 ### ⚡ Performance
 
 #### Índices
 
-- Adicionar `index` em campos de busca frequente
-- Foreign keys automaticamente recebem índices
-- Considerar índices compostos para consultas complexas
+-   Adicionar `index` em campos de busca frequente
+-   Foreign keys automaticamente recebem índices
+-   Considerar índices compostos para consultas complexas
 
 #### Paginação
 
-- Frontend gerado inclui paginação automática
-- Configurar limites apropriados no backend
+-   Frontend gerado inclui paginação automática
+-   Configurar limites apropriados no backend
 
 ---
 
@@ -668,9 +886,9 @@ php artisan vendor:publish --tag=crud-generator-stubs
 
 O sistema suporta múltiplas linguagens:
 
-- Labels automáticos baseados em nomes de campos
-- Mensagens de validação traduzidas
-- Documentação em português
+-   Labels automáticos baseados em nomes de campos
+-   Mensagens de validação traduzidas
+-   Documentação em português
 
 ---
 
@@ -680,9 +898,9 @@ O sistema suporta múltiplas linguagens:
 
 Os logs ficam em:
 
-- **Aplicação**: `storage/logs/laravel.log`
-- **Rollback**: `storage/framework/rollback/rollback_log.json`
-- **Geração**: Output do comando
+-   **Aplicação**: `storage/logs/laravel.log`
+-   **Rollback**: `storage/framework/rollback/rollback_log.json`
+-   **Geração**: Output do comando
 
 ### 📈 Métricas
 
@@ -705,9 +923,9 @@ find resources/frontend -name "*.vue" | wc -l
 
 ### 📞 Canais de Suporte
 
-- **Issues**: Reportar bugs e solicitar features
-- **Documentação**: Este manual e README.md
-- **Código**: Análise do código fonte
+-   **Issues**: Reportar bugs e solicitar features
+-   **Documentação**: Este manual e README.md
+-   **Código**: Análise do código fonte
 
 ### 🤝 Contribuição
 
@@ -723,15 +941,78 @@ Para contribuir:
 
 Funcionalidades planejadas:
 
-- [ ]  Suporte a relacionamentos many-to-many
-- [ ]  Geração de APIs REST
-- [ ]  Integração com GraphQL
-- [ ]  Testes automatizados mais abrangentes
-- [ ]  Interface web para configuração
+-   [ ] Suporte a relacionamentos many-to-many
+-   [ ] Geração de APIs REST
+-   [ ] Integração com GraphQL
+-   [ ] Testes automatizados mais abrangentes
+-   [ ] Interface web para configuração
 
 ---
 
-## 📄 Licença
+## � Referência Rápida de Campos
+
+### Sintaxe Geral
+
+```
+campo=tipo[,opção1][,opção2][,modificadores]
+```
+
+### Tabela de Referência Rápida
+
+| Tipo Campo         | Sintaxe Exemplo                              | Frontend        | Validação Backend            |
+| ------------------ | -------------------------------------------- | --------------- | ---------------------------- |
+| Texto curto        | `nome=string,100,req`                        | Input text      | required, string, max:100    |
+| Texto longo        | `descricao=text`                             | Textarea        | string                       |
+| Número inteiro     | `quantidade=integer,req`                     | Input number    | required, integer            |
+| Número decimal     | `preco=decimal,10,2,req`                     | Input currency  | required, numeric            |
+| Booleano           | `ativo=boolean`                              | Switch          | boolean                      |
+| Data               | `nascimento=date,req`                        | Date picker     | required, date               |
+| Data e hora        | `agendamento=datetime,req`                   | DateTime picker | required, date_format        |
+| Lista valores      | `status=enum,ativo\|inativo,req`             | Select          | required, in:ativo,inativo   |
+| CPF                | `cpf=string,14,req`                          | Input + máscara | required, string, cpf        |
+| CNPJ               | `cnpj=string,18,req`                         | Input + máscara | required, string, cnpj       |
+| Telefone           | `telefone=string,15`                         | Input + máscara | string, telefone             |
+| Email              | `email=string,100,req,unique`                | Input email     | required, email, unique      |
+| Moeda              | `valor_total=decimal,10,2,req`               | Input currency  | required, numeric            |
+| Imagem             | `foto_perfil=string,255`                     | Image upload    | string, max:255              |
+| Arquivo            | `documento=string,255`                       | File upload     | string, max:255              |
+| Chave estrangeira  | `categoria_id=foreign,categories,id`         | Autocomplete    | integer, exists:categories,id|
+| JSON               | `metadata=json`                              | Textarea        | json                         |
+
+### Modificadores Disponíveis
+
+| Modificador | Uso             | Descrição                          |
+| ----------- | --------------- | ---------------------------------- |
+| `req`       | `,req`          | Campo obrigatório                  |
+| `null`      | `,null`         | Permite valor NULL                 |
+| `unique`    | `,unique`       | Valor deve ser único na tabela     |
+| `index`     | `,index`        | Cria índice no banco de dados      |
+
+### Exemplos de Schemas Completos
+
+#### CRUD Simples
+```bash
+php artisan generate:crud --config='{"domain":"Products","model":"Product","schema":"nome=string,100,req;preco=decimal,10,2,req;ativo=boolean","force":true}'
+```
+
+#### CRUD com Enum
+```bash
+php artisan generate:crud --config='{"domain":"Orders","model":"Order","schema":"numero=string,50,req;status=enum,pendente|pago|enviado|entregue,req;valor=decimal,10,2,req","force":true}'
+```
+
+#### CRUD com Relacionamento
+```bash
+php artisan generate:crud --config='{"domain":"Products","model":"Product","schema":"nome=string,100,req;preco=decimal,10,2,req;categoria_id=foreign,categories,id","foreignKeys":[{"localKey":"categoria_id","foreignTable":"categories","foreignKey":"id","displayField":"nome"}],"force":true}'
+```
+
+#### CRUD Completo com Múltiplos Tipos
+```bash
+php artisan generate:crud --config='{"domain":"Clients","model":"Client","schema":"nome=string,150,req;email=string,100,req,unique;cpf=string,14,req,unique;telefone=string,15;celular=string,15,req;nascimento=date;foto=string,255;ativo=boolean;tipo=enum,pessoa_física|pessoa_jurídica,req","force":true}'
+```
+
+---
+
+## �📄 Licença
 
 MIT License - Veja o arquivo LICENSE para detalhes.
 

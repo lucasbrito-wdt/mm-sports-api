@@ -1,0 +1,7 @@
+<AppSelect
+  v-model="{{vModel}}"
+  label={{label}}
+  placeholder={{placeholder}}
+  :items="{{items}}"
+  :rules="[{{rules}}]"
+/>

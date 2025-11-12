@@ -1,1 +1,1 @@
-<CDFTiptapEditor v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" :rules="[{{rules}}]" {{maxlength}}/>
+<AppTextarea v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" :rules="[{{rules}}]" {{maxlength}}/>

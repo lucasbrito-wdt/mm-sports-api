@@ -1,4 +1,12 @@
 <?php
+/*
+ * @Autor: Lucas Brito
+ * @Data: 2025-11-07 20:44:02
+ * @Último Editor: Lucas Brito
+ * @Última Hora da Edição: 2025-11-12 15:22:32
+ * @Caminho do Arquivo: \cdf_generator\app\Console\Commands\Generator\Validators\SchemaValidator.php
+ * @Descrição:
+ */
 
 namespace App\Console\Commands\Generator\Validators;
 
@@ -74,7 +82,7 @@ class SchemaValidator
             'bigInteger',
             'boolean',
             'date',
-            'dateTime',
+            'datetime',
             'decimal',
             'float',
             'text',

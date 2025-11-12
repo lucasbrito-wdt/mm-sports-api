@@ -101,16 +101,53 @@ class ControllerGenerator
 
         foreach ($columns as $column) {
             @[$field, $params] = explode('=', $column);
-            @[$type, $option1, $option2, $required] = explode(',', $params ?? '');
 
-            if (!$field || !$type) {
+            if (!$field || !$params) {
                 continue;
+            }
+
+            // Separar parâmetros por vírgula
+            $paramParts = explode(',', $params);
+            $type = trim($paramParts[0]);
+
+            if (!$type) {
+                continue;
+            }
+
+            // Inicializar variáveis
+            $required = false;
+            $option1 = null;
+            $option2 = null;
+            $enumValues = [];
+
+            // Processar parâmetros
+            for ($i = 1; $i < count($paramParts); $i++) {
+                $part = trim($paramParts[$i]);
+
+                // Verificar se é 'req'
+                if (strtolower($part) === 'req') {
+                    $required = true;
+                    continue;
+                }
+
+                // Verificar se contém valores de enum (com |)
+                if (str_contains($part, '|')) {
+                    $enumValues = array_map('trim', explode('|', $part));
+                    continue;
+                }
+
+                // Caso contrário, é uma opção
+                if (!$option1) {
+                    $option1 = $part;
+                } elseif (!$option2) {
+                    $option2 = $part;
+                }
             }
 
             $ruleArray = [];
 
             // Verificar se é obrigatório
-            if ($required === 'req') {
+            if ($required) {
                 $ruleArray[] = 'required';
             } else {
                 $ruleArray[] = 'nullable';
@@ -142,11 +179,8 @@ class ControllerGenerator
                     break;
 
                 case 'date':
-                    $ruleArray[] = 'date';
-                    break;
-
                 case 'datetime':
-                    $ruleArray[] = 'date_format:Y-m-d H:i:s';
+                    $ruleArray[] = 'date';
                     break;
 
                 case 'decimal':
@@ -159,7 +193,7 @@ class ControllerGenerator
                     break;
 
                 case 'enum':
-                    $options = explode('|', $option1);
+                    $options = !empty($enumValues) ? $enumValues : explode('|', $option1);
                     $ruleArray[] = 'in:' . implode(',', $options);
                     break;
 

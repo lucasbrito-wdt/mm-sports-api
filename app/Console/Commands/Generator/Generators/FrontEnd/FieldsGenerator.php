@@ -30,6 +30,7 @@ class FieldsGenerator
         'image' => 'imageinput',
         'file' => 'fileinput',
         'checkbox' => 'checkbox',
+        'enum' => 'select',
     ];
 
     public function __construct(
@@ -132,6 +133,16 @@ class FieldsGenerator
             $variables['{{fieldType}}'] = strtolower($fieldConfig['type']) === 'datetime' ? 'datetime-local' : 'date';
         } else {
             $variables['{{fieldType}}'] = 'text'; // Valor padrão para outros tipos
+        }
+
+        // Adicionar items para campos enum (select)
+        if (isset($fieldConfig['type']) && strtolower($fieldConfig['type']) === 'enum' && isset($fieldConfig['enum_values'])) {
+            $enumItems = array_map(function ($value) {
+                return "{ title: '{$value}', value: '{$value}' }";
+            }, $fieldConfig['enum_values']);
+            $variables['{{items}}'] = '[' . implode(', ', $enumItems) . ']';
+        } else {
+            $variables['{{items}}'] = '[]';
         }
 
         return $variables;

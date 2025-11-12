@@ -143,8 +143,9 @@ Route::group([
 ], function () {
 
     // {$modelName} Routes
-    Route::apiResource('" . Str::kebab(Str::plural($modelName)) . "', {$controllerName}::class);{$fkRoutes}
-
+    Route::apiResource('" . Str::kebab(Str::plural($modelName)) . "', {$controllerName}::class);
+    Route::post('" . Str::kebab(Str::plural($modelName)) . "/search', [{$controllerName}::class, 'search']);
+    {$fkRoutes}
 });
 ";
 
