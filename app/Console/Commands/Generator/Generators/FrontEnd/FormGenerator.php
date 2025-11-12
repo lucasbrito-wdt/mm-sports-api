@@ -300,7 +300,7 @@ class FormGenerator
         foreach ($foreignKeys as $fk) {
             $dataName = Str::lower("{$fk['domain']}");
             $itemsName = Str::plural(Str::lower("{$fk['domain']}"));
-            $loading = Str::lower("{$fk['domain']}");
+            $loading = Str::plural(Str::lower("{$fk['domain']}"));
             $rules = $fk['required'] ?? false ? '[rules.requiredValidator]' : '[]';
 
             $inputs[] = <<<EOT
@@ -487,7 +487,7 @@ class FormGenerator
         $foreignKeys = $config['foreignKeys'] ?? [];
 
         // Verificar se há relacionamentos OneToMany
-        $hasOneToMany = false;
+        $hasOneToMany = false
         foreach ($foreignKeys as $fk) {
             if (($fk['relation'] ?? '') === 'hasMany') {
                 $hasOneToMany = true;

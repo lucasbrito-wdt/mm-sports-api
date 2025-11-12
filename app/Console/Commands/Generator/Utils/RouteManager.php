@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Generator\Utils;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RouteManager
@@ -41,6 +42,12 @@ class RouteManager
 
             return true;
         } catch (\Exception $e) {
+            // Log do erro para debug
+            Log::error('Erro ao gerar rotas para domínio: ' . $domainName, [
+                'model' => $modelName,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
     }
@@ -119,7 +126,7 @@ class RouteManager
         $fkRoutes = '';
         if (! empty($foreignKeys)) {
             foreach ($foreignKeys as $fk) {
-                $fkRoutes .= "\n    " . $this->createFKRoutes($domainName, $fk['model'], $controllerName);
+                $fkRoutes .= "\n    " . $this->createFKRoutes($domainName, $modelName, $fk['model'], $controllerName);
             }
         }
 
@@ -188,7 +195,7 @@ Route::group([
         $fkRoutes = '';
         if (! empty($foreignKeys)) {
             foreach ($foreignKeys as $fk) {
-                $fkRoutes .= "\n    " . $this->createFKRoutes($domainName, $fk['model'], $controllerName);
+                $fkRoutes .= "\n    " . $this->createFKRoutes($domainName, $modelName, $fk['model'], $controllerName);
             }
         }
 
@@ -395,19 +402,20 @@ Route::group([
     /**
      * Cria rotas para Foreign Keys (FK).
      *
-     * @param  string  $routeName  Nome da rota (baseado no modelo atual)
+     * @param  string  $domainName  Nome do domínio
+     * @param  string  $modelName  Nome do modelo atual
      * @param  string  $fkName  Nome da FK (modelo relacionado)
      * @param  string  $controllerName  Nome completo do controller
      * @return string Código da rota FK
      */
-    public function createFKRoutes(string $domainName, string $fkName, string $controllerName): string
+    public function createFKRoutes(string $domainName, string $modelName, string $fkName, string $controllerName): string
     {
-        $domainName = Str::kebab(Str::plural($modelName));
+        $modelNamePlural = Str::kebab(Str::plural($modelName));
         $fkNameCamel = Str::camel("listar{$fkName}");
-        $fkNameSlug = Str::slug($fkName);
+        $fkNameSlug = Str::kebab($fkName);
         $fkRouteTemplate = "Route::get('%s/listar/%s', [%s::class, '%s']);";
 
-        return sprintf($fkRouteTemplate, $domainName, $fkNameSlug, $controllerName, $fkNameCamel);
+        return sprintf($fkRouteTemplate, $modelNamePlural, $fkNameSlug, $controllerName, $fkNameCamel);
     }
 
     /**
@@ -434,6 +442,6 @@ Route::group([
     {
         $methodName = Str::camel("listar{$fkName}");
 
-        return "public function {$methodName}(\$options) {\n\t\t\$data = {$namespaceFk}::query()->paginate(\$options['per_page'] ?? 15);\n\t\treturn [\n\t\t\t'data' => \$data->items(),\n\t\t\t'total' => \$data->total(),\n\t\t\t'page' => \$data->currentPage(),\n\t\t];\n\t}";
+        return "public function {$methodName}(\$options) {\n\t\t\$data = {$namespaceFk}::query()->paginate(\$options['per_page'] ?? 15);\n\t\treturn $data->items();\n\t}";
     }
 }
