@@ -238,12 +238,22 @@ class FormGenerator
                 continue;
             }
 
+            if ($option1 === 'req') {
+                $required = true;
+                $option1 = null;
+            }
+
+            if ($option2 === 'req') {
+                $required = true;
+                $option2 = null;
+            }
+
             $fieldData = [
                 'name' => $field,
                 'type' => $type ?? 'string',
                 'option1' => $option1 ?? null,
                 'option2' => $option2 ?? null,
-                'required' => $required === 'req',
+                'required' => $required ?? false,
                 'label' => Str::title(str_replace('_', ' ', $field)),
             ];
 

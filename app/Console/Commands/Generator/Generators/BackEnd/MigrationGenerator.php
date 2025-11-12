@@ -68,6 +68,16 @@ class MigrationGenerator
                 continue;
             }
 
+            if ($option1 === 'req') {
+                $required = true;
+                $option1 = null;
+            }
+
+            if ($option2 === 'req') {
+                $required = true;
+                $option2 = null;
+            }
+
             $migrationField = $this->buildMigrationField($field, $type, $option1, $option2, $required);
             if ($migrationField) {
                 $fields[] = $migrationField;
@@ -114,11 +124,8 @@ class MigrationGenerator
         return implode("\n            ", $fields);
     }
 
-    private function buildMigrationField(string $field, string $type, ?string $option1, ?string $option2, ?string $required): ?string
+    private function buildMigrationField(string $field, string $type, ?string $option1, ?string $option2, ?bool $required): ?string
     {
-        // Determina se o campo é obrigatório baseado no parâmetro 'req'
-        $isRequired = $required === 'req';
-
         switch (strtolower($type)) {
             case 'string':
                 $length = $option1 ?: 255;
@@ -177,7 +184,7 @@ class MigrationGenerator
         }
 
         // Só adiciona ->nullable() se o campo NÃO for obrigatório
-        if (!$isRequired) {
+        if (!$required) {
             $result .= "->nullable()";
         }
 
