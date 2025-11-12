@@ -896,8 +896,7 @@ class CrudGenerator extends Command
     private function runEslint(): void
     {
         try {
-            $frontEndDir = str_replace('\\src', '', $this->getFrontendPath());
-            dd($frontEndDir);
+            $frontEndDir = str_replace('/src', '', $this->getFrontendPath());
             $command = sprintf(
                 'cd %s && %s %s --fix',
                 $frontEndDir,
