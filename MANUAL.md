@@ -238,45 +238,45 @@ campo=tipo[,tamanho][,precisao][,modificadores]
 
 #### Tipos Básicos
 
-| Tipo        | Descrição         | Exemplo                              | MySQL Equivalente | Frontend       |
-| ----------- | ----------------- | ------------------------------------ | ----------------- | -------------- |
-| `string`    | Texto curto       | `nome=string,100`                    | `VARCHAR(100)`    | Input text     |
-| `text`      | Texto longo       | `descricao=text`                     | `TEXT`            | Textarea       |
-| `integer`   | Número inteiro    | `idade=integer`                      | `INT`             | Input number   |
-| `bigInteger`| Número grande     | `contador=bigInteger`                | `BIGINT`          | Input number   |
-| `decimal`   | Número decimal    | `preco=decimal,8,2`                  | `DECIMAL(8,2)`    | Input currency |
-| `float`     | Número flutuante  | `taxa=float`                         | `FLOAT`           | Input currency |
-| `double`    | Decimal duplo     | `valor=double`                       | `DOUBLE`          | Input currency |
-| `boolean`   | Verdadeiro/Falso  | `ativo=boolean`                      | `BOOLEAN`         | Switch         |
-| `date`      | Data              | `nascimento=date`                    | `DATE`            | Date picker    |
-| `datetime`  | Data e hora       | `criado_em=datetime`                 | `DATETIME`        | DateTime picker|
-| `timestamp` | Timestamp         | `atualizado=timestamp`               | `TIMESTAMP`       | DateTime picker|
-| `time`      | Hora              | `horario=time`                       | `TIME`            | Input text     |
-| `json`      | Dados JSON        | `metadata=json`                      | `JSON`            | Textarea       |
-| `enum`      | Lista de valores  | `status=enum,ativo\|inativo\|pendente` | `ENUM`          | Select         |
-| `foreign`   | Chave estrangeira | `categoria_id=foreign,categories,id` | `BIGINT UNSIGNED` | Autocomplete   |
+| Tipo         | Descrição         | Exemplo                                | MySQL Equivalente | Frontend        |
+| ------------ | ----------------- | -------------------------------------- | ----------------- | --------------- |
+| `string`     | Texto curto       | `nome=string,100`                      | `VARCHAR(100)`    | Input text      |
+| `text`       | Texto longo       | `descricao=text`                       | `TEXT`            | Textarea        |
+| `integer`    | Número inteiro    | `idade=integer`                        | `INT`             | Input number    |
+| `bigInteger` | Número grande     | `contador=bigInteger`                  | `BIGINT`          | Input number    |
+| `decimal`    | Número decimal    | `preco=decimal,8,2`                    | `DECIMAL(8,2)`    | Input currency  |
+| `float`      | Número flutuante  | `taxa=float`                           | `FLOAT`           | Input currency  |
+| `double`     | Decimal duplo     | `valor=double`                         | `DOUBLE`          | Input currency  |
+| `boolean`    | Verdadeiro/Falso  | `ativo=boolean`                        | `BOOLEAN`         | Switch          |
+| `date`       | Data              | `nascimento=date`                      | `DATE`            | Date picker     |
+| `datetime`   | Data e hora       | `criado_em=datetime`                   | `DATETIME`        | DateTime picker |
+| `timestamp`  | Timestamp         | `atualizado=timestamp`                 | `TIMESTAMP`       | DateTime picker |
+| `time`       | Hora              | `horario=time`                         | `TIME`            | Input text      |
+| `json`       | Dados JSON        | `metadata=json`                        | `JSON`            | Textarea        |
+| `enum`       | Lista de valores  | `status=enum,ativo\|inativo\|pendente` | `ENUM`            | Select          |
+| `foreign`    | Chave estrangeira | `categoria_id=foreign,categories,id`   | `BIGINT UNSIGNED` | Autocomplete    |
 
 #### Tipos Especiais (Detectados pelo Nome do Campo)
 
 O sistema detecta automaticamente campos especiais baseado no **nome do campo** e aplica máscaras e validações apropriadas:
 
-| Padrão Nome | Tipo Gerado  | Frontend       | Validação         | Exemplo                    |
-| ----------- | ------------ | -------------- | ----------------- | -------------------------- |
-| `*cpf*`     | CPF          | Input com máscara CPF | Validador CPF  | `cpf=string,14,req`        |
-| `*cnpj*`    | CNPJ         | Input com máscara CNPJ| Validador CNPJ | `cnpj=string,18,req`       |
-| `*telefone*`| Telefone     | Input com máscara Tel | Validador Tel  | `telefone=string,15,req`   |
-| `*celular*` | Celular      | Input com máscara Cel | Validador Tel  | `celular=string,15,req`    |
-| `*mobile*`  | Celular      | Input com máscara Cel | Validador Tel  | `mobile=string,15,req`     |
-| `*preco*`   | Moeda        | Input currency | Numérico          | `preco=decimal,10,2,req`   |
-| `*valor*`   | Moeda        | Input currency | Numérico          | `valor_total=decimal,10,2` |
-| `*price*`   | Moeda        | Input currency | Numérico          | `price=decimal,10,2`       |
-| `*image*`   | Imagem       | Image uploader | Arquivo imagem    | `imagem=string,255`        |
-| `*foto*`    | Imagem       | Image uploader | Arquivo imagem    | `foto_perfil=string,255`   |
-| `*avatar*`  | Imagem       | Image uploader | Arquivo imagem    | `avatar=string,255`        |
-| `*file*`    | Arquivo      | File uploader  | Arquivo genérico  | `arquivo=string,255`       |
-| `*arquivo*` | Arquivo      | File uploader  | Arquivo genérico  | `arquivo_pdf=string,255`   |
-| `*document*`| Arquivo      | File uploader  | Arquivo genérico  | `document=string,255`      |
-| `*email*`   | Email        | Input email    | Validador email   | `email=string,100,req`     |
+| Padrão Nome  | Tipo Gerado | Frontend               | Validação        | Exemplo                    |
+| ------------ | ----------- | ---------------------- | ---------------- | -------------------------- |
+| `*cpf*`      | CPF         | Input com máscara CPF  | Validador CPF    | `cpf=string,14,req`        |
+| `*cnpj*`     | CNPJ        | Input com máscara CNPJ | Validador CNPJ   | `cnpj=string,18,req`       |
+| `*telefone*` | Telefone    | Input com máscara Tel  | Validador Tel    | `telefone=string,15,req`   |
+| `*celular*`  | Celular     | Input com máscara Cel  | Validador Tel    | `celular=string,15,req`    |
+| `*mobile*`   | Celular     | Input com máscara Cel  | Validador Tel    | `mobile=string,15,req`     |
+| `*preco*`    | Moeda       | Input currency         | Numérico         | `preco=decimal,10,2,req`   |
+| `*valor*`    | Moeda       | Input currency         | Numérico         | `valor_total=decimal,10,2` |
+| `*price*`    | Moeda       | Input currency         | Numérico         | `price=decimal,10,2`       |
+| `*image*`    | Imagem      | Image uploader         | Arquivo imagem   | `imagem=string,255`        |
+| `*foto*`     | Imagem      | Image uploader         | Arquivo imagem   | `foto_perfil=string,255`   |
+| `*avatar*`   | Imagem      | Image uploader         | Arquivo imagem   | `avatar=string,255`        |
+| `*file*`     | Arquivo     | File uploader          | Arquivo genérico | `arquivo=string,255`       |
+| `*arquivo*`  | Arquivo     | File uploader          | Arquivo genérico | `arquivo_pdf=string,255`   |
+| `*document*` | Arquivo     | File uploader          | Arquivo genérico | `document=string,255`      |
+| `*email*`    | Email       | Input email            | Validador email  | `email=string,100,req`     |
 
 ### 🏷️ Modificadores
 
@@ -353,34 +353,39 @@ campo=enum,opcao1|opcao2|opcao3[,modificadores]
 
 #### Características
 
-- **Backend**: Cria validação `in:opcao1,opcao2,opcao3`
-- **Frontend**: Gera componente `AppSelect` com as opções
-- **Separador**: Use `|` (pipe) para separar os valores
-- **Case Sensitive**: Os valores são sensíveis a maiúsculas/minúsculas
+-   **Backend**: Cria validação `in:opcao1,opcao2,opcao3`
+-   **Frontend**: Gera componente `AppSelect` com as opções
+-   **Separador**: Use `|` (pipe) para separar os valores
+-   **Case Sensitive**: Os valores são sensíveis a maiúsculas/minúsculas
 
 #### Exemplos de Uso
 
 **Status de Produto**
+
 ```
 status=enum,ativo|inativo|esgotado,req
 ```
 
 **Prioridade de Tarefa**
+
 ```
 prioridade=enum,baixa|média|alta|crítica,req
 ```
 
 **Tipo de Pessoa**
+
 ```
 tipo_pessoa=enum,física|jurídica,req
 ```
 
 **Forma de Pagamento**
+
 ```
 forma_pagamento=enum,dinheiro|cartão_crédito|cartão_débito|pix|boleto,req
 ```
 
 **Estado Civil**
+
 ```
 estado_civil=enum,solteiro|casado|divorciado|viúvo
 ```
@@ -416,17 +421,17 @@ No backend, o sistema gera automaticamente:
 
 ```vue
 <AppSelect
-  v-model="data.status"
-  label="Status"
-  placeholder="Selecione o status"
-  :items="[
-    { title: 'pendente', value: 'pendente' },
-    { title: 'processando', value: 'processando' },
-    { title: 'enviado', value: 'enviado' },
-    { title: 'entregue', value: 'entregue' },
-    { title: 'cancelado', value: 'cancelado' }
-  ]"
-  :rules="[rules.requiredValidator]"
+    v-model="data.status"
+    label="Status"
+    placeholder="Selecione o status"
+    :items="[
+        { title: 'pendente', value: 'pendente' },
+        { title: 'processando', value: 'processando' },
+        { title: 'enviado', value: 'enviado' },
+        { title: 'entregue', value: 'entregue' },
+        { title: 'cancelado', value: 'cancelado' },
+    ]"
+    :rules="[rules.requiredValidator]"
 />
 ```
 
@@ -448,47 +453,57 @@ preco_promocional=decimal,10,2
 ### 📱 Campos com Máscara
 
 #### CPF
+
 ```
 cpf=string,14,req
 cpf_responsavel=string,14
 ```
+
 **Máscara**: 000.000.000-00
 **Validação**: Validador de CPF
 
 #### CNPJ
+
 ```
 cnpj=string,18,req
 cnpj_empresa=string,18
 ```
+
 **Máscara**: 00.000.000/0000-00
 **Validação**: Validador de CNPJ
 
 #### Telefone/Celular
+
 ```
 telefone=string,15
 celular=string,15,req
 telefone_comercial=string,15
 ```
+
 **Máscara**: (00) 0000-0000 ou (00) 00000-0000
 **Validação**: Formato de telefone brasileiro
 
 ### 📁 Campos de Upload
 
 #### Imagem
+
 ```
 foto_perfil=string,255
 imagem_principal=string,255
 avatar=string,255
 ```
+
 **Frontend**: Image uploader com preview
 **Validação**: Tipos de arquivo de imagem (jpg, png, gif, etc.)
 
 #### Arquivo Genérico
+
 ```
 arquivo_pdf=string,255
 documento=string,255
 file_anexo=string,255
 ```
+
 **Frontend**: File uploader
 **Validação**: Qualquer tipo de arquivo
 
@@ -498,6 +513,7 @@ file_anexo=string,255
 categoria_id=foreign,categories,id
 usuario_id=foreign,users,id
 ```
+
 **Frontend**: Autocomplete com busca
 **Backend**: Validação de existência na tabela relacionada
 
@@ -959,53 +975,57 @@ campo=tipo[,opção1][,opção2][,modificadores]
 
 ### Tabela de Referência Rápida
 
-| Tipo Campo         | Sintaxe Exemplo                              | Frontend        | Validação Backend            |
-| ------------------ | -------------------------------------------- | --------------- | ---------------------------- |
-| Texto curto        | `nome=string,100,req`                        | Input text      | required, string, max:100    |
-| Texto longo        | `descricao=text`                             | Textarea        | string                       |
-| Número inteiro     | `quantidade=integer,req`                     | Input number    | required, integer            |
-| Número decimal     | `preco=decimal,10,2,req`                     | Input currency  | required, numeric            |
-| Booleano           | `ativo=boolean`                              | Switch          | boolean                      |
-| Data               | `nascimento=date,req`                        | Date picker     | required, date               |
-| Data e hora        | `agendamento=datetime,req`                   | DateTime picker | required, date_format        |
-| Lista valores      | `status=enum,ativo\|inativo,req`             | Select          | required, in:ativo,inativo   |
-| CPF                | `cpf=string,14,req`                          | Input + máscara | required, string, cpf        |
-| CNPJ               | `cnpj=string,18,req`                         | Input + máscara | required, string, cnpj       |
-| Telefone           | `telefone=string,15`                         | Input + máscara | string, telefone             |
-| Email              | `email=string,100,req,unique`                | Input email     | required, email, unique      |
-| Moeda              | `valor_total=decimal,10,2,req`               | Input currency  | required, numeric            |
-| Imagem             | `foto_perfil=string,255`                     | Image upload    | string, max:255              |
-| Arquivo            | `documento=string,255`                       | File upload     | string, max:255              |
-| Chave estrangeira  | `categoria_id=foreign,categories,id`         | Autocomplete    | integer, exists:categories,id|
-| JSON               | `metadata=json`                              | Textarea        | json                         |
+| Tipo Campo        | Sintaxe Exemplo                      | Frontend        | Validação Backend             |
+| ----------------- | ------------------------------------ | --------------- | ----------------------------- |
+| Texto curto       | `nome=string,100,req`                | Input text      | required, string, max:100     |
+| Texto longo       | `descricao=text`                     | Textarea        | string                        |
+| Número inteiro    | `quantidade=integer,req`             | Input number    | required, integer             |
+| Número decimal    | `preco=decimal,10,2,req`             | Input currency  | required, numeric             |
+| Booleano          | `ativo=boolean`                      | Switch          | boolean                       |
+| Data              | `nascimento=date,req`                | Date picker     | required, date                |
+| Data e hora       | `agendamento=datetime,req`           | DateTime picker | required, date_format         |
+| Lista valores     | `status=enum,ativo\|inativo,req`     | Select          | required, in:ativo,inativo    |
+| CPF               | `cpf=string,14,req`                  | Input + máscara | required, string, cpf         |
+| CNPJ              | `cnpj=string,18,req`                 | Input + máscara | required, string, cnpj        |
+| Telefone          | `telefone=string,15`                 | Input + máscara | string, telefone              |
+| Email             | `email=string,100,req,unique`        | Input email     | required, email, unique       |
+| Moeda             | `valor_total=decimal,10,2,req`       | Input currency  | required, numeric             |
+| Imagem            | `foto_perfil=string,255`             | Image upload    | string, max:255               |
+| Arquivo           | `documento=string,255`               | File upload     | string, max:255               |
+| Chave estrangeira | `categoria_id=foreign,categories,id` | Autocomplete    | integer, exists:categories,id |
+| JSON              | `metadata=json`                      | Textarea        | json                          |
 
 ### Modificadores Disponíveis
 
-| Modificador | Uso             | Descrição                          |
-| ----------- | --------------- | ---------------------------------- |
-| `req`       | `,req`          | Campo obrigatório                  |
-| `null`      | `,null`         | Permite valor NULL                 |
-| `unique`    | `,unique`       | Valor deve ser único na tabela     |
-| `index`     | `,index`        | Cria índice no banco de dados      |
+| Modificador | Uso       | Descrição                      |
+| ----------- | --------- | ------------------------------ |
+| `req`       | `,req`    | Campo obrigatório              |
+| `null`      | `,null`   | Permite valor NULL             |
+| `unique`    | `,unique` | Valor deve ser único na tabela |
+| `index`     | `,index`  | Cria índice no banco de dados  |
 
 ### Exemplos de Schemas Completos
 
 #### CRUD Simples
+
 ```bash
 php artisan generate:crud --config='{"domain":"Products","model":"Product","schema":"nome=string,100,req;preco=decimal,10,2,req;ativo=boolean","force":true}'
 ```
 
 #### CRUD com Enum
+
 ```bash
 php artisan generate:crud --config='{"domain":"Orders","model":"Order","schema":"numero=string,50,req;status=enum,pendente|pago|enviado|entregue,req;valor=decimal,10,2,req","force":true}'
 ```
 
 #### CRUD com Relacionamento
+
 ```bash
 php artisan generate:crud --config='{"domain":"Products","model":"Product","schema":"nome=string,100,req;preco=decimal,10,2,req;categoria_id=foreign,categories,id","foreignKeys":[{"localKey":"categoria_id","foreignTable":"categories","foreignKey":"id","displayField":"nome"}],"force":true}'
 ```
 
 #### CRUD Completo com Múltiplos Tipos
+
 ```bash
 php artisan generate:crud --config='{"domain":"Clients","model":"Client","schema":"nome=string,150,req;email=string,100,req,unique;cpf=string,14,req,unique;telefone=string,15;celular=string,15,req;nascimento=date;foto=string,255;ativo=boolean;tipo=enum,pessoa_física|pessoa_jurídica,req","force":true}'
 ```
