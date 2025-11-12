@@ -487,7 +487,8 @@ class FormGenerator
         $foreignKeys = $config['foreignKeys'] ?? [];
 
         // Verificar se há relacionamentos OneToMany
-        $hasOneToMany = false
+        $hasOneToMany = false;
+
         foreach ($foreignKeys as $fk) {
             if (($fk['relation'] ?? '') === 'hasMany') {
                 $hasOneToMany = true;
