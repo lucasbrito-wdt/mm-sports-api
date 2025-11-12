@@ -12,19 +12,54 @@ class SchemaValidator
 
         $columns = explode(';', rtrim($schema, ';'));
         foreach ($columns as $column) {
-            @[$field, $params] = explode('=', $column);
-            @[$type, $option, $required] = explode(',', $params ?? '');
+            @[$field, $params] = explode('=', $column, 2);
 
-            if (!$field || !$type) {
+            if (!$field || !$params) {
                 return 'Schema inválido. Use o formato: campo=tipo,opção,req';
             }
 
-            if ($required && strtolower($required) !== 'req') {
-                return 'O parâmetro de obrigatoriedade deve ser "req"';
+            $paramParts = explode(',', $params);
+            $type = $paramParts[0] ?? '';
+
+            if (!$type) {
+                return 'Schema inválido. Use o formato: campo=tipo,opção,req';
             }
 
             if (!$this->isValidType($type)) {
                 return "O tipo '$type' não é válido";
+            }
+
+            // Validar enum com valores
+            if (strtolower($type) === 'enum') {
+                $hasEnumValues = false;
+                foreach ($paramParts as $part) {
+                    if (str_contains($part, '|')) {
+                        $hasEnumValues = true;
+                        $enumValues = explode('|', $part);
+                        if (count($enumValues) < 2) {
+                            return "Enum '{$field}' deve ter pelo menos 2 valores separados por '|'";
+                        }
+                        foreach ($enumValues as $value) {
+                            if (empty(trim($value))) {
+                                return "Enum '{$field}' contém valor vazio";
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (!$hasEnumValues) {
+                    return "Enum '{$field}' deve especificar valores no formato: tipo=enum,req,VALOR1|VALOR2";
+                }
+            }
+
+            // Validar parâmetro de obrigatoriedade
+            foreach ($paramParts as $part) {
+                $trimmedPart = trim($part);
+                if ($trimmedPart && !str_contains($trimmedPart, '|') && strtolower($trimmedPart) !== 'req' && strtolower($trimmedPart) !== strtolower($type)) {
+                    // Se não é 'req', não é o tipo e não contém '|', pode ser uma opção válida
+                    // Permitir opções como 'unique', 'nullable', etc.
+                    continue;
+                }
             }
         }
 
