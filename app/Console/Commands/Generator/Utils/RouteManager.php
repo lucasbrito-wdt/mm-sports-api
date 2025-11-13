@@ -442,6 +442,6 @@ Route::group([
     {
         $methodName = Str::camel("listar{$fkName}");
 
-        return "public function {$methodName}(\$options) {\n\t\t\$data = {$namespaceFk}::query()->paginate(\$options['per_page'] ?? 15);\n\t\treturn $data->items();\n\t}";
+        return "public function {$methodName}(\$options) {\n\t\t\$data = {$namespaceFk}::query()->paginate(\$options['per_page'] ?? 15);\n\t\treturn \$data->items();\n\t}";
     }
 }

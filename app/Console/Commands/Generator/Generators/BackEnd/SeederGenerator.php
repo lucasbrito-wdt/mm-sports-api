@@ -71,7 +71,7 @@ class SeederGenerator
                 $additionalImports .= "use App\\Domains\\{$fkDomain}\\Models\\{$fkModel};\n";
 
                 // Para relacionamentos belongsTo, pode ser necessário criar registros relacionados primeiro
-                if ($fk['relation'] === 'belongsTo') {
+                if ($fk['relation'] === 'belongsTo' || $fk['relation'] === 'hasMany' || $fk['relation'] === 'hasOne') {
                     $additionalSeeders .= "        // Garantir que existam {$fkModel}s para o relacionamento\n";
                     $additionalSeeders .= "        // \$this->call(\\App\\Domains\\{$fkDomain}\\Seeders\\{$fkModel}Seeder::class);\n\n";
                 }

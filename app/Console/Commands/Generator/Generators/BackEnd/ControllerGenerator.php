@@ -208,7 +208,7 @@ class ControllerGenerator
         // Adicionar regras para chaves estrangeiras
         if (!empty($config['foreignKeys'])) {
             foreach ($config['foreignKeys'] as $fk) {
-                if ($fk['relation'] === 'belongsTo') {
+                if ($fk['relation'] === 'belongsTo' || $fk['relation'] === 'hasMany' || $fk['relation'] === 'hasOne') {
                     $foreignKey = Str::snake($fk['model']) . '_id';
                     $ruleArray = [];
 
@@ -218,7 +218,7 @@ class ControllerGenerator
                         $ruleArray[] = 'nullable';
                     }
 
-                    $ruleArray[] = 'integer';
+                    $ruleArray[] = 'ulid';
                     $ruleArray[] = 'exists:' . Str::snake(Str::plural($fk['model'])) . ',id';
 
                     $rules[] = "'{$foreignKey}' => [" . implode(', ', array_map(fn($rule) => "'{$rule}'", $ruleArray)) . "],";

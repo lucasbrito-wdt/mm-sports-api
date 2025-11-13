@@ -95,7 +95,7 @@ class MigrationGenerator
                     $fk['required'] = true; // Default to required if not specified
                 }
 
-                if ($fk['relation'] === 'belongsTo') {
+                if ($fk['relation'] === 'belongsTo' || $fk['relation'] === 'hasMany' || $fk['relation'] === 'hasOne') {
                     $foreignKey = Str::snake($fk['model']) . '_id';
                     $line = "\$table->foreignUlid('{$foreignKey}')";
 
