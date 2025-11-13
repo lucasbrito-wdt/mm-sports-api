@@ -922,7 +922,7 @@ class CrudGenerator extends Command
     {
         $domainsDir = [];
         foreach (collect(scandir(app_path() . '/Domains')) as $dir) {
-            if (! in_array($dir, ['.', '..', 'Shared', 'Auth', 'ACL'])) {
+            if (! in_array($dir, ['.', '..', 'Shared', 'ACL'])) {
                 $domainsDir[] = $dir;
             }
         }
