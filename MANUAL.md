@@ -43,7 +43,15 @@ php artisan generate:crud --help
 php artisan generate:crud [opções]
 ```
 
+### 🗄️ Comando de Geração a partir de DBML
+
+```bash
+php artisan generate:domains-from-dbml {arquivo.dbml} [opções]
+```
+
 ### 🎛️ Opções Disponíveis
+
+#### Para `generate:crud`
 
 | Opção             | Descrição                            | Exemplo                |
 | ----------------- | ------------------------------------ | ---------------------- |
@@ -55,6 +63,16 @@ php artisan generate:crud [opções]
 | `--config=`       | Usa configuração via JSON            | `--config=config.json` |
 | `--domain`        | Gera um domínio completo             | `--domain`             |
 | `--rollback`      | Desfaz alterações anteriores         | `--rollback`           |
+
+#### Para `generate:domains-from-dbml`
+
+| Opção              | Descrição                                      | Exemplo                      |
+| ------------------ | ---------------------------------------------- | ---------------------------- |
+| `--domain-prefix=` | Adiciona prefixo aos nomes dos domínios       | `--domain-prefix=Admin`      |
+| `--force`          | Força criação mesmo se domínio já existir      | `--force`                    |
+| `--skip-frontend`  | Não gera arquivos frontend                     | `--skip-frontend`            |
+| `--skip-backend`   | Não gera arquivos backend                      | `--skip-backend`             |
+| `--dry-run`        | Apenas mostra a ordem sem executar             | `--dry-run`                  |
 
 ---
 
@@ -137,7 +155,162 @@ Esta configuração gerará:
 -   **Frontend Completo**: Components, Stores, Services para todos os modelos
 -   **Rotas Organizadas**: Todas as rotas no mesmo arquivo de domínio
 
-### 3. ⚡ Geração via Configuração JSON
+### 3. 🗄️ Geração de Domínios a partir de DBML
+
+**NOVA FUNCIONALIDADE**: Gere múltiplos domínios automaticamente a partir de um arquivo DBML, respeitando a ordem correta das dependências de chaves estrangeiras.
+
+#### 📋 Comando
+
+```bash
+php artisan generate:domains-from-dbml {arquivo.dbml} [opções]
+```
+
+#### 🎛️ Opções Disponíveis
+
+| Opção              | Descrição                                      | Exemplo                      |
+| ------------------ | ---------------------------------------------- | ---------------------------- |
+| `--domain-prefix=` | Adiciona prefixo aos nomes dos domínios       | `--domain-prefix=Admin`      |
+| `--force`          | Força criação mesmo se domínio já existir      | `--force`                    |
+| `--skip-frontend`  | Não gera arquivos frontend                     | `--skip-frontend`            |
+| `--skip-backend`   | Não gera arquivos backend                      | `--skip-backend`             |
+| `--dry-run`        | Apenas mostra a ordem sem executar             | `--dry-run`                  |
+
+#### 🔍 Como Funciona
+
+O comando analisa o arquivo DBML e:
+
+1. **Análise**: Identifica todas as tabelas e seus campos
+2. **Dependências**: Mapeia chaves estrangeiras e relacionamentos
+3. **Ordenação**: Ordena as tabelas usando topological sort:
+   - **FASE 1**: Tabelas sem chaves estrangeiras (criadas primeiro)
+   - **FASE 2**: Tabelas com chaves estrangeiras (respeitando dependências)
+4. **Geração**: Cria os domínios na ordem correta automaticamente
+
+#### 📝 Exemplos de Uso
+
+**1. Análise sem execução (dry-run)**
+
+```bash
+php artisan generate:domains-from-dbml iva.dbml --dry-run
+```
+
+**2. Geração completa**
+
+```bash
+php artisan generate:domains-from-dbml iva.dbml --force
+```
+
+**3. Apenas backend**
+
+```bash
+php artisan generate:domains-from-dbml iva.dbml --skip-frontend --force
+```
+
+**4. Com prefixo nos domínios**
+
+```bash
+php artisan generate:domains-from-dbml iva.dbml --domain-prefix=Admin --force
+```
+
+#### 📄 Formato DBML Suportado
+
+O comando suporta o formato padrão DBML:
+
+```dbml
+Table companies {
+  id integer [primary key]
+  name varchar
+  document varchar
+  email varchar
+  logo varchar
+}
+
+Table users {
+  id integer [primary key]
+  name varchar
+  email varchar
+  company_id integer [ref: > companies.id]
+}
+
+Table posts {
+  id integer [primary key]
+  title varchar
+  content text
+  user_id integer [ref: > users.id]
+}
+```
+
+#### 🔄 Ordem de Criação Automática
+
+O comando sempre cria os domínios na seguinte ordem:
+
+**FASE 1: Domínios SEM chaves estrangeiras**
+- Companies
+- Courses
+- Modules
+- Classes
+- Ebooks
+- Products
+- Roles
+- Permissions
+
+**FASE 2: Domínios COM chaves estrangeiras**
+- Users (depende de: Companies)
+- Posts (depende de: Users)
+- CoursesStudents (depende de: Users, Courses)
+- RoleHasUsers (depende de: Users, Roles)
+- RoleHasPermissions (depende de: Roles, Permissions)
+
+#### ✅ Validações Automáticas
+
+- ✅ Detecta ciclos de dependência
+- ✅ Valida existência de tabelas referenciadas
+- ✅ Verifica se arquivo DBML existe
+- ✅ Confirma antes de executar (exceto com `--force`)
+- ✅ Exibe ordem de criação antes de executar
+
+#### 🎯 Exemplo Completo
+
+```bash
+$ php artisan generate:domains-from-dbml iva.dbml --dry-run
+
+🚀 Gerador de Domínios a partir de DBML
+
+📖 Analisando arquivo DBML...
+🔀 Ordenando tabelas por dependências...
+
+📋 Ordem de criação dos domínios:
+
+FASE 1: Domínios SEM chaves estrangeiras
+───────────────────────────────────────────────────
+  1. Companie (companies)
+  2. Cours (courses)
+  3. Module (modules)
+  4. Classe (classes)
+  5. Ebook (ebooks)
+  6. Product (products)
+  7. Role (roles)
+  8. Permissiom (permissions)
+
+FASE 2: Domínios COM chaves estrangeiras
+───────────────────────────────────────────────────
+  9. User (users) → depende de: companies
+  10. CoursesStudent (courses_students) → depende de: users, courses
+  11. RoleHasUser (role_has_users) → depende de: users, roles
+  12. RoleHasPermissiom (role_has_permissions) → depende de: roles, permissions
+  13. Post (posts) → depende de: users
+
+✅ Modo dry-run: nenhuma alteração foi feita.
+```
+
+#### 💡 Dicas de Uso
+
+- Use `--dry-run` primeiro para verificar a ordem antes de executar
+- O comando detecta automaticamente tipos de campos (varchar, text, integer, etc.)
+- Chaves estrangeiras são automaticamente marcadas como obrigatórias (`req`)
+- Tabelas pivot (many-to-many) são criadas na FASE 2 após suas dependências
+
+### 4. ⚡ Geração via Configuração JSON
 
 Para automação, use arquivos de configuração:
 

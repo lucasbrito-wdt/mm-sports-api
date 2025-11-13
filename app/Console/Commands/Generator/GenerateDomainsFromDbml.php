@@ -356,7 +356,8 @@ class GenerateDomainsFromDbml extends Command
                 $foreignKeys[] = [
                     'domain' => $domainName,
                     'model' => $foreignModel,
-                    'relation' => 'belongsTo'
+                    'relation' => 'belongsTo',
+                    'required' => true // Foreign keys são obrigatórias por padrão
                 ];
             }
         }
