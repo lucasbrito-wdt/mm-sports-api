@@ -1,1 +1,0 @@
-<CDFTiptapEditor v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" :rules="[{{rules}}]"/>

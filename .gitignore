@@ -21,6 +21,12 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-/app/Console/Commands/GeradorAntigo
 /config.json
-/storage/framework/rollback
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets

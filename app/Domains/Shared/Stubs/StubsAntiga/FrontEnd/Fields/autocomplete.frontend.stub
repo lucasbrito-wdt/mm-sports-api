@@ -1,1 +1,0 @@
-<CDFAutoComplete v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" :rules="[{{rules}}]" :items="[]" item-value="" item-title="" :return-object="false"/>
