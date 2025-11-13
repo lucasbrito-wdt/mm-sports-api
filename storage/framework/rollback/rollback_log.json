@@ -1,0 +1,543 @@
+{
+    "version": "2.0",
+    "created_at": "2025-11-13T13:14:07.815540Z",
+    "user": "luqui",
+    "sessions": [
+        {
+            "id": "6915da6a641fc",
+            "timestamp": "2025-11-13T13:17:30.410135Z",
+            "action": "generate_domain",
+            "domain": "Produto",
+            "user": "luqui",
+            "created": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Models/Produto.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Migrations/2025_11_13_131730_create_produtos_table.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Services/ProdutoService.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Controllers/ProdutoController.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Requests/ProdutoRequest.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\routes/domains/produto.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Seeders/ProdutoSeeder.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/types.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/stores/useprodutoStore.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/services/produtoService.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/components/ProdutoForm.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/cadastrar/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/editar/[id].vue"
+            ],
+            "modified": [
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\routes/api.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/f4f293a40aac008fef96ae804fc524ad_api.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\database\\seeders/DatabaseSeeder.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/4468e0694a0962ba316b7fc940348fef_DatabaseSeeder.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\config\\permission_list.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/73759fd622a0b29db8e606b78b6135b5_permission_list.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/navigation/vertical/index.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/1aaeac2bcda721cb9a4c0fd03004e924_index.ts"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/configs/abilityConfig.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/bab5bf55f5214351b2549382dcd1f3b7_abilityConfig.ts"
+                }
+            ],
+            "directories": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Controllers",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Enums",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Migrations",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Models",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Requests",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Seeders",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/cadastrar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/editar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/components",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/stores"
+            ],
+            "metadata": {
+                "php_version": "8.4.14",
+                "laravel_version": "12.24.0",
+                "is_domain_generator": true,
+                "skip_frontend": false,
+                "skip_backend": false,
+                "with_tests": false,
+                "with_docs": false
+            },
+            "status": "completed",
+            "completed_at": "2025-11-13T13:17:35.086056Z"
+        },
+        {
+            "id": "6915da9f0fe2f",
+            "timestamp": "2025-11-13T13:18:23.065091Z",
+            "action": "generate_domain",
+            "domain": "Empresa",
+            "user": "luqui",
+            "created": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Models/Empresa.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Migrations/2025_11_13_131823_create_empresas_table.php"
+            ],
+            "modified": [],
+            "directories": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Controllers",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Enums",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Migrations",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Models",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Requests",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Seeders",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Services"
+            ],
+            "metadata": {
+                "php_version": "8.4.14",
+                "laravel_version": "12.24.0",
+                "is_domain_generator": true,
+                "skip_frontend": false,
+                "skip_backend": false,
+                "with_tests": false,
+                "with_docs": false
+            },
+            "status": "active"
+        },
+        {
+            "id": "6915dd5fda8a7",
+            "timestamp": "2025-11-13T13:30:07.895165Z",
+            "action": "generate_domain",
+            "domain": "Fornecedor",
+            "user": "luqui",
+            "created": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Models/Fornecedor.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Migrations/2025_11_13_133008_create_fornecedores_table.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Services/FornecedorService.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Controllers/FornecedorController.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Requests/FornecedorRequest.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\routes/domains/fornecedor.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Seeders/FornecedorSeeder.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/types.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/stores/usefornecedorStore.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/services/fornecedorService.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/components/FornecedorForm.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/cadastrar/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/editar/[id].vue"
+            ],
+            "modified": [
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\routes/api.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/f4f293a40aac008fef96ae804fc524ad_api.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\database\\seeders/DatabaseSeeder.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/4468e0694a0962ba316b7fc940348fef_DatabaseSeeder.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\config\\permission_list.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/73759fd622a0b29db8e606b78b6135b5_permission_list.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/navigation/vertical/index.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/1aaeac2bcda721cb9a4c0fd03004e924_index.ts"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/configs/abilityConfig.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/bab5bf55f5214351b2549382dcd1f3b7_abilityConfig.ts"
+                }
+            ],
+            "directories": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Controllers",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Enums",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Migrations",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Models",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Requests",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Seeders",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Fornecedor/Services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/cadastrar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/editar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/components",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/fornecedor/stores"
+            ],
+            "metadata": {
+                "php_version": "8.4.14",
+                "laravel_version": "12.24.0",
+                "is_domain_generator": true,
+                "skip_frontend": false,
+                "skip_backend": false,
+                "with_tests": false,
+                "with_docs": false
+            },
+            "status": "completed",
+            "completed_at": "2025-11-13T13:30:12.935053Z"
+        },
+        {
+            "id": "6915dd9165591",
+            "timestamp": "2025-11-13T13:30:57.415141Z",
+            "action": "generate_domain",
+            "domain": "Empresa",
+            "user": "luqui",
+            "created": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Models/Empresa.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Migrations/2025_11_13_133057_create_empresas_table.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Services/EmpresaService.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Controllers/EmpresaController.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Requests/EmpresaRequest.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\routes/domains/empresa.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Seeders/EmpresaSeeder.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/types.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/stores/useempresaStore.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/services/empresaService.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/components/EmpresaForm.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/cadastrar/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/editar/[id].vue"
+            ],
+            "modified": [
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\routes/api.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/f4f293a40aac008fef96ae804fc524ad_api.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\database\\seeders/DatabaseSeeder.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/4468e0694a0962ba316b7fc940348fef_DatabaseSeeder.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\config\\permission_list.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/73759fd622a0b29db8e606b78b6135b5_permission_list.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/navigation/vertical/index.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/1aaeac2bcda721cb9a4c0fd03004e924_index.ts"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/configs/abilityConfig.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/bab5bf55f5214351b2549382dcd1f3b7_abilityConfig.ts"
+                }
+            ],
+            "directories": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Controllers",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Enums",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Migrations",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Models",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Requests",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Seeders",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Empresa/Services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/cadastrar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/editar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/components",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/empresa/stores"
+            ],
+            "metadata": {
+                "php_version": "8.4.14",
+                "laravel_version": "12.24.0",
+                "is_domain_generator": true,
+                "skip_frontend": false,
+                "skip_backend": false,
+                "with_tests": false,
+                "with_docs": false
+            },
+            "status": "completed",
+            "completed_at": "2025-11-13T13:31:02.113892Z"
+        },
+        {
+            "id": "6915ddaa67eab",
+            "timestamp": "2025-11-13T13:31:22.425666Z",
+            "action": "generate_domain",
+            "domain": "Diretor",
+            "user": "luqui",
+            "created": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Models/Diretor.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Migrations/2025_11_13_133122_create_diretores_table.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Services/DiretorService.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Controllers/DiretorController.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Requests/DiretorRequest.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\routes/domains/diretor.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Seeders/DiretorSeeder.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/types.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/stores/usediretorStore.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/services/diretorService.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/components/DiretorForm.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/cadastrar/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/editar/[id].vue"
+            ],
+            "modified": [
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\routes/api.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/f4f293a40aac008fef96ae804fc524ad_api.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\database\\seeders/DatabaseSeeder.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/4468e0694a0962ba316b7fc940348fef_DatabaseSeeder.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\config\\permission_list.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/73759fd622a0b29db8e606b78b6135b5_permission_list.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/navigation/vertical/index.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/1aaeac2bcda721cb9a4c0fd03004e924_index.ts"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/configs/abilityConfig.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/bab5bf55f5214351b2549382dcd1f3b7_abilityConfig.ts"
+                }
+            ],
+            "directories": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Controllers",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Enums",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Migrations",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Models",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Requests",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Seeders",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Diretor/Services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/cadastrar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/editar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/components",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/diretor/stores"
+            ],
+            "metadata": {
+                "php_version": "8.4.14",
+                "laravel_version": "12.24.0",
+                "is_domain_generator": true,
+                "skip_frontend": false,
+                "skip_backend": false,
+                "with_tests": false,
+                "with_docs": false
+            },
+            "status": "completed",
+            "completed_at": "2025-11-13T13:31:27.125278Z"
+        },
+        {
+            "id": "6915de2fe7753",
+            "timestamp": "2025-11-13T13:33:35.948070Z",
+            "action": "generate_domain",
+            "domain": "Produto",
+            "user": "luqui",
+            "created": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Models/Produto.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Migrations/2025_11_13_133336_create_produtos_table.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Services/ProdutoService.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Controllers/ProdutoController.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Requests/ProdutoRequest.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\routes/domains/produto.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Seeders/ProdutoSeeder.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/types.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/stores/useprodutoStore.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/services/produtoService.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/components/ProdutoForm.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/cadastrar/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/editar/[id].vue"
+            ],
+            "modified": [
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\routes/api.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/f4f293a40aac008fef96ae804fc524ad_api.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\database\\seeders/DatabaseSeeder.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/4468e0694a0962ba316b7fc940348fef_DatabaseSeeder.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\config\\permission_list.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/73759fd622a0b29db8e606b78b6135b5_permission_list.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/navigation/vertical/index.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/1aaeac2bcda721cb9a4c0fd03004e924_index.ts"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/configs/abilityConfig.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/bab5bf55f5214351b2549382dcd1f3b7_abilityConfig.ts"
+                }
+            ],
+            "directories": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Controllers",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Enums",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Migrations",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Models",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Requests",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Seeders",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/cadastrar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/editar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/components",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/stores"
+            ],
+            "metadata": {
+                "php_version": "8.4.14",
+                "laravel_version": "12.24.0",
+                "is_domain_generator": true,
+                "skip_frontend": false,
+                "skip_backend": false,
+                "with_tests": false,
+                "with_docs": false
+            },
+            "status": "completed",
+            "completed_at": "2025-11-13T13:33:41.057556Z"
+        },
+        {
+            "id": "6915e3a8df2a5",
+            "timestamp": "2025-11-13T13:56:56.914105Z",
+            "action": "generate_domain",
+            "domain": "Teste",
+            "user": "luqui",
+            "created": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Models/Teste.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Migrations/2025_11_13_135657_create_testes_table.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Services/TesteService.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Controllers/TesteController.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Requests/TesteRequest.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\routes/domains/teste.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Seeders/TesteSeeder.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/types.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/stores/usetesteStore.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/services/testeService.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/components/TesteForm.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/cadastrar/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/editar/[id].vue"
+            ],
+            "modified": [
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\routes/api.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/f4f293a40aac008fef96ae804fc524ad_api.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\database\\seeders/DatabaseSeeder.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/4468e0694a0962ba316b7fc940348fef_DatabaseSeeder.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\config\\permission_list.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/73759fd622a0b29db8e606b78b6135b5_permission_list.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/navigation/vertical/index.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/1aaeac2bcda721cb9a4c0fd03004e924_index.ts"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/configs/abilityConfig.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/bab5bf55f5214351b2549382dcd1f3b7_abilityConfig.ts"
+                }
+            ],
+            "directories": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Controllers",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Enums",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Migrations",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Models",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Requests",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Seeders",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Teste/Services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/cadastrar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/editar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/components",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/teste/stores"
+            ],
+            "metadata": {
+                "php_version": "8.4.14",
+                "laravel_version": "12.24.0",
+                "is_domain_generator": true,
+                "skip_frontend": false,
+                "skip_backend": false,
+                "with_tests": false,
+                "with_docs": false
+            },
+            "status": "completed",
+            "completed_at": "2025-11-13T13:57:01.730876Z"
+        },
+        {
+            "id": "6915e4703626d",
+            "timestamp": "2025-11-13T14:00:16.221825Z",
+            "action": "generate_domain",
+            "domain": "Produto",
+            "user": "luqui",
+            "created": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Models/Produto.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Migrations/2025_11_13_140016_create_produtos_table.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Services/ProdutoService.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Controllers/ProdutoController.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Requests/ProdutoRequest.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\routes/domains/produto.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Seeders/ProdutoSeeder.php",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/types.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/stores/useprodutoStore.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/services/produtoService.ts",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/components/ProdutoForm.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/cadastrar/index.vue",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/editar/[id].vue"
+            ],
+            "modified": [
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\routes/api.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/f4f293a40aac008fef96ae804fc524ad_api.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\database\\seeders/DatabaseSeeder.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/4468e0694a0962ba316b7fc940348fef_DatabaseSeeder.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\config\\permission_list.php",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/73759fd622a0b29db8e606b78b6135b5_permission_list.php"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/navigation/vertical/index.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/1aaeac2bcda721cb9a4c0fd03004e924_index.ts"
+                },
+                {
+                    "file": "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/configs/abilityConfig.ts",
+                    "backup": "H:\\CodifyTech\\backend\\cdf_generator\\storage\\framework/rollback/backups/bab5bf55f5214351b2549382dcd1f3b7_abilityConfig.ts"
+                }
+            ],
+            "directories": [
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Controllers",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Enums",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Migrations",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Models",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Requests",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Seeders",
+                "H:\\CodifyTech\\backend\\cdf_generator\\app\\Domains/Produto/Services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/cadastrar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/editar",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/components",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/services",
+                "H:\\CodifyTech\\backend\\cdf_generator\\/../../frontend/cdf_frontend/src/pages/produto/stores"
+            ],
+            "metadata": {
+                "php_version": "8.4.14",
+                "laravel_version": "12.24.0",
+                "is_domain_generator": true,
+                "skip_frontend": false,
+                "skip_backend": false,
+                "with_tests": false,
+                "with_docs": false
+            },
+            "status": "completed",
+            "completed_at": "2025-11-13T14:00:21.058618Z"
+        }
+    ]
+}
