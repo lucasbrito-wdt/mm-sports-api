@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2|^8.4",
+        "ext-gd": "*",
         "archtechx/enums": "*",
         "coduo/php-humanizer": "^5.0",
         "intervention/image": "*",
@@ -45,14 +46,12 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi",
-            "@php artisan ide-helper:generate",
-            "@php artisan ide-helper:models --write",
-            "@php artisan ide-helper:eloquent",
-            "@php artisan ide-helper:meta"
+            "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "post-update-cmd-dev": [
             "@php artisan ide-helper:generate",
             "@php artisan ide-helper:models --write",
             "@php artisan ide-helper:eloquent",
