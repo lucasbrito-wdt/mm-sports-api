@@ -25,9 +25,6 @@ class UserController extends BaseController
     {
         $data = $request->all();
 
-        if (isset($data['role'])) {
-            $data['role'] = $data['role']['slug'];
-        }
         if (isset($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         }
@@ -39,9 +36,6 @@ class UserController extends BaseController
     {
         $data = $request->all();
 
-        if (isset($data['role'])) {
-            $data['role'] = $data['role']['slug'];
-        }
         if (isset($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         }

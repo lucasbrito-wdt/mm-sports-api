@@ -24,7 +24,7 @@ class UserRequest extends BaseFormRequest
     {
         return [
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'role.slug' => ['required', 'exists:\Domains\ACL\Models\Role,slug'],
+            'role' => ['required', 'exists:\Domains\ACL\Models\Role,slug'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ];
     }
@@ -33,7 +33,7 @@ class UserRequest extends BaseFormRequest
     {
         return [
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $this->request->get('id')],
-            'role.slug' => ['required', 'exists:\Domains\ACL\Models\Role,slug'],
+            'role' => ['required', 'exists:\Domains\ACL\Models\Role,slug'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ];
     }
@@ -46,15 +46,15 @@ class UserRequest extends BaseFormRequest
     public function attributes(): array
     {
         return [
-            'role.slug' => 'cargo',
+            'role' => 'cargo',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'role.slug.required' => 'O cargo é obrigatório',
-            'role.slug.exists' => 'O cargo selecionado é inválido',
+            'role.required' => 'O cargo é obrigatório',
+            'role.exists' => 'O cargo selecionado é inválido',
         ];
     }
 }

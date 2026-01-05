@@ -117,14 +117,8 @@ class User extends Authenticatable implements JWTSubject
         return Attribute::make(
             get: function () {
                 $role = $this->getFirstRole();
-                if ($role) {
-                    return [
-                        'name' => $role['name'] ?? 'N/A',
-                        'slug' => $role['slug'] ?? 'N/A',
-                    ];
-                }
 
-                return null;
+                return $role['slug'] ?? 'N/A';
             },
         );
     }
