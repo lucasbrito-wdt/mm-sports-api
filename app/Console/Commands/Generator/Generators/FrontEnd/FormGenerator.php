@@ -135,7 +135,7 @@ class FormGenerator
 
         // Construir imports para FK
         $imports = $this->buildImports($foreignKeys);
-        
+
         // Construir imports dos componentes Form* baseado nos campos
         $formImports = $this->buildFormComponentImports($schema, $foreignKeys);
 
@@ -311,17 +311,17 @@ class FormGenerator
             $required = $fk['required'] ?? false ? 'required' : '';
 
             $inputs[] = <<<EOT
-    <FormSelect
-      name="{$fieldName}"
-      :label="'{$label}'"
-      placeholder="Selecione {$label}"
-      :options="{$itemsName}"
-      :searchable="true"
-      :disabled="{$storeVar}.loading"
-      option-value="id"
-      option-title="name"
-      {$required}
-    />
+            <FormSelect
+                name="{$fieldName}"
+                :label="'{$label}'"
+                placeholder="Selecione {$label}"
+                :options="{$itemsName}"
+                :searchable="true"
+                :disabled="{$storeVar}.loading"
+                option-value="id"
+                option-title="name"
+                {$required}
+            />
             EOT;
         }
 
@@ -334,10 +334,10 @@ class FormGenerator
     private function buildFormComponentImports(array $schema, array $foreignKeys): string
     {
         $components = [];
-        
+
         foreach ($schema as $fieldConfig) {
             $fieldType = $this->fieldsGenerator->determineFieldType($fieldConfig);
-            
+
             $component = match ($fieldType) {
                 'input', 'cpf', 'cnpj', 'telefone', 'celular', 'currency' => 'FormInput',
                 'textarea' => 'FormTextarea',
@@ -347,21 +347,21 @@ class FormGenerator
                 'date' => 'FormDatePicker',
                 default => null,
             };
-            
+
             if ($component && !in_array($component, $components)) {
                 $components[] = $component;
             }
         }
-        
+
         // Adicionar FormSelect se houver foreign keys
         if (!empty($foreignKeys) && !in_array('FormSelect', $components)) {
             $components[] = 'FormSelect';
         }
-        
+
         if (empty($components)) {
             return 'FormInput';
         }
-        
+
         return implode(', ', $components);
     }
 
@@ -376,7 +376,7 @@ class FormGenerator
             $entityKebab = Str::kebab($fk['model']);
             $imports[] = "import { {$storeName} } from '~/stores/{$entityKebab}'";
         }
-        
+
         return implode("\n", $imports);
     }
 
@@ -388,13 +388,13 @@ class FormGenerator
         if (empty($foreignKeys)) {
             return '';
         }
-        
+
         $logic = [];
-        
+
         foreach ($foreignKeys as $fk) {
             $storeName = 'use' . Str::studly($fk['model']) . 'Store';
             $storeVar = Str::camel($fk['model']) . 'Store';
-            
+
             $logic[] = "// Store de {$fk['model']}";
             $logic[] = "const {$storeVar} = {$storeName}()";
             $logic[] = "";
@@ -404,7 +404,7 @@ class FormGenerator
             $logic[] = "})";
             $logic[] = "";
         }
-        
+
         return implode("\n", $logic);
     }
 
