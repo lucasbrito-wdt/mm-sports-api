@@ -1,1 +1,1 @@
-<CDFTextField v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" :rules="[{{rules}}]" {{maxlength}}/>
+<FormInput name="{{fieldName}}" :label="{{label}}" :placeholder="{{placeholder}}" {{required}} {{maxlength}}/>

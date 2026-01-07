@@ -59,13 +59,13 @@ class FieldsGenerator
 
     public function generateColField(string $field): string
     {
-        return "<VCol cols=\"12\" md=\"6\" lg=\"4\" xl=\"3\">$field</VCol>";
+        return $field;
     }
 
     /**
      * Determina o tipo de campo baseado na configuração
      */
-    private function determineFieldType(array $fieldConfig): string
+    public function determineFieldType(array $fieldConfig): string
     {
         $fieldName = strtolower($fieldConfig['name']);
         $dataType = $fieldConfig['type'] ?? 'string';
@@ -110,35 +110,26 @@ class FieldsGenerator
         $fieldName = $fieldConfig['name'];
         $label = $fieldConfig['label'] ?? Str::title(str_replace('_', ' ', $fieldName));
         $placeholder = $fieldConfig['placeholder'] ?? "Digite {$label}";
-
-        // Construir regras de validação
-        $rules = $this->buildValidationRules($fieldConfig);
+        $required = isset($fieldConfig['required']) && $fieldConfig['required'];
 
         $variables = [
-            '{{vModel}}' => "data.{$fieldName}",
+            '{{fieldName}}' => $fieldName,
             '{{label}}' => "'{$label}'",
             '{{placeholder}}' => "'{$placeholder}'",
-            '{{rules}}' => $rules,
+            '{{required}}' => $required ? 'required' : '',
         ];
 
         // Adicionar atributo maxlength para campos string e text
         if ((isset($fieldConfig['type']) && in_array(strtolower($fieldConfig['type']), ['string', 'text'])) && isset($fieldConfig['max_length'])) {
-            $variables['{{maxlength}}'] = ' maxlength="' . $fieldConfig['max_length'] . '"';
+            $variables['{{maxlength}}'] = ' :maxlength="' . $fieldConfig['max_length'] . '"';
         } else {
             $variables['{{maxlength}}'] = '';
         }
 
-        // Adicionar tipo de campo para campos date/datetime
-        if (isset($fieldConfig['type']) && in_array(strtolower($fieldConfig['type']), ['date', 'datetime'])) {
-            $variables['{{fieldType}}'] = strtolower($fieldConfig['type']) === 'datetime' ? 'datetime-local' : 'date';
-        } else {
-            $variables['{{fieldType}}'] = 'text'; // Valor padrão para outros tipos
-        }
-
-        // Adicionar items para campos enum (select)
+        // Adicionar items para campos enum (select) - formato SelectOption[]
         if (isset($fieldConfig['type']) && strtolower($fieldConfig['type']) === 'enum' && isset($fieldConfig['enum_values'])) {
             $enumItems = array_map(function ($value) {
-                return "{ title: '{$value}', value: '{$value}' }";
+                return "{ value: '{$value}', label: '{$value}' }";
             }, $fieldConfig['enum_values']);
             $variables['{{items}}'] = '[' . implode(', ', $enumItems) . ']';
         } else {
@@ -148,46 +139,6 @@ class FieldsGenerator
         return $variables;
     }
 
-    /**
-     * Constrói as regras de validação para o campo
-     */
-    private function buildValidationRules(array $fieldConfig): string
-    {
-        $rules = [];
-
-        // Regra obrigatória
-        if (isset($fieldConfig['required']) && $fieldConfig['required']) {
-            $rules[] = 'rules.requiredValidator';
-        }
-
-        // Regras específicas por tipo
-        $fieldType = $this->determineFieldType($fieldConfig);
-
-        switch ($fieldType) {
-            case 'cpf':
-                $rules[] = 'rules.cpfValidator';
-                break;
-            case 'cnpj':
-                $rules[] = 'rules.cnpjValidator';
-                break;
-            case 'telefone':
-            case 'celular':
-                $rules[] = 'rules.telefoneValidator';
-                break;
-        }
-
-        // Adicionar validação de tamanho para campos string e text
-        if (isset($fieldConfig['type']) && in_array(strtolower($fieldConfig['type']), ['string', 'text']) && isset($fieldConfig['max_length'])) {
-            $rules[] = "rules.maxLengthValidator(data.{$fieldConfig['name']},{$fieldConfig['max_length']})";
-        }
-
-        // Adicionar validação de tamanho mínimo se especificado
-        if (isset($fieldConfig['min_length'])) {
-            $rules[] = "rules.maxLengthValidator(data.{$fieldConfig['name']},{$fieldConfig['min_length']})";
-        }
-
-        return implode(', ', $rules);
-    }
 
     /**
      * Gera todos os campos para um formulário

@@ -25,11 +25,10 @@ class CriarGenerator
         $frontEndAbsoluteDir = $this->getFrontendPath();
 
         $fullPath = sprintf(
-            '%s/%s/%s/%s',
+            '%s/%s/%s',
             $frontEndAbsoluteDir,
             'pages',
-            Str::snake($domain, '-'),
-            'cadastrar'
+            Str::kebab($modelName)
         );
 
         // Criar diretório se não existir
@@ -37,8 +36,8 @@ class CriarGenerator
             File::makeDirectory($fullPath, 0755, true);
         }
 
-        // Nome do arquivo seguindo padrão antigo
-        $fileName = 'index.vue';
+        // Nome do arquivo: create.vue
+        $fileName = 'create.vue';
         $filePath = $fullPath . '/' . $fileName;
 
         // Verificar se o arquivo já existe
@@ -67,22 +66,29 @@ class CriarGenerator
         $domain = $config['domain'];
 
         // Construir store name
-        $storeName = 'use' . $modelName . 'Store';
-
-        // Construir interface name
-        $interfaceName = "I" . $modelName;
+        $storeName = 'use' . Str::studly($modelName) . 'Store';
+        $storeVar = Str::camel($modelName) . 'Store';
 
         // Construir entity singular var
-        $entitySingularVar = strtolower(Str::singular($domain));
+        $entitySingularVar = Str::kebab($modelName);
+        $entityName = Str::studly($modelName);
+        $entityLabel = ucfirst(Str::snake($modelName, ' '));
 
-        // Construir form name
-        $formName = Str::singular($domain) . 'Form';
+        // Construir form component name
+        $formComponent = Str::studly($modelName) . 'Form';
+
+        // Construir schema name
+        $schemaName = Str::camel($modelName) . 'CreateSchema';
 
         return [
             '{{store_name}}' => $storeName,
-            '{{interface_name}}' => $interfaceName,
-            '{{entity_var}}' => $entitySingularVar,
-            '{{form}}' => $formName,
+            '{{store_var}}' => $storeVar,
+            '{{entity_singular_var}}' => $entitySingularVar,
+            '{{entity_name}}' => $entityName,
+            '{{entity_label}}' => $entityLabel,
+            '{{form_component}}' => $formComponent,
+            '{{schema_name}}' => $schemaName,
+            '{{create_subtitle}}' => "Preencha os dados para criar um novo {$entityLabel}",
         ];
     }
 }

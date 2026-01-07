@@ -1,12 +1,12 @@
-import {{service_name}} from '../services/{{service_name}}'
-import type { {{interface_name}} } from '../types'
+import {{service_name}} from '~/services/{{entity_singular_var}}.service'
+import type { {{interface_name}} } from '~/types/{{entity_singular_var}}'
 {{imports}}
 
 const defaultValue = {
     {{attributes}}
 } as Partial<{{interface_name}}>
 
-export const {{store_name}} = defineStore('{{entity_singular_var}}', {
+export const use{{EntityName}}Store = defineStore('{{entity_singular_var}}', {
   state: () => ({
     _crud: true,
     apiService: {{service_name}},
@@ -16,7 +16,7 @@ export const {{store_name}} = defineStore('{{entity_singular_var}}', {
     {{fk_loadings}}
   }),
   actions: {
-      // 👉 methods
-      {{fk_fetchs}}
+    // 👉 methods
+    {{fk_fetchs}}
   },
 })

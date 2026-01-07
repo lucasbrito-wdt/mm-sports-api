@@ -1,76 +1,21 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import * as rules from '@/validators/cdf-rules'
-{{imports}}
+import { {{form_imports}} } from '~/components/ui/form'
+{{additional_imports}}
 
-import { {{store_name}} } from '../stores/{{store_name}}'
-import type { {{interface_name}} } from '../types'
-
-withDefaults(defineProps<{
+interface Props {
   isEditing?: boolean
-  isHeader?: boolean
-  isActions?: boolean
-  isReadOnly?: boolean
-}>(), {
+}
+
+const props = withDefaults(defineProps<Props>(), {
   isEditing: false,
-  isHeader: true,
-  isActions: true,
-  isReadOnly: false,
 })
 
-const store = {{store_name}}()
-
-const {
-  form,
-  formKey,
-  data,
-  crudLoading,
-  {{fk_refs_state}}
-} = storeToRefs(store)
-
-const {
-  create,
-  update,
-  resetForm,
-  {{fk_methods}}
-} = store
-
-onMounted(() => {
-    // 👉 methods
-   {{methods_fetchs}}
-})
-
-onBeforeRouteLeave(() => {
-  resetForm()
-})
+{{form_logic}}
 </script>
 
 <template>
-  <LayoutForms
-    v-model:form="form"
-    v-model:form-key="formKey"
-    v-model:loading="crudLoading.save"
-    :title="{{form_title}}"
-    :is-editing="isEditing"
-    :is-header="isHeader"
-    :is-actions="isActions"
-    :is-read-only="isReadOnly"
-    :actions="{
-      save: {
-        method: () => create(),
-      },
-      update: {
-        method: () => update(),
-      },
-      reset: {
-        method: () => resetForm(),
-      },
-    }"
-    back="/{{entity_singular_var}}"
-  >
-    <template #content>
-      {{fields}}
-      {{fk_inputs}}
-    </template>
-  </LayoutForms>
+  <div class="space-y-4">
+    {{fields}}
+    {{fk_inputs}}
+  </div>
 </template>

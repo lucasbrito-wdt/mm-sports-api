@@ -1,25 +1,58 @@
 <script setup lang="ts">
-import {{form}} from '../components/{{form}}.vue'
-import { {{store_name}} } from '../stores/{{store_name}}'
+import { storeToRefs } from 'pinia'
+import LayoutForms from '~/components/common/LayoutForms.vue'
+import {{form_component}} from '../components/{{form_component}}.vue'
+import { {{update_schema_name}} } from '~/schemas/{{entity_singular_var}}'
+import { {{store_name}} } from '~/stores/{{entity_singular_var}}'
 
-definePage({
-  meta: {
-    navActiveLink: '{{entity_var}}',
-    action: 'edit',
-    subject: '{{entity_var}}',
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'can'],
+  ability: {
+    action: 'update',
+    subject: '{{entity_name}}',
   },
 })
 
-const store = {{store_name}}()
-const router = useRouter()
+const route = useRoute()
+const {{store_var}} = {{store_name}}()
 
-const {
-  fetchItem,
-} = store
+const {{entity_id}} = computed(() => route.params.id as string)
 
-fetchItem(router.currentRoute.value.params.id)
+// Carregar dados
+onMounted(async () => {
+  await {{store_var}}.fetchOne({{entity_id}}.value)
+})
+
+// Valores iniciais do formulário
+const initialValues = computed(() => {
+  const data = {{store_var}}.data
+  if (!data) {
+    return {{default_values}}
+  }
+  return {{mapped_values}}
+})
+
+useHead({
+  title: 'Editar {{entity_label}}',
+})
 </script>
 
 <template>
-  <{{form}} is-editing />
+  <LayoutForms
+    title="Editar {{entity_label}}"
+    subtitle="{{edit_subtitle}}"
+    back="/{{entity_singular_var}}"
+    :validation-schema="{{update_schema_name}}"
+    :initial-values="initialValues"
+    :store="{{store_var}}"
+    :item-id="{{entity_id}}"
+    redirect-to="/{{entity_singular_var}}"
+    :is-editing="true"
+    :show-progress="true"
+  >
+    <template #content>
+      <{{form_component}} :is-editing="true" />
+    </template>
+  </LayoutForms>
 </template>

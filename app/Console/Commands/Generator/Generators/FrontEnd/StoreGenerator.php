@@ -28,10 +28,8 @@ class StoreGenerator
         $frontEndAbsoluteDir = $this->getFrontendPath();
 
         $fullPath = sprintf(
-            '%s/%s/%s/%s',
+            '%s/%s',
             $frontEndAbsoluteDir,
-            'pages',
-            Str::snake($domain, '-'),
             'stores'
         );
 
@@ -40,10 +38,12 @@ class StoreGenerator
             File::makeDirectory($fullPath, 0755, true);
         }
 
-        // Nome do arquivo seguindo padrão antigo
-        $storeName = 'use'.$modelName.'Store';
-        $fileName = $storeName.'.ts';
+        // Nome do arquivo: {entity}.ts (ex: users.ts)
+        $fileName = Str::kebab($modelName).'.ts';
         $filePath = $fullPath.'/'.$fileName;
+        
+        // Nome do store: use{Entity}Store (ex: useUsersStore)
+        $storeName = 'use'.Str::studly($modelName).'Store';
 
         // Verificar se o arquivo já existe
         if (File::exists($filePath) && ! ($config['force'] ?? false)) {
@@ -88,10 +88,11 @@ class StoreGenerator
 
         return [
             '{{store_name}}' => $storeName,
+            '{{EntityName}}' => Str::studly($modelName),
             '{{service_name}}' => $serviceName,
             '{{interface_name}}' => 'I'.$modelName,
             '{{crud_name}}' => $modelName,
-            '{{entity_singular_var}}' => strtolower(Str::singular($domain)),
+            '{{entity_singular_var}}' => Str::kebab($modelName),
             '{{attributes}}' => $attributes,
             '{{orderKeyDefault}}' => $orderKeyDefault,
             '{{fk_fetchs}}' => implode("\n", $fkFetchs),
@@ -205,7 +206,7 @@ class StoreGenerator
             $relatedModelName = $fk['model'] ?? Str::studly(Str::singular($foreignTable));
             $modelName = Str::studly(Str::singular($config['model']));
 
-            $this->imports[] = "import type { I{$relatedModelName} } from '@/pages/".Str::lower($fk['model'])."/types'";
+            $this->imports[] = "import type { I{$relatedModelName} } from '~/types/".Str::kebab($fk['model'])."'";
 
             if ($relatedModelName) {
                 $pluralName = Str::plural(strtolower($relatedModelName));

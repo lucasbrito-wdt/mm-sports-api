@@ -135,9 +135,12 @@ class FormGenerator
 
         // Construir imports para FK
         $imports = $this->buildImports($foreignKeys);
+        
+        // Construir imports dos componentes Form* baseado nos campos
+        $formImports = $this->buildFormComponentImports($schema, $foreignKeys);
 
         // Construir store name
-        $storeName = 'use' . $modelName . 'Store';
+        $storeName = 'use' . Str::studly($modelName) . 'Store';
 
         // Construir interface name
         $interfaceName = 'I' . $modelName;
@@ -162,6 +165,9 @@ class FormGenerator
 
         return [
             '{{imports}}' => implode("\n", $imports),
+            '{{form_imports}}' => $formImports,
+            '{{additional_imports}}' => $this->buildAdditionalImports($foreignKeys),
+            '{{form_logic}}' => $this->buildFormLogic($foreignKeys),
             '{{store_name}}' => $storeName,
             '{{interface_name}}' => $interfaceName,
             '{{methods_fetchs}}' => implode("\n", $methodsFetchs),
@@ -169,8 +175,8 @@ class FormGenerator
             '{{fk_methods}}' => implode(",\n  ", $fkMethods),
             '{{form_title}}' => $formTitle,
             '{{fields}}' => $formFields,
-            '{{fk_inputs}}' => implode(",\n  ", $fkInputs),
-            '{{entity_singular_var}}' => Str::kebab($domain),
+            '{{fk_inputs}}' => implode("\n    ", $fkInputs),
+            '{{entity_singular_var}}' => Str::kebab($modelName),
         ];
     }
 
@@ -179,8 +185,8 @@ class FormGenerator
         $imports = [];
         foreach ($foreignKeys as $fk) {
             $interfaceName = 'I' . $fk['model'];
-            $domainKebab = Str::kebab($fk['domain']);
-            $imports[] = "import type { {$interfaceName} } from '@/pages/{$domainKebab}/types'";
+            $entityKebab = Str::kebab($fk['model']);
+            $imports[] = "import type { {$interfaceName} } from '~/types/{$entityKebab}'";
         }
 
         return $imports;
@@ -298,28 +304,108 @@ class FormGenerator
     {
         $inputs = [];
         foreach ($foreignKeys as $fk) {
-            $dataName = Str::lower("{$fk['domain']}");
-            $itemsName = Str::plural(Str::lower("{$fk['domain']}"));
-            $loading = Str::plural(Str::lower("{$fk['domain']}"));
-            $rules = $fk['required'] ?? false ? '[rules.requiredValidator]' : '[]';
+            $fieldName = Str::snake($fk['model']) . '_id';
+            $label = $fk['label'] ?? Str::studly($fk['model']);
+            $storeVar = Str::camel($fk['model']) . 'Store';
+            $itemsName = $storeVar . '.asArray';
+            $required = $fk['required'] ?? false ? 'required' : '';
 
             $inputs[] = <<<EOT
-            <VCol cols="12" md="6" lg="4" xl="3">
-                <AppAutocomplete
-                    v-model="data.{$dataName}_id"
-                    :items="$itemsName"
-                    label="{$fk['domain']}"
-                    :return-object="false"
-                    :loading="loading.$loading"
-                    :rules="$rules"
-                    item-value="id"
-                    item-title="[Informe Nome do Campo]"
-                />
-            </VCol>
+    <FormSelect
+      name="{$fieldName}"
+      :label="'{$label}'"
+      placeholder="Selecione {$label}"
+      :options="{$itemsName}"
+      :searchable="true"
+      :disabled="{$storeVar}.loading"
+      option-value="id"
+      option-title="name"
+      {$required}
+    />
             EOT;
         }
 
         return $inputs;
+    }
+
+    /**
+     * Constrói imports dos componentes Form* baseado nos tipos de campos
+     */
+    private function buildFormComponentImports(array $schema, array $foreignKeys): string
+    {
+        $components = [];
+        
+        foreach ($schema as $fieldConfig) {
+            $fieldType = $this->fieldsGenerator->determineFieldType($fieldConfig);
+            
+            $component = match ($fieldType) {
+                'input', 'cpf', 'cnpj', 'telefone', 'celular', 'currency' => 'FormInput',
+                'textarea' => 'FormTextarea',
+                'select', 'autocomplete' => 'FormSelect',
+                'switch' => 'FormSwitch',
+                'checkbox' => 'FormCheckbox',
+                'date' => 'FormDatePicker',
+                default => null,
+            };
+            
+            if ($component && !in_array($component, $components)) {
+                $components[] = $component;
+            }
+        }
+        
+        // Adicionar FormSelect se houver foreign keys
+        if (!empty($foreignKeys) && !in_array('FormSelect', $components)) {
+            $components[] = 'FormSelect';
+        }
+        
+        if (empty($components)) {
+            return 'FormInput';
+        }
+        
+        return implode(', ', $components);
+    }
+
+    /**
+     * Constrói imports adicionais (stores de FK, etc)
+     */
+    private function buildAdditionalImports(array $foreignKeys): string
+    {
+        $imports = [];
+        foreach ($foreignKeys as $fk) {
+            $storeName = 'use' . Str::studly($fk['model']) . 'Store';
+            $entityKebab = Str::kebab($fk['model']);
+            $imports[] = "import { {$storeName} } from '~/stores/{$entityKebab}'";
+        }
+        
+        return implode("\n", $imports);
+    }
+
+    /**
+     * Constrói lógica adicional do formulário (stores de FK, etc)
+     */
+    private function buildFormLogic(array $foreignKeys): string
+    {
+        if (empty($foreignKeys)) {
+            return '';
+        }
+        
+        $logic = [];
+        
+        foreach ($foreignKeys as $fk) {
+            $storeName = 'use' . Str::studly($fk['model']) . 'Store';
+            $storeVar = Str::camel($fk['model']) . 'Store';
+            
+            $logic[] = "// Store de {$fk['model']}";
+            $logic[] = "const {$storeVar} = {$storeName}()";
+            $logic[] = "";
+            $logic[] = "// Buscar {$fk['model']} ao montar o componente";
+            $logic[] = "onMounted(async () => {";
+            $logic[] = "  await {$storeVar}.fetchAll()";
+            $logic[] = "})";
+            $logic[] = "";
+        }
+        
+        return implode("\n", $logic);
     }
 
     /**

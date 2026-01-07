@@ -1,7 +1,1 @@
-<AppSelect
-  v-model="{{vModel}}"
-  label={{label}}
-  placeholder={{placeholder}}
-  :items="{{items}}"
-  :rules="[{{rules}}]"
-/>
+<FormSelect name="{{fieldName}}" :label="{{label}}" :placeholder="{{placeholder}}" :options="{{items}}" {{required}}/>

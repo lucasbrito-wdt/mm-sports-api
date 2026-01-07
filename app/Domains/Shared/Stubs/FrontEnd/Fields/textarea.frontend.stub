@@ -1,1 +1,1 @@
-<AppTextarea v-model="{{vModel}}" :label="{{label}}" :placeholder="{{placeholder}}" :rules="[{{rules}}]" {{maxlength}}/>
+<FormTextarea name="{{fieldName}}" :label="{{label}}" :placeholder="{{placeholder}}" {{required}} {{maxlength}}/>

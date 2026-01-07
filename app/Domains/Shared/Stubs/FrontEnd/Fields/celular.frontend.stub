@@ -1,1 +1,1 @@
-<CDFTextField type="tel" v-model="{{vModel}}" v-mask="'(##) #####-####'" :label="{{label}}" placeholder="{{placeholder}}" :rules="[{{rules}}]"/>
+<FormInput name="{{fieldName}}" type="tel" :label="{{label}}" :placeholder="{{placeholder}}" {{required}}/>

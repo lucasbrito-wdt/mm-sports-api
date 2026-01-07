@@ -1,22 +1,37 @@
 <script setup lang="ts">
-import {{form}} from '../components/{{form}}.vue'
-import { {{store_name}} } from '../stores/{{store_name}}'
+import LayoutForms from '~/components/common/LayoutForms.vue'
+import {{form_component}} from '../components/{{form_component}}.vue'
+import { {{schema_name}} } from '~/schemas/{{entity_singular_var}}'
+import { {{store_name}} } from '~/stores/{{entity_singular_var}}'
 
-definePage({
-  meta: {
-    navActiveLink: '{{entity_var}}',
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'can'],
+  ability: {
     action: 'create',
-    subject: '{{entity_var}}',
+    subject: '{{entity_name}}',
   },
 })
 
-const { resetForm } = {{store_name}}()
-
-onBeforeRouteLeave(() => {
-  resetForm()
+useHead({
+  title: 'Criar {{entity_label}}',
 })
+
+const {{store_var}} = {{store_name}}()
 </script>
 
 <template>
-  <{{form}} />
+  <LayoutForms
+    title="Criar {{entity_label}}"
+    subtitle="{{create_subtitle}}"
+    back="/{{entity_singular_var}}"
+    :validation-schema="{{schema_name}}"
+    :store="{{store_var}}"
+    redirect-to="/{{entity_singular_var}}"
+    :show-progress="true"
+  >
+    <template #content>
+      <{{form_component}} />
+    </template>
+  </LayoutForms>
 </template>

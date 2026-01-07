@@ -12,9 +12,11 @@ use App\Console\Commands\Generator\Generators\FrontEnd\EditarGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\FormGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\FrontendPathTrait;
 use App\Console\Commands\Generator\Generators\FrontEnd\ListGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\SchemaGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\ServiceGenerator as FrontEndServiceGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\StoreGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\TypesGenerator;
+use App\Console\Commands\Generator\Generators\FrontEnd\ZodSchemaGenerator;
 use App\Console\Commands\Generator\Generators\Utils\FrontendUtils;
 use App\Console\Commands\Generator\Utils\AbilityManager;
 use App\Console\Commands\Generator\Utils\ModelRelationsManager;
@@ -788,7 +790,7 @@ class CrudGenerator extends Command
             $this->info('  ✓ Types gerados com sucesso');
 
             // Registrar arquivo gerado para rollback
-            $typesPath = $this->getFrontendPath() . '/pages/' . Str::kebab($this->config['domain']) . '/types.ts';
+            $typesPath = $this->getFrontendPath() . '/types/' . Str::kebab($this->config['model']) . '.d.ts';
             if (file_exists($typesPath)) {
                 $this->logCreatedFile($typesPath);
             }
@@ -800,7 +802,7 @@ class CrudGenerator extends Command
             $this->info('  ✓ Store gerado com sucesso');
 
             // Registrar arquivo gerado para rollback
-            $storePath = $this->getFrontendPath() . '/pages/' . Str::kebab($this->config['domain']) . '/stores/use' . Str::camel($this->config['model']) . 'Store.ts';
+            $storePath = $this->getFrontendPath() . '/stores/' . Str::kebab($this->config['model']) . '.ts';
             if (file_exists($storePath)) {
                 $this->logCreatedFile($storePath);
             }
@@ -812,9 +814,22 @@ class CrudGenerator extends Command
             $this->info('  ✓ Service gerado com sucesso');
 
             // Registrar arquivo gerado para rollback
-            $servicePath = $this->getFrontendPath() . '/pages/' . Str::kebab($this->config['domain']) . '/services/' . Str::camel($this->config['model']) . 'Service.ts';
+            $servicePath = $this->getFrontendPath() . '/services/' . Str::kebab($this->config['model']) . '.service.ts';
             if (file_exists($servicePath)) {
                 $this->logCreatedFile($servicePath);
+            }
+        }
+
+        // Gerar Schema Zod
+        $zodSchemaGenerator = app(ZodSchemaGenerator::class);
+        $schemaGenerator = app(SchemaGenerator::class);
+        if ($schemaGenerator->generate($this->config)) {
+            $this->info('  ✓ Schema Zod gerado com sucesso');
+
+            // Registrar arquivo gerado para rollback
+            $schemaPath = $this->getFrontendPath() . '/schemas/' . Str::kebab($this->config['model']) . '.ts';
+            if (file_exists($schemaPath)) {
+                $this->logCreatedFile($schemaPath);
             }
         }
 
@@ -828,7 +843,7 @@ class CrudGenerator extends Command
             $this->info('  ✓ Formulário gerado com sucesso');
 
             // Registrar arquivo gerado para rollback
-            $formPath = $this->getFrontendPath() . '/pages/' . Str::kebab($this->config['domain']) . "/components/{$this->config['model']}Form.vue";
+            $formPath = $this->getFrontendPath() . '/pages/' . Str::kebab($this->config['model']) . "/components/{$this->config['model']}Form.vue";
             if (file_exists($formPath)) {
                 $this->logCreatedFile($formPath);
             }
@@ -1427,7 +1442,7 @@ class CrudGenerator extends Command
             $this->info('      ✓ Types TypeScript geradas');
 
             // Registrar arquivo gerado para rollback
-            $typesPath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['domain']) . "/types/{$config['model']}.ts";
+            $typesPath = $this->getFrontendPath() . '/types/' . Str::kebab($config['model']) . '.d.ts';
             if (file_exists($typesPath)) {
                 $this->logCreatedFile($typesPath);
             }
@@ -1439,7 +1454,7 @@ class CrudGenerator extends Command
             $this->info('      ✓ Store Pinia gerada');
 
             // Registrar arquivo gerado para rollback
-            $storePath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['domain']) . '/stores/' . Str::camel($config['model']) . 'Store.ts';
+            $storePath = $this->getFrontendPath() . '/stores/' . Str::kebab($config['model']) . '.ts';
             if (file_exists($storePath)) {
                 $this->logCreatedFile($storePath);
             }
@@ -1451,9 +1466,22 @@ class CrudGenerator extends Command
             $this->info('      ✓ Service do frontend gerado');
 
             // Registrar arquivo gerado para rollback
-            $servicePath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['domain']) . '/services/' . Str::camel($config['model']) . 'Service.ts';
+            $servicePath = $this->getFrontendPath() . '/services/' . Str::kebab($config['model']) . '.service.ts';
             if (file_exists($servicePath)) {
                 $this->logCreatedFile($servicePath);
+            }
+        }
+
+        // Gerar Schema Zod
+        $zodSchemaGenerator = app(ZodSchemaGenerator::class);
+        $schemaGenerator = app(SchemaGenerator::class);
+        if ($schemaGenerator->generate($config)) {
+            $this->info('      ✓ Schema Zod gerado');
+
+            // Registrar arquivo gerado para rollback
+            $schemaPath = $this->getFrontendPath() . '/schemas/' . Str::kebab($config['model']) . '.ts';
+            if (file_exists($schemaPath)) {
+                $this->logCreatedFile($schemaPath);
             }
         }
 
@@ -1467,7 +1495,7 @@ class CrudGenerator extends Command
             $this->info('      ✓ Componente Form gerado');
 
             // Registrar arquivo gerado para rollback
-            $formPath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['domain']) . "/components/{$config['model']}Form.vue";
+            $formPath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['model']) . "/components/{$config['model']}Form.vue";
             if (file_exists($formPath)) {
                 $this->logCreatedFile($formPath);
             }
@@ -1479,7 +1507,7 @@ class CrudGenerator extends Command
             $this->info('      ✓ Componente List gerado');
 
             // Registrar arquivo gerado para rollback
-            $listPath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['domain']) . "/components/{$config['model']}List.vue";
+            $listPath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['model']) . '/index.vue';
             if (file_exists($listPath)) {
                 $this->logCreatedFile($listPath);
             }
@@ -1491,7 +1519,7 @@ class CrudGenerator extends Command
             $this->info('      ✓ Componente Criar gerado');
 
             // Registrar arquivo gerado para rollback
-            $criarPath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['domain']) . "/components/Criar{$config['model']}.vue";
+            $criarPath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['model']) . '/create.vue';
             if (file_exists($criarPath)) {
                 $this->logCreatedFile($criarPath);
             }
@@ -1503,7 +1531,7 @@ class CrudGenerator extends Command
             $this->info('      ✓ Componente Editar gerado');
 
             // Registrar arquivo gerado para rollback
-            $editarPath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['domain']) . "/components/Editar{$config['model']}.vue";
+            $editarPath = $this->getFrontendPath() . '/pages/' . Str::kebab($config['model']) . '/[id]/edit.vue';
             if (file_exists($editarPath)) {
                 $this->logCreatedFile($editarPath);
             }

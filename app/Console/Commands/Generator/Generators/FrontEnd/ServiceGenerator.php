@@ -26,10 +26,8 @@ class ServiceGenerator
         $frontEndAbsoluteDir = $this->getFrontendPath();
 
         $fullPath = sprintf(
-            '%s/%s/%s/%s',
+            '%s/%s',
             $frontEndAbsoluteDir,
-            'pages',
-            Str::snake($domain, '-'),
             'services'
         );
 
@@ -38,10 +36,12 @@ class ServiceGenerator
             File::makeDirectory($fullPath, 0755, true);
         }
 
-        // Nome do arquivo seguindo padrão antigo
-        $serviceName = $modelName . 'Service';
-        $fileName = $serviceName . '.ts';
+        // Nome do arquivo: {entity}.service.ts (ex: users.service.ts)
+        $fileName = Str::kebab($modelName) . '.service.ts';
         $filePath = $fullPath . '/' . $fileName;
+        
+        // Nome do service: {Entity}Service (ex: UsersService)
+        $serviceName = Str::studly($modelName) . 'Service';
 
         // Verificar se o arquivo já existe
         if (File::exists($filePath) && !($config['force'] ?? false)) {

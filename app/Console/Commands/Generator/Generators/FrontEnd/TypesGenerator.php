@@ -30,10 +30,9 @@ class TypesGenerator
         $frontEndAbsoluteDir = $this->getFrontendPath();
 
         $fullPath = sprintf(
-            '%s/%s/%s',
+            '%s/%s',
             $frontEndAbsoluteDir,
-            'pages',
-            Str::snake($domain, '-')
+            'types'
         );
 
         // Criar diretório se não existir
@@ -41,8 +40,8 @@ class TypesGenerator
             File::makeDirectory($fullPath, 0755, true);
         }
 
-        // Nome do arquivo seguindo padrão antigo
-        $fileName = 'types.ts';
+        // Nome do arquivo: {entity}.d.ts (ex: users.d.ts)
+        $fileName = Str::kebab($modelName).'.d.ts';
         $filePath = $fullPath.'/'.$fileName;
 
         // Verificar se o arquivo já existe
@@ -103,7 +102,7 @@ class TypesGenerator
 
                 $relatedModelName = $fk['model'] ?? Str::studly(Str::singular($fk['foreignTable']));
 
-                $this->imports[] = "import type { I{$relatedModelName} } from '@/pages/".Str::lower($fk['model'])."/types'";
+                $this->imports[] = "import type { I{$relatedModelName} } from '~/types/".Str::kebab($fk['model'])."'";
 
                 if ($fk['relation'] === 'belongsTo') {
                     $foreignKey = Str::snake($fk['model']).'_id';

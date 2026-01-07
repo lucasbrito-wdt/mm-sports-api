@@ -1,7 +1,8 @@
-import { ApiService } from '@codifytech/services/ApiService'
+import { ApiService } from '~/services/ApiService'
 
 class {{service_name}} extends ApiService {
- // 👉 methods
- {{methods_fk}}
+  // 👉 methods
+  {{methods_fk}}
 }
+
 export default new {{service_name}}('{{end_point}}')

@@ -1,102 +1,100 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import type { ComputedRef } from 'vue'
-import type { ITerm } from '@codifytech/types/globalTypes'
-import type { IHeader, ITableAction } from '@codifytech/types/layoutTable'
+import type {
+  FilterConfig,
+  HeaderActionConfig,
+  RowActionConfig,
+  SimpleColumn,
+} from '~/components/common/LayoutTable.vue'
+import LayoutTable from '~/components/common/LayoutTable.vue'
+import { {{store_name}} } from '~/stores/{{entity_singular_var}}'
+import type { {{interface_name}} } from '~/types/{{entity_singular_var}}'
 
-import { {{store_name}} } from './stores/{{store_name}}'
-import type { {{interface_name}} } from './types'
-
-withDefaults(defineProps<{
-  isHeader: boolean
-}>(), {
-  isHeader: true,
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth'],
 })
 
-definePage({
-  meta: {
-    action: 'list',
-    subject: '{{entity_singular_var}}',
-  },
+useHead({
+  title: '{{list_title}}',
 })
 
-const store = {{store_name}}()
+const {{store_var}} = {{store_name}}()
+const { fetchAll, handlePageChange, delete: deleteItem } = {{store_var}}
+const { items, crudLoading, total } = storeToRefs({{store_var}})
+const router = useRouter()
+const { showConfirm } = useConfirm()
 
-const {
-  items,
-  isSearching,
-  perPage,
-  currentPage,
-  total,
-  crudLoading,
-  stateHandler,
-  stateHandlerKey,
-} = storeToRefs(store)
-
-const {
-  loadMore,
-  setSearchParams,
-  reset,
-  destroy,
-  onOrderBy,
-} = store
-
-const headers: ComputedRef<IHeader[]> = computed(() => {
-  return {{header}} as IHeader[]
-})
-
-const terms: ComputedRef<ITerm[]> = computed(() => {
-  return {{terms}} as ITerm[]
-})
-
-const actions: ITableAction[] = [
-  {
-    icon: 'tabler-edit',
-    color: 'primary',
-    can: {
-      action: 'edit',
-      subject: '{{entity_singular_var}}',
-    },
-    to: (item: {{interface_name}}) => `/{{entity_singular_var}}/editar/${item.id}`,
-  },
-  {
-    icon: 'tabler-trash',
-    color: 'error',
-    can: {
-      action: 'delete',
-      subject: '{{entity_singular_var}}',
-    },
-    onClick: (item: {{interface_name}}) => destroy(item.id),
-  },
+// Colunas da tabela
+const columns: SimpleColumn<{{interface_name}}>[] = [
+  {{columns}}
 ]
 
-onBeforeRouteLeave(() => {
-  store.$reset()
-})
+// Ações do header
+const headerActions = computed<HeaderActionConfig[]>(() => [
+  {
+    id: 'create',
+    label: 'Criar {{entity_label}}',
+    icon: 'lucide:plus',
+    onClick: async () => {
+      await router.push('/{{entity_singular_var}}/create')
+    },
+  },
+])
+
+// Filtros
+const filters = computed<FilterConfig[]>(() => [
+  {{filters}}
+])
+
+// Ações das linhas
+const rowActions = computed<RowActionConfig<{{interface_name}}>[]>(() => [
+  {
+    id: 'edit',
+    label: 'Editar',
+    icon: 'lucide:pencil',
+    variant: 'ghost',
+    size: 'icon',
+    onClick: async (row) => {
+      await router.push(`/{{entity_singular_var}}/${row.id}/edit`)
+    },
+  },
+  {
+    id: 'delete',
+    label: 'Excluir',
+    icon: 'lucide:trash',
+    variant: 'ghost',
+    size: 'icon',
+    className: 'text-destructive hover:text-destructive',
+    onClick: async (row) => {
+      const confirmed = await showConfirm({
+        title: 'Confirmar exclusão',
+        description: 'Tem certeza que deseja excluir este {{entity_label}}?',
+        variant: 'destructive',
+      })
+      if (confirmed) {
+        await deleteItem(row.id)
+      }
+    },
+  },
+])
 </script>
 
 <template>
   <LayoutTable
-    v-model:loading="crudLoading.items"
-    v-model:loading-destroy="crudLoading.delete"
-    v-model:is-searching="isSearching"
-    v-model:state-handler="stateHandler"
-    v-model:state-handler-key="stateHandlerKey"
-    :items="items || []"
-    :is-header="isHeader"
-    :destroy="destroy"
+    :data="items"
+    :columns="columns"
+    :total-items="total"
+    :page-size="15"
+    :auto-paginate="true"
+    :is-loading="crudLoading.items"
+    :header-actions="headerActions"
+    :row-actions="rowActions"
+    :filters="filters"
+    :fetch-on-mount="fetchAll"
     title="{{list_title}}"
-    new-item="/{{entity_singular_var}}/cadastrar"
-    :headers="headers"
-    :actions="actions"
-    :items-per-page="perPage"
-    :items-length="total || 0"
-    :page="currentPage"
-    :load-more="loadMore"
-    :terms-search="terms"
-    :set-search-params="setSearchParams"
-    :on-reset="reset"
-    :on-order-by="onOrderBy"
-    @update:searching="setSearchParams"
-  />
+    subtitle="{{list_subtitle}}"
+    @page-change="handlePageChange"
+  >
+    {{custom_cells}}
+  </LayoutTable>
 </template>
