@@ -19,16 +19,16 @@ class FrontendUtils
      */
     public function addMenu($config)
     {
-        $pathMenu = $this->getFrontendPath().'/navigation/vertical/index.ts';
+        $pathMenu = $this->getFrontendPath() . '/navigation/vertical/index.ts';
 
         $domain = $config['domain'];
 
         $menu = "{
-                    title: '".Humanize::humanize($domain)."',
+                    title: '" . Humanize::humanize($domain) . "',
                     icon: { icon: 'tabler-template' },
-                    to: '".str($domain)->snake('-')."',
+                    to: '" . str($domain)->snake('-') . "',
                     action: 'list',
-                    subject: '".str($domain)->snake('-')."',
+                    subject: '" . str($domain)->snake('-') . "',
                 },";
 
         // Verifica se o arquivo existe
@@ -38,7 +38,7 @@ class FrontendUtils
             // Verifica se o novo menu já está presente no código
             if (strpos($codigo, $menu) === false) {
                 // Adiciona o novo menu ao final do código
-                $novoCodigo = rtrim($codigo, "] \r\n")."\n".$menu."\n]";
+                $novoCodigo = rtrim($codigo, "] \r\n") . "\n" . $menu . "\n]";
 
                 // Atualize o arquivo TypeScript com o novo código
                 File::put($pathMenu, $novoCodigo);
@@ -49,7 +49,7 @@ class FrontendUtils
     }
 
     /**
-     * Adiciona um novo subject ao array userSubjects no arquivo abilityConfig.ts.
+     * Adiciona um novo subject ao array userSubjects no arquivo abilities.ts.
      *
      * @param  array  $config  Configuração contendo o domínio.
      *
@@ -57,18 +57,18 @@ class FrontendUtils
      */
     public function addAbility(array $config): bool
     {
-        $abilityFile = $this->getFrontendPath().'/configs/abilityConfig.ts';
+        $abilityFile = $this->getFrontendPath() . '/configs/abilities.ts';
         $subject = str($config['domain'])->snake('-');
 
         if (! File::exists($abilityFile)) {
-            throw new \Exception('O arquivo abilityConfig.ts não foi encontrado.');
+            throw new \Exception('O arquivo abilities.ts não foi encontrado.');
         }
 
         $fileContent = File::get($abilityFile);
 
         $arrayStart = strpos($fileContent, 'const userSubjects = [');
         if ($arrayStart === false) {
-            throw new \Exception('Array userSubjects não encontrado em abilityConfig.ts.');
+            throw new \Exception('Array userSubjects não encontrado em abilities.ts.');
         }
 
         $arrayEnd = strpos($fileContent, ']', $arrayStart);
