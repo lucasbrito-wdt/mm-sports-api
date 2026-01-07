@@ -57,7 +57,7 @@ class FrontendUtils
      */
     public function addAbility(array $config): bool
     {
-        $abilityFile = $this->getFrontendPath() . '/configs/abilities.ts';
+        $abilityFile = $this->getFrontendPath() . '/config/abilities.ts';
         $subject = str($config['domain'])->snake('-');
 
         if (! File::exists($abilityFile)) {
