@@ -68,9 +68,9 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'tenant_id',
-        'foto',
-        'termos',
-        'ativo',
+        'avatar',
+        'terms',
+        'active',
     ];
 
     protected static array $searchable = [
@@ -97,7 +97,7 @@ class User extends Authenticatable implements JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'foto' => UploadCast::class,
+        'avatar' => UploadCast::class,
     ];
 
     protected $appends = [
@@ -108,7 +108,7 @@ class User extends Authenticatable implements JWTSubject
         'id',
         'name',
         'email',
-        'foto',
+        'avatar',
     ];
 
     protected $primaryKey = 'id';

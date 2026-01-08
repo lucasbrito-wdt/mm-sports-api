@@ -10,7 +10,7 @@ class UserRequest extends BaseFormRequest
     public function base(): array
     {
         return [
-            'foto' => ['nullable'],
+            'avatar' => ['nullable'],
             'name' => ['required', 'string', 'max:255'],
         ];
     }

@@ -164,6 +164,7 @@ class BaseService implements IService
      *   page: int,
      *   last_page: int,
      * }
+     * @deprecated
      */
     public function search(
         array $options = [],

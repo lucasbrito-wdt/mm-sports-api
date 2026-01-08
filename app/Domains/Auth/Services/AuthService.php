@@ -61,9 +61,9 @@ class AuthService extends BaseService
         $user = $this->user->create([
             'name' => $request->name,
             'email' => $request->email,
-            'celular' => $request->celular,
+            'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'termos' => $request->termos,
+            'terms' => $request->terms,
         ]);
 
         if (! empty($request->roles)) {
@@ -178,7 +178,7 @@ class AuthService extends BaseService
             ]);
         }
 
-        if (!Auth::user()->ativo) {
+        if (!Auth::user()->active) {
             throw ValidationException::withMessages([
                 'email' => ['O seu usuário não está ativo. Por favor, entre em contato com o suporte para solicitar a ativação da sua conta.'],
             ]);

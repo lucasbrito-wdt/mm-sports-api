@@ -13,7 +13,7 @@ class RegisterRequest extends FormRequest
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
             'roles' => 'required|exists:roles,slug',
-            'termos' => 'required|boolean',
+            'terms' => 'required|boolean',
         ];
     }
 }

@@ -22,9 +22,9 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('foto')->nullable();
-            $table->boolean('termos')->default(false);
-            $table->boolean('ativo')->default(true);
+            $table->string('avatar')->nullable();
+            $table->boolean('terms')->default(false);
+            $table->boolean('active')->default(true);
             $table->rememberToken();
             $table->timestamps();
         });

@@ -150,6 +150,7 @@ class BaseController extends Controller implements IController
      *
      * @param  Request  $request  The incoming HTTP request. The request data is used as options for the search.
      * @return JsonResponse Returns a JSON response containing the search results.
+     * @deprecated
      */
     public function search(Request $request, ?\Closure $builderCallback = null)
     {
