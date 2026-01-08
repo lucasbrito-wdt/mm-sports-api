@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use LucasBritoWdt\LaravelDatabaseFts\Traits\Searchable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
@@ -55,7 +56,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  */
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, HasRoles, HasUlids, MustVerifyEmail, Notifiable, TenantScope;
+    use HasFactory, HasRoles, HasUlids, MustVerifyEmail, Notifiable, TenantScope, Searchable;
 
     /**
      * The attributes that are mass assignable.
@@ -70,6 +71,11 @@ class User extends Authenticatable implements JWTSubject
         'foto',
         'termos',
         'ativo',
+    ];
+
+    protected static array $searchable = [
+        'name',
+        'email',
     ];
 
     /**

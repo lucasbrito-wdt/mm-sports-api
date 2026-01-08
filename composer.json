@@ -17,6 +17,7 @@
         "laravel/framework": "^12.0",
         "laravel/telescope": "*",
         "laravel/tinker": "^2.10.1",
+        "lucasbrito-wdt/laravel-database-fts": "^1.1",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import LayoutForms from '~/components/common/LayoutForms.vue'
-import {{form_component}} from '../components/{{form_component}}.vue'
+import {{form_component}} from './components/{{form_component}}.vue'
 import { {{schema_name}} } from '~/schemas/{{entity_singular_var}}'
 import { {{store_name}} } from '~/stores/{{entity_singular_var}}'
 

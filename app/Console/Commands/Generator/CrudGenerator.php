@@ -17,7 +17,7 @@ use App\Console\Commands\Generator\Generators\FrontEnd\ServiceGenerator as Front
 use App\Console\Commands\Generator\Generators\FrontEnd\StoreGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\TypesGenerator;
 use App\Console\Commands\Generator\Generators\FrontEnd\ZodSchemaGenerator;
-use App\Console\Commands\Generator\Generators\Utils\FrontendUtils;
+use App\Console\Commands\Generator\Utils\FrontendUtils;
 use App\Console\Commands\Generator\Utils\AbilityManager;
 use App\Console\Commands\Generator\Utils\ModelRelationsManager;
 use App\Console\Commands\Generator\Utils\RollbackLogger;

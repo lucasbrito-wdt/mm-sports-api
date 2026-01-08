@@ -1,7 +1,8 @@
 <?php
+
 namespace App\Domains\Shared\Interfaces;
 
-interface ReplacerAwareRule
+interface IReplacerAwareRule
 {
     public function replacers(): array;
 }

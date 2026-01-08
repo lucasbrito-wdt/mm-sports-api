@@ -9,7 +9,7 @@ Route::middleware(['auth:api', 'verified'])->group(function () {
     */
     Route::apiResource('users', UserController::class);
     Route::group(['prefix' => 'users', 'as' => 'users'], function () {
-        Route::post('search', [UserController::class, 'search']);
+        Route::post('search', [UserController::class, 'searchText']);
         Route::get('list/roles', [UserController::class, 'roles']);
     });
 });

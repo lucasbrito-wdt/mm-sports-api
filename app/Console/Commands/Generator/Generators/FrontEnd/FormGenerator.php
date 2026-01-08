@@ -43,14 +43,14 @@ class FormGenerator
      */
     private function attachToExistingForm(array $config): bool
     {
-        $domain = $config['domain'];
+        $modelName = $config['model'];
         $frontEndAbsoluteDir = $this->getFrontendPath();
 
         $domainPath = sprintf(
             '%s/%s/%s/%s',
             $frontEndAbsoluteDir,
             'pages',
-            Str::snake($domain, '-'),
+            Str::kebab($modelName),
             'components'
         );
 
@@ -80,7 +80,6 @@ class FormGenerator
     private function createNewForm(array $config): bool
     {
         $modelName = $config['model'];
-        $domain = $config['domain'];
 
         $frontEndAbsoluteDir = $this->getFrontendPath();
 
@@ -88,7 +87,7 @@ class FormGenerator
             '%s/%s/%s/%s',
             $frontEndAbsoluteDir,
             'pages',
-            Str::snake($domain, '-'),
+            Str::kebab($modelName),
             'components'
         );
 

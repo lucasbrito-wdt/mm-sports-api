@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\Generator\Generators\Utils;
+namespace App\Console\Commands\Generator\Utils;
 
 use App\Console\Commands\Generator\Generators\FrontEnd\FrontendPathTrait;
 use Coduo\PHPHumanizer\StringHumanizer as Humanize;

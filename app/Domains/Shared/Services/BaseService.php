@@ -8,6 +8,7 @@ use App\Domains\Shared\Utils\IntHelper;
 use App\Domains\Shared\Helpers\SortHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Class BaseService
@@ -27,18 +28,29 @@ class BaseService implements IService
      */
     public function index(array $options = [], ?\Closure $builderCallback = null)
     {
+        // Criar query base
         $query = $this->model->newQuery();
+
+        // Se houver busca textual, aplicar scope search() do model (LaravelPostgresFts)
+        if (!empty($options['search'])) {
+            // Verificar se o model tem o método search (trait Searchable)
+            $query = $query->search($options['search']);
+        }
+
+        // Aplicar filtros específicos (filters) e outras condições
+        $query = $this->applyFilters($query, $options);
 
         // Permite modificar a query com operações adicionais
         if ($builderCallback !== null) {
             $builderCallback($query);
         }
 
+        // Ordenação
         $sortBy = $options['sort_by'] ?? 'id';
         $sortOrder = $options['sort_order'] ?? 'desc';
-
         $query = SortHelper::applySort($query, $sortBy, $sortOrder);
 
+        // Paginação
         $data = $query->paginate(IntHelper::tryParser($options['per_page'] ?? 15) ?? 15);
 
         return [
@@ -140,36 +152,30 @@ class BaseService implements IService
     }
 
     /**
-     * Searches for items based on a field and value.
+     * Busca registros usando o método search do model, com suporte a paginação.
      *
-     * @param  array  $options  An array of options for the search operation.
-     * @return array The result of the search operation.
+     * @param  array  $options  Parâmetros da busca. Esperado:
+     *   - q (string|null): termo de busca
+     *   - per_page (int|null): itens por página (padrão: 15)
+     * @param  \Closure|null  $builderCallback  Callback opcional para customizar o builder.
+     * @return array{
+     *   data: array,
+     *   total: int,
+     *   page: int,
+     *   last_page: int,
+     * }
      */
     public function search(
         array $options = [],
         ?\Closure $builderCallback = null,
     ) {
-        $field = $options['field'] ?? null;
-        $value = $options['value'] ?? null;
-        $relation = $options['relation'] ?? null;
+        $q = $options['q'] ?? null;
 
-        $query = $this->model
-            ->when(! empty($relation), function (Builder $query) use ($field, $value, $relation) {
-                $query->whereHas($relation, function ($query) use ($value, $field) {
-                    $query->where($field, 'like', "%$value%")->orderBy($field);
-                });
-            })
-            ->when(empty($relation), function (Builder $query) use ($value, $field) {
-                $query->where($field, 'like', "%$value%")->orderBy($field);
-            });
+        $query = $this->model->search($q);
 
         if ($builderCallback !== null) {
             $builderCallback($query);
         }
-
-        $sortBy = $options['sort_by'] ?? 'id';
-        $sortOrder = $options['sort_order'] ?? 'desc';
-        $query = SortHelper::applySort($query, $sortBy, $sortOrder);
 
         $data = $query->paginate(IntHelper::tryParser($options['per_page'] ?? 15) ?? 15);
 
@@ -179,5 +185,35 @@ class BaseService implements IService
             'page' => $data->currentPage(),
             'last_page' => $data->lastPage(),
         ];
+    }
+
+    /**
+     * Aplica filtros específicos na query
+     *
+     * Nota: A busca textual (search) é aplicada diretamente na inicialização da query
+     * via $this->model->search(), não neste método.
+     *
+     * @param  Builder  $query
+     * @param  array  $options
+     * @return Builder
+     */
+    protected function applyFilters(Builder $query, array $options): Builder
+    {
+        // Processar filtros específicos do array 'filters'
+        if (!empty($options['filters']) && is_array($options['filters'])) {
+            foreach ($options['filters'] as $field => $value) {
+                // Ignorar valores vazios ou padrão
+                if (empty($value) || $value === 'all' || $value === null) {
+                    continue;
+                }
+
+                // Aplicar where se o campo existir na tabela
+                if (Schema::hasColumn($this->model->getTable(), $field)) {
+                    $query->where($field, $value);
+                }
+            }
+        }
+
+        return $query;
     }
 }
