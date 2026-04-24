@@ -2,6 +2,7 @@
 
 use App\Domains\Catalog\Controllers\Admin\AttributeController;
 use App\Domains\Catalog\Controllers\Admin\AttributeValueController;
+use App\Domains\Catalog\Controllers\Admin\ProductFacetAttributesController;
 use App\Domains\Catalog\Controllers\Admin\ProductImageController;
 use App\Domains\Catalog\Controllers\Admin\ProductVariantMatrixController;
 use App\Domains\Catalog\Controllers\CatalogFacetController;
@@ -53,5 +54,8 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
         Route::post  ('images',         [ProductImageController::class, 'store']);
         Route::put   ('images/{image}', [ProductImageController::class, 'update']);
         Route::delete('images/{image}', [ProductImageController::class, 'destroy']);
+
+        Route::get('facet-attributes',  [ProductFacetAttributesController::class, 'show']);
+        Route::put('facet-attributes',  [ProductFacetAttributesController::class, 'update']);
     });
 });

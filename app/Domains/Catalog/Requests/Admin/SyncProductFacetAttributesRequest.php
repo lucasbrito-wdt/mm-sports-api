@@ -10,7 +10,7 @@ class SyncProductFacetAttributesRequest extends BaseFormRequest
     {
         return [
             'value_ids'   => ['present', 'array'],
-            'value_ids.*' => ['integer', 'exists:attribute_values,id'],
+            'value_ids.*' => ['string', 'exists:attribute_values,id'],
         ];
     }
 

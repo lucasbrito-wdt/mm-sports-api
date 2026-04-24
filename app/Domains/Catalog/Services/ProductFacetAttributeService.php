@@ -14,7 +14,7 @@ class ProductFacetAttributeService extends BaseService
         // Avoids OOM from Dependencies trait recursive new BaseService()
     }
 
-    /** @param int[] $valueIds */
+    /** @param string[] $valueIds */
     public function sync(Product $product, array $valueIds): void
     {
         DB::transaction(function () use ($product, $valueIds) {
@@ -24,7 +24,7 @@ class ProductFacetAttributeService extends BaseService
             }
             $rows = array_map(fn ($vid) => [
                 'product_id'         => $product->id,
-                'attribute_value_id' => (int) $vid,
+                'attribute_value_id' => (string) $vid,
             ], array_unique($valueIds));
             DB::table('product_attribute_values')->insert($rows);
         });
@@ -35,13 +35,13 @@ class ProductFacetAttributeService extends BaseService
         }
     }
 
-    /** @return int[] */
+    /** @return string[] */
     public function listValueIds(Product $product): array
     {
         return DB::table('product_attribute_values')
             ->where('product_id', $product->id)
             ->pluck('attribute_value_id')
-            ->map(fn ($v) => (int) $v)
+            ->map(fn ($v) => (string) $v)
             ->all();
     }
 }
