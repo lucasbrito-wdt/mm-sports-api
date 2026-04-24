@@ -29,6 +29,7 @@
 - `app/Domains/Catalog/Migrations/2026_04_24_100300_add_cache_columns_to_products_and_variants.php`
 - `app/Domains/Catalog/Migrations/2026_04_24_100400_create_product_images_table.php`
 - `app/Domains/Catalog/Migrations/2026_04_24_100500_create_product_facet_counts_mv.php`
+- `app/Domains/Catalog/Concerns/HasAttributeValueIds.php`
 - `app/Domains/Catalog/Models/Attribute.php`
 - `app/Domains/Catalog/Models/AttributeValue.php`
 - `app/Domains/Catalog/Models/ProductImage.php`
@@ -38,8 +39,6 @@
 - `app/Domains/Catalog/Services/CatalogProductSearchService.php`
 - `app/Domains/Catalog/Services/AttributeAdminService.php`
 - `app/Domains/Catalog/Services/AttributeValueAdminService.php`
-- `app/Domains/Catalog/Observers/ProductAttributeSyncObserver.php`
-- `app/Domains/Catalog/Observers/VariantAttributeSyncObserver.php`
 - `app/Domains/Catalog/Observers/CatalogCacheInvalidationObserver.php`
 - `app/Domains/Catalog/Controllers/CatalogFacetController.php`
 - `app/Domains/Catalog/Controllers/CatalogProductController.php`
@@ -504,6 +503,7 @@ return new class extends Migration {
         DB::statement("CREATE INDEX pv_attrs_gin
             ON product_variants USING GIN (attribute_value_ids)");
 
+        // attribute_payload is assumed to already exist on product_variants (added in the commerce plan migration)
         DB::statement("CREATE INDEX pv_payload_gin
             ON product_variants USING GIN (attribute_payload jsonb_path_ops)");
     }
@@ -1028,7 +1028,7 @@ public function variantAxes(): BelongsToMany
         'product_variant_axes',
         'product_id',
         'attribute_id'
-    )->withPivot('display_order')->orderBy('pivot_display_order');
+    )->withPivot('display_order')->orderByPivot('display_order');
 }
 
 public function images(): HasMany
@@ -1072,7 +1072,32 @@ public function attributeValues(): BelongsToMany
 }
 ```
 
-Same `attribute_value_ids` accessor as Product (copy identically).
+Extract the accessor to a shared trait `App\Domains\Catalog\Concerns\HasAttributeValueIds` and use it on both models — do NOT copy-paste:
+
+```php
+<?php
+// app/Domains/Catalog/Concerns/HasAttributeValueIds.php
+
+namespace App\Domains\Catalog\Concerns;
+
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
+trait HasAttributeValueIds
+{
+    protected function attributeValueIds(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if ($value === null || $value === '{}') return [];
+                return array_map('intval', explode(',', trim($value, '{}')));
+            },
+            set: fn (array $ids) => '{' . implode(',', array_map('intval', $ids)) . '}',
+        );
+    }
+}
+```
+
+Add `use HasAttributeValueIds;` to both `Product` and `ProductVariant`.
 
 - [ ] **Step 6: Run test to verify it passes**
 
@@ -1363,8 +1388,7 @@ class GenerateVariantMatrixService extends BaseService
                 ->get()->keyBy('id');
 
             foreach ($combinations as $combo) {
-                $signature = collect($combo)->sort()->values()->all(); // stable
-                $existing = $this->findVariantBySignature($product, $signature);
+                $existing = $this->findVariantBySignature($product, $combo);
                 if ($existing) {
                     continue;
                 }
@@ -1393,7 +1417,7 @@ class GenerateVariantMatrixService extends BaseService
                 }
                 DB::table('variant_attribute_values')->insert($pivotRows);
 
-                // denormalized array is synced by VariantAttributeSyncObserver in Task 13
+                // denormalized array is synced by refreshAttributeCache() called in syncAttributeValues() (Task 13)
                 $variant->refresh();
             }
         });
@@ -1473,12 +1497,13 @@ git commit -m "feat(catalog): add GenerateVariantMatrixService with idempotent c
 
 ---
 
-## Task 13: Sync observers — keep `attribute_value_ids` consistent
+## Task 13: Sync methods — keep `attribute_value_ids` consistent
+
+**Note:** Laravel does not fire model events on pivot `sync()` calls. Rather than fighting this with a brittle observer, we expose explicit sync methods on the models that update the denormalized column in the same call. No separate Observer files are needed for this task.
 
 **Files:**
-- Create: `app/Domains/Catalog/Observers/ProductAttributeSyncObserver.php`
-- Create: `app/Domains/Catalog/Observers/VariantAttributeSyncObserver.php`
-- Modify: `app/Providers/AppServiceProvider.php`
+- Modify: `app/Domains/Catalog/Models/Product.php`
+- Modify: `app/Domains/Catalog/Models/ProductVariant.php`
 - Test: `tests/Feature/Catalog/Observers/AttributeSyncObserversTest.php`
 
 - [ ] **Step 1: Write failing test**
@@ -1500,11 +1525,11 @@ it('recomputes products.attribute_value_ids when facets change', function () {
 
     $product = Product::create(['title' => 'Camisa', 'slug' => 'cam-obs', 'origin' => 'national', 'status' => 'active']);
 
-    $product->attributeValues()->sync([$nike->id]);
+    $product->syncAttributeValues([$nike->id]);
     $product->refresh();
     expect($product->attribute_value_ids)->toBe([$nike->id]);
 
-    $product->attributeValues()->sync([$nike->id, $adi->id]);
+    $product->syncAttributeValues([$nike->id, $adi->id]);
     $product->refresh();
     expect($product->attribute_value_ids)->toEqualCanonicalizing([$nike->id, $adi->id]);
 });
@@ -1515,9 +1540,9 @@ it('recomputes products.attribute_value_ids when facets change', function () {
 Run: `php artisan test --filter=AttributeSyncObserversTest`
 Expected: FAIL (array stays empty).
 
-- [ ] **Step 3: Create ProductAttributeSyncObserver**
+- [ ] **Step 3: Add sync methods to Product model**
 
-Since Laravel does not fire events on pivot sync, the sync happens via an event bound on `BelongsToMany` using `saved` hooks. Simplest approach: expose a method on Product and wrap sync calls, OR use model events on a pivot model. For reliability, we implement a **custom sync method** on Product and route code through it.
+Since Laravel does not fire model events on pivot `sync()` calls, we expose explicit sync methods on the model that update the denormalized column in the same call.
 
 Add to `Product` model:
 
@@ -1539,7 +1564,7 @@ public function refreshAttributeValueIdsCache(): void
 }
 ```
 
-Update the test to call `syncAttributeValues()` instead of `attributeValues()->sync()`.
+The test already uses `syncAttributeValues()` — no changes needed to the test.
 
 - [ ] **Step 4: Repeat for ProductVariant**
 
@@ -1673,7 +1698,7 @@ class CatalogFacetService extends BaseService
             JOIN attribute_values av ON av.attribute_id = a.id
             LEFT JOIN product_facet_counts fc ON fc.attribute_value_id = av.id
             WHERE a.is_filterable = true
-              AND (fc.product_count IS NULL OR fc.product_count > 0)
+              AND COALESCE(fc.product_count, 0) > 0
             ORDER BY a.display_order, av.display_order
         ");
 
@@ -1818,8 +1843,9 @@ use Illuminate\Support\Facades\DB;
 
 class CatalogProductSearchService extends BaseService
 {
-    public function search(array $filters, int $page = 1, int $perPage = 24): Collection|LengthAwarePaginator
+    public function search(array $filters, int $page = 1, int $perPage = 24): LengthAwarePaginator
     {
+        ksort($filters); // ensure stable hash regardless of key order
         $hash = sha1(json_encode([$filters, $page, $perPage]));
         $key = "catalog:list:{$hash}";
 
@@ -1827,28 +1853,36 @@ class CatalogProductSearchService extends BaseService
             fn () => $this->runQuery($filters, $page, $perPage));
     }
 
-    private function runQuery(array $filters, int $page, int $perPage): Collection
+    private function runQuery(array $filters, int $page, int $perPage): LengthAwarePaginator
     {
         $q = $filters['q'] ?? null;
         unset($filters['q'], $filters['page'], $filters['per_page']);
 
-        // split facet vs variant attrs
+        // split facet vs variant attrs — single batch query for all slugs
         $attrs = Attribute::whereIn('code', array_keys($filters))
             ->get()->keyBy('code');
 
         $facetValueIds = [];
         $variantValueIds = [];
 
-        foreach ($filters as $code => $slugs) {
-            $attr = $attrs[$code] ?? null;
-            if (!$attr) continue;
-            $ids = AttributeValue::where('attribute_id', $attr->id)
-                ->whereIn('slug', (array) $slugs)->pluck('id')->all();
+        if ($attrs->isNotEmpty()) {
+            $allSlugs = array_merge(...array_map(fn ($s) => (array) $s, array_values($filters)));
+            $valuesByAttr = AttributeValue::whereIn('attribute_id', $attrs->pluck('id'))
+                ->whereIn('slug', $allSlugs)
+                ->get()
+                ->groupBy('attribute_id');
 
-            if ($attr->type->isVariant() && !$attr->type->isFacet()) {
-                $variantValueIds = array_merge($variantValueIds, $ids);
-            } else {
-                $facetValueIds = array_merge($facetValueIds, $ids);
+            foreach ($attrs as $code => $attr) {
+                $slugs = (array) ($filters[$code] ?? []);
+                $ids = ($valuesByAttr[$attr->id] ?? collect())
+                    ->whereIn('slug', $slugs)
+                    ->pluck('id')->all();
+
+                if ($attr->type->isVariant() && !$attr->type->isFacet()) {
+                    $variantValueIds = array_merge($variantValueIds, $ids);
+                } else {
+                    $facetValueIds = array_merge($facetValueIds, $ids);
+                }
             }
         }
 
@@ -1876,8 +1910,7 @@ class CatalogProductSearchService extends BaseService
         }
 
         return $query->orderByDesc('id')
-            ->forPage($page, $perPage)
-            ->get();
+            ->paginate($perPage, ['*'], 'page', $page);
     }
 }
 ```
@@ -2511,32 +2544,40 @@ class RebuildCatalogCacheService extends BaseService
 {
     public function handle(): void
     {
+        // Single query: updates products with values and resets those without
         DB::statement("
-            UPDATE products p SET attribute_value_ids = COALESCE(sub.ids, '{}')
+            UPDATE products p
+            SET attribute_value_ids = COALESCE(sub.ids, '{}')
             FROM (
-                SELECT product_id, array_agg(attribute_value_id ORDER BY attribute_value_id) AS ids
-                FROM product_attribute_values
-                GROUP BY product_id
+                SELECT p2.id AS product_id,
+                       array_agg(pav.attribute_value_id ORDER BY pav.attribute_value_id) AS ids
+                FROM products p2
+                LEFT JOIN product_attribute_values pav ON pav.product_id = p2.id
+                GROUP BY p2.id
             ) sub
             WHERE sub.product_id = p.id
         ");
 
+        // Single query: updates variants with values and resets those without
         DB::statement("
-            UPDATE products SET attribute_value_ids = '{}'
-            WHERE id NOT IN (SELECT product_id FROM product_attribute_values)
-        ");
-
-        DB::statement("
-            UPDATE product_variants v SET attribute_value_ids = COALESCE(sub.ids, '{}')
+            UPDATE product_variants v
+            SET attribute_value_ids = COALESCE(sub.ids, '{}')
             FROM (
-                SELECT product_variant_id, array_agg(attribute_value_id ORDER BY attribute_value_id) AS ids
-                FROM variant_attribute_values
-                GROUP BY product_variant_id
+                SELECT v2.id AS variant_id,
+                       array_agg(vav.attribute_value_id ORDER BY vav.attribute_value_id) AS ids
+                FROM product_variants v2
+                LEFT JOIN variant_attribute_values vav ON vav.product_variant_id = v2.id
+                GROUP BY v2.id
             ) sub
-            WHERE sub.product_variant_id = v.id
+            WHERE sub.variant_id = v.id
         ");
 
-        DB::statement("REFRESH MATERIALIZED VIEW CONCURRENTLY product_facet_counts");
+        // CONCURRENTLY requires a prior non-concurrent populate; fallback handles fresh deploys
+        try {
+            DB::statement('REFRESH MATERIALIZED VIEW CONCURRENTLY product_facet_counts');
+        } catch (\Exception) {
+            DB::statement('REFRESH MATERIALIZED VIEW product_facet_counts');
+        }
 
         \Illuminate\Support\Facades\Cache::tags(['facets'])->flush();
     }
@@ -2659,11 +2700,7 @@ class CatalogCacheInvalidationObserver
 {
     public function saved(Model $model): void
     {
-        Cache::tags(['facets'])->flush();
-
-        if (method_exists($model, 'getKey')) {
-            Cache::tags(["product:{$model->getKey()}"])->flush();
-        }
+        Cache::tags(['facets', "model:{$model->getKey()}"])->flush();
     }
 
     public function deleted(Model $model): void
@@ -2722,11 +2759,16 @@ This test is marked `@group performance` so CI can skip if slow; it asserts plan
 use Illuminate\Support\Facades\DB;
 
 it('uses GIN bitmap scan on products.attribute_value_ids filter', function () {
+    // Force GIN usage — planner picks seqscan on empty tables otherwise
+    DB::statement('SET LOCAL enable_seqscan = off');
+
     $plan = DB::select("
         EXPLAIN (FORMAT JSON)
         SELECT id FROM products
         WHERE attribute_value_ids @> '{1,2}'::bigint[]
     ")[0];
+
+    DB::statement('SET LOCAL enable_seqscan = on');
 
     $planText = json_encode($plan);
     expect($planText)->toContain('Bitmap')->toContain('products_attrs_gin');
@@ -2736,7 +2778,7 @@ it('uses GIN bitmap scan on products.attribute_value_ids filter', function () {
 - [ ] **Step 2: Run the test**
 
 Run: `php artisan test --filter=CatalogPerformanceSmokeTest`
-Expected: PASS (may require seeded data; if planner picks seq scan on empty table, add `SET enable_seqscan = off` before the query or seed ~100 rows first).
+Expected: PASS. The `SET LOCAL enable_seqscan = off` in the test forces GIN usage regardless of table size.
 
 If empty-table planner issue occurs, seed 100 products in the test setup before running EXPLAIN.
 
@@ -2847,7 +2889,19 @@ git commit -m "test(catalog): end-to-end scenario (facets + matrix + filtered li
 
 **Placeholder scan** — no TBDs, no "add appropriate X", every test/code snippet is complete.
 
-**Type consistency** — `attribute_value_ids` cast accessor defined identically on Product and ProductVariant; `syncAttributeValues()` signature consistent; `AttributeType::isFacet()/isVariant()` used consistently.
+**Type consistency** — `attribute_value_ids` cast extracted to `HasAttributeValueIds` trait (Task 10); `syncAttributeValues()` signature consistent; `AttributeType::isFacet()/isVariant()` used consistently.
+
+**Corrections applied (2026-04-24 code review):**
+- Task 5: documented pre-existing `attribute_payload` dependency on `product_variants`
+- Task 10: fixed `orderByPivot('display_order')` (was `orderBy('pivot_display_order')`)
+- Task 10: extracted `attribute_value_ids` accessor to `HasAttributeValueIds` trait
+- Task 12: removed dead `$signature` variable; `findVariantBySignature` receives `$combo`
+- Task 13: clarified no separate Observer files; sync is via model methods; test updated accordingly
+- Task 14: fixed facet filter `COALESCE(fc.product_count, 0) > 0` (was `IS NULL OR > 0`)
+- Task 15: batched attribute value slug resolution (eliminated N+1); stable cache key via `ksort`; fixed return type to `LengthAwarePaginator` using `->paginate()`
+- Task 19: unified NOT IN to LEFT JOIN batch UPDATE; added `CONCURRENTLY` fallback for fresh deploys
+- Task 20: removed dead `method_exists($model, 'getKey')` conditional
+- Task 21: added `SET LOCAL enable_seqscan = off` to prevent flaky planner choice on empty table
 
 ---
 
