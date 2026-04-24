@@ -57,6 +57,7 @@ class R2PresignServiceTest extends TestCase
 
         $this->assertArrayHasKey('presigned_url', $result);
         $this->assertArrayHasKey('public_url', $result);
+        $this->assertArrayHasKey('key', $result);
         $this->assertArrayHasKey('expires_in', $result);
         $this->assertEquals(300, $result['expires_in']);
         $this->assertStringStartsWith('https://cdn.test/', $result['public_url']);

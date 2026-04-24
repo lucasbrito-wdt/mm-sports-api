@@ -70,6 +70,7 @@ return [
             'url' => env('R2_PUBLIC_URL'),
             'use_path_style_endpoint' => true,
             'throw' => false,
+            'report' => false,
         ],
 
     ],
