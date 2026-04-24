@@ -13,11 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         health: '/up',
     )
+    ->withCommands([
+        __DIR__.'/../app/Domains/Catalog/Console',
+    ])
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(ReturnJsonResponseMiddleware::class);
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('catalog:refresh-facets')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('catalog:prune-orphan-product-images')->daily()->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
