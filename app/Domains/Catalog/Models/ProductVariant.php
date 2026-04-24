@@ -22,6 +22,7 @@ class ProductVariant extends BaseModel
         'width_cm',
         'height_cm',
         'attribute_payload',
+        'attribute_value_ids',
         'is_active',
     ];
 
