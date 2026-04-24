@@ -38,11 +38,12 @@ class PruneOrphanProductImages extends Command
             } else {
                 $disk->delete($key);
                 $this->line("deleted: {$key}");
-                $deleted++;
             }
+            $deleted++;
         }
 
-        $this->info("Pruned {$deleted} orphan object(s).");
+        $verb = $this->option('dry-run') ? 'Would prune' : 'Pruned';
+        $this->info("{$verb} {$deleted} orphan object(s).");
         return self::SUCCESS;
     }
 }
