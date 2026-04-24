@@ -23,26 +23,37 @@ class ProductImageService extends BaseService
 
     public function createForProduct(string $productId, array $data): ProductImage
     {
-        $exists = ProductImage::where('product_id', $productId)->exists();
-        $maxOrder = $exists ? (int) ProductImage::where('product_id', $productId)->max('display_order') + 1 : 0;
+        $currentMax = ProductImage::where('product_id', $productId)->max('display_order');
+        $nextOrder = $currentMax !== null ? (int) $currentMax + 1 : 0;
 
         return ProductImage::create([
             'product_id'         => $productId,
             'url'                => $data['url'],
             'alt'                => $data['alt'] ?? null,
             'attribute_value_id' => $data['attribute_value_id'] ?? null,
-            'display_order'      => $data['display_order'] ?? $maxOrder,
+            'display_order'      => $data['display_order'] ?? $nextOrder,
         ]);
     }
 
     public function updateOne(string $imageId, array $data): ProductImage
     {
         $img = ProductImage::findOrFail($imageId);
-        $img->update(array_filter([
-            'alt'                => $data['alt'] ?? null,
-            'attribute_value_id' => array_key_exists('attribute_value_id', $data) ? $data['attribute_value_id'] : $img->attribute_value_id,
-            'display_order'      => $data['display_order'] ?? $img->display_order,
-        ], fn ($v) => $v !== null) + ['updated_at' => now()]);
+
+        $payload = [];
+        if (array_key_exists('alt', $data)) {
+            $payload['alt'] = $data['alt'];
+        }
+        if (array_key_exists('attribute_value_id', $data)) {
+            $payload['attribute_value_id'] = $data['attribute_value_id'];
+        }
+        if (array_key_exists('display_order', $data)) {
+            $payload['display_order'] = $data['display_order'];
+        }
+
+        if (! empty($payload)) {
+            $img->update($payload);
+        }
+
         return $img->refresh();
     }
 

@@ -16,6 +16,6 @@ class CreateProductImageRequest extends BaseFormRequest
         ];
     }
 
-    public function store(): array  { return []; }
-    public function update(): array { return []; }
+    public function store(): array  { return $this->base(); }
+    public function update(): array { return $this->base(); }
 }
