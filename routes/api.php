@@ -14,3 +14,4 @@ require __DIR__.'/domains/reviews.php';
 require __DIR__.'/domains/commerce.php';
 require __DIR__.'/domains/integrations.php';
 require __DIR__.'/domains/tracking.php';
+require __DIR__.'/domains/storage.php';
