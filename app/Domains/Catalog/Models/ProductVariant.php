@@ -2,10 +2,12 @@
 
 namespace App\Domains\Catalog\Models;
 
+use App\Domains\Catalog\Observers\VariantAttributeSyncObserver;
 use App\Domains\Shared\Models\BaseModel;
 use Illuminate\Database\Eloquent\Casts\Attribute as CastsAttribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\DB;
 
 class ProductVariant extends BaseModel
 {
@@ -49,6 +51,38 @@ class ProductVariant extends BaseModel
             'product_variant_id',
             'attribute_value_id'
         )->withPivot('attribute_id');
+    }
+
+    /**
+     * @param  array<string, string>  $mapAttrIdToValueId  attribute_id => attribute_value_id
+     */
+    public function syncAttributeValues(array $mapAttrIdToValueId): void
+    {
+        DB::transaction(function () use ($mapAttrIdToValueId) {
+            DB::table('variant_attribute_values')
+                ->where('product_variant_id', $this->id)
+                ->delete();
+
+            $rows = [];
+            foreach ($mapAttrIdToValueId as $attributeId => $valueId) {
+                $rows[] = [
+                    'product_variant_id' => $this->id,
+                    'attribute_id' => $attributeId,
+                    'attribute_value_id' => $valueId,
+                ];
+            }
+            if ($rows !== []) {
+                DB::table('variant_attribute_values')->insert($rows);
+            }
+
+            $this->unsetRelation('attributeValues');
+            VariantAttributeSyncObserver::recomputeFromPivots($this);
+        });
+    }
+
+    public function refreshAttributeCache(): void
+    {
+        VariantAttributeSyncObserver::recomputeFromPivots($this);
     }
 
     protected function attributeValueIds(): CastsAttribute

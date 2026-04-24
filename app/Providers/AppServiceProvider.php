@@ -21,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Catálogo: ProductAttributeSyncObserver / VariantAttributeSyncObserver são invocados
+        // a partir de Product::syncAttributeValues e ProductVariant::syncAttributeValues
+        // (alterações só no pivô não disparam Model::observe).
+
         URL::forceHttps();
 
         HasMany::macro('createUpdateOrDelete', function (iterable $records) {

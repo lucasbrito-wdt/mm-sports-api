@@ -4,6 +4,7 @@ namespace App\Domains\Catalog\Models;
 
 use App\Domains\Catalog\Enums\ProductOrigin;
 use App\Domains\Catalog\Enums\ProductStatus;
+use App\Domains\Catalog\Observers\ProductAttributeSyncObserver;
 use App\Domains\Shared\Models\BaseModel;
 use Illuminate\Database\Eloquent\Casts\Attribute as CastsAttribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,7 @@ class Product extends BaseModel
         'ncm',
         'meta_title',
         'meta_description',
+        'attribute_value_ids',
     ];
 
     protected function casts(): array
@@ -82,6 +84,21 @@ class Product extends BaseModel
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('display_order');
+    }
+
+    /**
+     * @param  string[]  $valueIds  IDs de attribute_values (facetas no produto)
+     */
+    public function syncAttributeValues(array $valueIds): void
+    {
+        $this->attributeValues()->sync($valueIds);
+        $this->unsetRelation('attributeValues');
+        ProductAttributeSyncObserver::recomputeAttributeValueIds($this);
+    }
+
+    public function refreshAttributeValueIdsCache(): void
+    {
+        ProductAttributeSyncObserver::recomputeAttributeValueIds($this);
     }
 
     protected function attributeValueIds(): CastsAttribute
