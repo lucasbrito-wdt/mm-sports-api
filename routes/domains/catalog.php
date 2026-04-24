@@ -1,11 +1,21 @@
 <?php
 
+use App\Domains\Catalog\Controllers\Admin\AttributeController;
+use App\Domains\Catalog\Controllers\Admin\AttributeValueController;
+use App\Domains\Catalog\Controllers\Admin\ProductVariantMatrixController;
+use App\Domains\Catalog\Controllers\CatalogFacetController;
+use App\Domains\Catalog\Controllers\CatalogProductController;
 use App\Domains\Catalog\Controllers\ProductAdminController;
 use App\Domains\Catalog\Controllers\ProductController;
 use App\Domains\Catalog\Controllers\ProductPersonalizationOptionAdminController;
 use App\Domains\Catalog\Controllers\ProductVariantAdminController;
 use App\Domains\Catalog\Controllers\SizeChartAdminController;
 use Illuminate\Support\Facades\Route;
+
+Route::prefix('catalog')->group(function () {
+    Route::get('facets', [CatalogFacetController::class, 'index']);
+    Route::get('products', [CatalogProductController::class, 'index']);
+});
 
 Route::get('products', [ProductController::class, 'index']);
 Route::get('products/{id}', [ProductController::class, 'show']);
@@ -21,7 +31,18 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
             'destroy' => 'size.charts.destroy',
         ]);
 
+    Route::get('attributes', [AttributeController::class, 'index'])->name('attributes.index');
+    Route::post('attributes', [AttributeController::class, 'store'])->name('attributes.store');
+    Route::put('attributes/{attribute}', [AttributeController::class, 'update'])->name('attributes.update');
+    Route::delete('attributes/{attribute}', [AttributeController::class, 'destroy'])->name('attributes.destroy');
+
+    Route::post('attributes/{attribute}/values', [AttributeValueController::class, 'store'])->name('attributes.values.store');
+    Route::put('attributes/values/{value}', [AttributeValueController::class, 'update'])->name('attributes.values.update');
+    Route::delete('attributes/values/{value}', [AttributeValueController::class, 'destroy'])->name('attributes.values.destroy');
+
     Route::apiResource('products', ProductAdminController::class);
+    Route::post('products/{product}/variant-matrix', [ProductVariantMatrixController::class, 'generate'])
+        ->name('products.variant-matrix.generate');
     Route::apiResource('products.variants', ProductVariantAdminController::class)->scoped();
     // `personalization-options` gera parâmetro inválido no singular (optiom); usar `options`.
     Route::apiResource('products.options', ProductPersonalizationOptionAdminController::class)->scoped();

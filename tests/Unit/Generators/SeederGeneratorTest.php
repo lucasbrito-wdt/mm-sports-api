@@ -42,11 +42,11 @@ class {{seederName}} extends Seeder
             ->with('BackEnd/seeder.stub', Mockery::any())
             ->andReturn($this->stubContent);
             
-        // Mock do File para não afetar o sistema de arquivos real durante os testes
         File::shouldReceive('exists')->andReturn(true);
         File::shouldReceive('makeDirectory')->andReturn(true);
-        File::shouldReceive('put')->andReturn(true);
-        File::shouldReceive('get')->andReturn('<?php namespace Database\Seeders; class DatabaseSeeder {}');
+        File::shouldReceive('get')->andReturn(
+            '<?php namespace Database\Seeders; use Illuminate\Database\Seeder; class DatabaseSeeder extends Seeder { public function run(): void { $this->call(Existing::class); } }'
+        );
         
         // Instanciar o gerador com o mock
         $this->seederGenerator = new SeederGenerator($this->templateManager);
@@ -60,43 +60,39 @@ class {{seederName}} extends Seeder
     
     public function testGenerateCreatesSeederFile()
     {
-        // Configuração para o teste
         $config = [
             'domain' => 'TestDomain',
             'model' => 'TestModel',
         ];
-        
-        // Verificar que o File::put é chamado com os parâmetros corretos
+
         File::shouldReceive('put')
-            ->with(app_path("Domains/TestDomain/Seeders/TestModelSeeder.php"), Mockery::any())
-            ->once()
+            ->twice()
             ->andReturn(true);
-        
-        // Executar o método
+
         $result = $this->seederGenerator->generate($config);
-        
-        // Verificar o resultado
+
         $this->assertTrue($result);
     }
     
     public function testSeederIsRegisteredInDatabaseSeeder()
     {
-        // Configuração para o teste
         $config = [
             'domain' => 'TestDomain',
             'model' => 'TestModel',
         ];
-        
-        // Verificar que File::put é chamado para o DatabaseSeeder
+
         File::shouldReceive('put')
-            ->with(database_path('seeders/DatabaseSeeder.php'), Mockery::any())
             ->once()
+            ->with(app_path('Domains/TestDomain/Seeders/TestModelSeeder.php'), Mockery::any())
             ->andReturn(true);
-            
-        // Executar o método
+
+        File::shouldReceive('put')
+            ->once()
+            ->with(database_path('seeders/DatabaseSeeder.php'), Mockery::any())
+            ->andReturn(true);
+
         $result = $this->seederGenerator->generate($config);
-        
-        // Verificar o resultado
+
         $this->assertTrue($result);
     }
 }

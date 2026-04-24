@@ -34,7 +34,7 @@ class SeederGenerator
         $seederContent = $this->generateSeederContent($domain, $seederName, $modelName, $foreignKeys);
 
         // Criar diretório se não existir
-        $seederDir = app_path("Domains\\{$domain}\\Seeders");
+        $seederDir = app_path("Domains/{$domain}/Seeders");
         if (!File::exists($seederDir)) {
             File::makeDirectory($seederDir, 0755, true);
         }

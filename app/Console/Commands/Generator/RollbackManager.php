@@ -7,7 +7,6 @@ use App\Console\Commands\Generator\Utils\FrontendRollbackHandler;
 use App\Console\Commands\Generator\Utils\IntegrityValidator;
 use App\Console\Commands\Generator\Utils\RouteManager;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -33,9 +32,15 @@ class RollbackManager extends Command
     // private IntegrityValidator $integrityValidator;
     private string $rollbackLogPath;
 
-    private Collection $rollbackLog;
+    /** @var list<array<string, mixed>> */
+    private array $sessions = [];
 
-    private array $rollbackDomain = [];
+    /** @var array{created: list<string>, modified: array<string, string>, directories: list<string>} */
+    private array $flatRollback = [
+        'created' => [],
+        'modified' => [],
+        'directories' => [],
+    ];
 
     public function __construct(RouteManager $routeManager)
     {
@@ -43,7 +48,10 @@ class RollbackManager extends Command
         $this->routeManager = $routeManager;
         $this->frontendHandler = new FrontendRollbackHandler($this);
         // $this->integrityValidator = new IntegrityValidator($this);
-        $this->rollbackLogPath = storage_path('framework/rollback/rollback_log.json');
+        $override = getenv('ROLLBACK_LOG_PATH');
+        $this->rollbackLogPath = (is_string($override) && $override !== '')
+            ? $override
+            : storage_path('framework/rollback/rollback_log.json');
     }
 
     public function handle(): int
@@ -56,15 +64,21 @@ class RollbackManager extends Command
             return CommandAlias::FAILURE;
         }
 
-        // Carregar log de rollback
-        $this->rollbackLog = collect(json_decode(file_get_contents($this->rollbackLogPath), true)['sessions']);
-        if (! $this->rollbackLog || ! is_array($this->rollbackLog->toArray())) {
+        $decoded = json_decode(file_get_contents($this->rollbackLogPath), true);
+        if (! is_array($decoded)) {
             $this->error('❌ Log de rollback corrompido ou inválido.');
 
             return CommandAlias::FAILURE;
         }
 
-        $this->rollbackDomain = $this->rollbackLog->where('domain', $this->option('domain'))->values()->first();
+        $this->sessions = $this->normalizeSessions($decoded);
+        if ($this->sessions === []) {
+            $this->error('❌ Log de rollback corrompido ou inválido.');
+
+            return CommandAlias::FAILURE;
+        }
+
+        $this->rebuildFlatFromSessions();
 
         // Mostrar resumo do que será desfeito
         $this->showRollbackSummary();
@@ -82,13 +96,77 @@ class RollbackManager extends Command
         return $this->handleFullRollback();
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function normalizeSessions(array $decoded): array
+    {
+        if (isset($decoded['sessions']) && is_array($decoded['sessions']) && $decoded['sessions'] !== []) {
+            return array_values(array_filter($decoded['sessions'], 'is_array'));
+        }
+
+        if (isset($decoded['created']) || isset($decoded['modified']) || isset($decoded['directories'])) {
+            return [[
+                'id' => 'legacy-embedded',
+                'domain' => 'unknown',
+                'status' => 'completed',
+                'action' => 'legacy',
+                'timestamp' => $decoded['timestamp'] ?? now()->toIso8601String(),
+                'created' => $decoded['created'] ?? [],
+                'modified' => $decoded['modified'] ?? [],
+                'directories' => $decoded['directories'] ?? [],
+            ]];
+        }
+
+        return [];
+    }
+
+    private function rebuildFlatFromSessions(): void
+    {
+        $this->flatRollback = ['created' => [], 'modified' => [], 'directories' => []];
+
+        foreach ($this->sessions as $session) {
+            foreach ($session['created'] ?? [] as $file) {
+                if (is_string($file)) {
+                    $this->flatRollback['created'][] = $file;
+                }
+            }
+            foreach ($session['modified'] ?? [] as $file => $backup) {
+                if (is_string($file)) {
+                    $this->flatRollback['modified'][$file] = is_string($backup) ? $backup : '';
+                }
+            }
+            foreach ($session['directories'] ?? [] as $dir) {
+                if (is_string($dir)) {
+                    $this->flatRollback['directories'][] = $dir;
+                }
+            }
+        }
+    }
+
     private function showRollbackSummary(): void
     {
         $this->info('📋 Resumo do que será desfeito:');
 
-        $createdFiles = count($this->rollbackDomain['created'] ?? []);
-        $modifiedFiles = count($this->rollbackDomain['modified'] ?? []);
-        $directories = count($this->rollbackDomain['directories'] ?? []);
+        $domain = $this->option('domain');
+        if ($domain) {
+            $df = $this->getDomainFiles($domain);
+            $createdFiles = count($df['created']);
+            $modifiedFiles = count($df['modified']);
+            $needleA = 'Domains'.DIRECTORY_SEPARATOR.$domain;
+            $needleB = 'Domains/'.$domain;
+            $needleC = 'Domains\\'.$domain;
+            $directories = count(array_filter(
+                $this->flatRollback['directories'],
+                fn (string $dir): bool => str_contains($dir, $needleA)
+                    || str_contains($dir, $needleB)
+                    || str_contains($dir, $needleC)
+            ));
+        } else {
+            $createdFiles = count($this->flatRollback['created']);
+            $modifiedFiles = count($this->flatRollback['modified']);
+            $directories = count($this->flatRollback['directories']);
+        }
 
         $this->line("  📁 Arquivos criados: {$createdFiles}");
         $this->line("  📝 Arquivos modificados: {$modifiedFiles}");
@@ -286,8 +364,8 @@ class RollbackManager extends Command
     private function handleFileSpecificRollback(): int
     {
         $allFiles = array_merge(
-            array_keys($this->rollbackLog['modified'] ?? []),
-            $this->rollbackLog['created'] ?? []
+            array_keys($this->flatRollback['modified'] ?? []),
+            $this->flatRollback['created'] ?? []
         );
 
         if (empty($allFiles)) {
@@ -399,7 +477,7 @@ class RollbackManager extends Command
         $frontendPath = $this->getFrontendPath();
 
         // Remover rotas de domínios criados
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
             if (str_contains($file, 'routes/domains/') && str_ends_with($file, '.php')) {
                 $domainName = basename($file, '.php');
                 $domainName = Str::studly(str_replace('-', '', $domainName));
@@ -412,12 +490,12 @@ class RollbackManager extends Command
 
         // Coletar arquivos de frontend para processamento específico
         $frontendFiles = [];
-        foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
+        foreach ($this->flatRollback['modified'] ?? [] as $file => $backup) {
             if (str_starts_with($file, $frontendPath)) {
                 $frontendFiles[] = $file;
             }
         }
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
             if (str_starts_with($file, $frontendPath)) {
                 $frontendFiles[] = $file;
             }
@@ -431,7 +509,7 @@ class RollbackManager extends Command
         }
 
         // Restaurar arquivos modificados (exceto frontend já processado)
-        foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
+        foreach ($this->flatRollback['modified'] ?? [] as $file => $backup) {
             if (! str_starts_with($file, $frontendPath) && file_exists($backup)) {
                 copy($backup, $file);
                 $this->info("  ✓ Arquivo restaurado: {$file}");
@@ -439,7 +517,7 @@ class RollbackManager extends Command
         }
 
         // Remover arquivos criados (exceto frontend já processado)
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
             if (! str_starts_with($file, $frontendPath) && file_exists($file)) {
                 unlink($file);
                 $this->info("  ✓ Arquivo removido: {$file}");
@@ -447,7 +525,7 @@ class RollbackManager extends Command
         }
 
         // Remover diretórios criados (em ordem reversa)
-        foreach (array_reverse($this->rollbackLog['directories'] ?? []) as $dir) {
+        foreach (array_reverse($this->flatRollback['directories'] ?? []) as $dir) {
             if (is_dir($dir) && count(scandir($dir)) === 2) {
                 rmdir($dir);
                 $this->info("  ✓ Diretório removido: {$dir}");
@@ -472,14 +550,14 @@ class RollbackManager extends Command
         $frontendFiles = [];
 
         // Arquivos modificados do frontend
-        foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
+        foreach ($this->flatRollback['modified'] ?? [] as $file => $backup) {
             if (str_starts_with($file, $frontendPath)) {
                 $frontendFiles[] = $file;
             }
         }
 
         // Arquivos criados do frontend
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
             if (str_starts_with($file, $frontendPath)) {
                 $frontendFiles[] = $file;
             }
@@ -499,7 +577,7 @@ class RollbackManager extends Command
         }
 
         // Remover diretórios vazios do frontend
-        foreach (array_reverse($this->rollbackLog['directories'] ?? []) as $dir) {
+        foreach (array_reverse($this->flatRollback['directories'] ?? []) as $dir) {
             if (str_starts_with($dir, $frontendPath) && is_dir($dir) && count(scandir($dir)) === 2) {
                 rmdir($dir);
                 $this->info('  ✓ Diretório frontend removido: '.basename($dir));
@@ -543,13 +621,13 @@ class RollbackManager extends Command
         $domainLower = strtolower($domain);
 
         // Coletar arquivos relacionados ao domínio dos logs
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
             if (str_contains(strtolower($file), $domainLower)) {
                 $sessionData['files'][] = $file;
             }
         }
 
-        foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
+        foreach ($this->flatRollback['modified'] ?? [] as $file => $backup) {
             if (str_contains(strtolower($file), $domainLower)) {
                 $sessionData['files'][] = $file;
             }
@@ -663,7 +741,7 @@ class RollbackManager extends Command
         $frontendPath = $this->getFrontendPath();
 
         // Restaurar arquivos modificados do backend
-        foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
+        foreach ($this->flatRollback['modified'] ?? [] as $file => $backup) {
             if (! str_starts_with($file, $frontendPath) && file_exists($backup)) {
                 copy($backup, $file);
                 $this->info('  ✓ Arquivo backend restaurado: '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $file));
@@ -671,7 +749,7 @@ class RollbackManager extends Command
         }
 
         // Remover arquivos criados do backend
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
             if (! str_starts_with($file, $frontendPath) && file_exists($file)) {
                 unlink($file);
                 $this->info('  ✓ Arquivo backend removido: '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $file));
@@ -679,7 +757,7 @@ class RollbackManager extends Command
         }
 
         // Remover diretórios vazios do backend
-        foreach (array_reverse($this->rollbackLog['directories'] ?? []) as $dir) {
+        foreach (array_reverse($this->flatRollback['directories'] ?? []) as $dir) {
             if (! str_starts_with($dir, $frontendPath) && is_dir($dir) && count(scandir($dir)) === 2) {
                 rmdir($dir);
                 $this->info('  ✓ Diretório backend removido: '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $dir));
@@ -691,8 +769,8 @@ class RollbackManager extends Command
     {
         foreach ($selectedFiles as $file) {
             // Verificar se é arquivo modificado
-            if (isset($this->rollbackLog['modified'][$file])) {
-                $backup = $this->rollbackLog['modified'][$file];
+            if (isset($this->flatRollback['modified'][$file])) {
+                $backup = $this->flatRollback['modified'][$file];
                 if (file_exists($backup)) {
                     copy($backup, $file);
                     $this->info('  ✓ Arquivo restaurado: '.basename($file));
@@ -700,7 +778,7 @@ class RollbackManager extends Command
             }
 
             // Verificar se é arquivo criado
-            if (in_array($file, $this->rollbackLog['created'] ?? [])) {
+            if (in_array($file, $this->flatRollback['created'] ?? [])) {
                 if (file_exists($file)) {
                     unlink($file);
                     $this->info('  ✓ Arquivo removido: '.basename($file));
@@ -716,7 +794,7 @@ class RollbackManager extends Command
         try {
             // Identificar migrations criadas no log
             $migrations = [];
-            foreach ($this->rollbackLog['created'] ?? [] as $file) {
+            foreach ($this->flatRollback['created'] ?? [] as $file) {
                 if (str_contains($file, 'Migration') && str_ends_with($file, '.php')) {
                     // Extrair nome da tabela do arquivo de migration
                     $fileName = basename($file);
@@ -743,17 +821,17 @@ class RollbackManager extends Command
     private function simulateRollback(): void
     {
         $this->line('📁 Arquivos que seriam restaurados:');
-        foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
+        foreach ($this->flatRollback['modified'] ?? [] as $file => $backup) {
             $this->line('  • '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $file));
         }
 
         $this->line('\n🗑️ Arquivos que seriam removidos:');
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
             $this->line('  • '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $file));
         }
 
         $this->line('\n📂 Diretórios que seriam removidos:');
-        foreach (array_reverse($this->rollbackLog['directories'] ?? []) as $dir) {
+        foreach (array_reverse($this->flatRollback['directories'] ?? []) as $dir) {
             $this->line('  • '.str_replace(base_path().DIRECTORY_SEPARATOR, '', $dir));
         }
     }
@@ -762,34 +840,52 @@ class RollbackManager extends Command
     {
         $domains = [];
 
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
+        foreach ($this->sessions as $session) {
+            $d = $session['domain'] ?? null;
+            if (is_string($d) && $d !== '' && $d !== 'unknown') {
+                $domains[] = $d;
+            }
+        }
+
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
             if (preg_match('/app[\/\\\\]Domains[\/\\\\]([^\/\\\\]+)/', $file, $matches)) {
                 $domains[] = $matches[1];
             }
         }
 
-        foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
+        foreach ($this->flatRollback['modified'] ?? [] as $file => $backup) {
             if (preg_match('/app[\/\\\\]Domains[\/\\\\]([^\/\\\\]+)/', $file, $matches)) {
                 $domains[] = $matches[1];
             }
         }
 
-        return array_unique($domains);
+        return array_values(array_unique($domains));
     }
 
     private function getDomainFiles(string $domain): array
     {
         $domainFiles = ['created' => [], 'modified' => []];
+        $needles = [
+            'Domains'.DIRECTORY_SEPARATOR.$domain,
+            'Domains/'.$domain,
+            'Domains\\'.$domain,
+        ];
 
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
-            if (str_contains($file, "Domains{DIRECTORY_SEPARATOR}{$domain}")) {
-                $domainFiles['created'][] = $file;
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
+            foreach ($needles as $needle) {
+                if (str_contains($file, $needle)) {
+                    $domainFiles['created'][] = $file;
+                    break;
+                }
             }
         }
 
-        foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
-            if (str_contains($file, "Domains{DIRECTORY_SEPARATOR}{$domain}")) {
-                $domainFiles['modified'][$file] = $backup;
+        foreach ($this->flatRollback['modified'] ?? [] as $file => $backup) {
+            foreach ($needles as $needle) {
+                if (str_contains($file, $needle)) {
+                    $domainFiles['modified'][$file] = $backup;
+                    break;
+                }
             }
         }
 
@@ -801,13 +897,13 @@ class RollbackManager extends Command
         $count = 0;
         $frontendPath = $this->getFrontendPath();
 
-        foreach ($this->rollbackLog['created'] ?? [] as $file) {
+        foreach ($this->flatRollback['created'] ?? [] as $file) {
             if (str_starts_with($file, $frontendPath)) {
                 $count++;
             }
         }
 
-        foreach ($this->rollbackLog['modified'] ?? [] as $file => $backup) {
+        foreach ($this->flatRollback['modified'] ?? [] as $file => $backup) {
             if (str_starts_with($file, $frontendPath)) {
                 $count++;
             }

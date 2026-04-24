@@ -873,12 +873,12 @@ class FrontendRollbackHandler
         $report .= "❌ Falhas ao remover arquivos: " . count($results['failed']) . "\n";
 
         // Estatísticas específicas
-        $report .= "🏪 Stores atualizadas: " . count($results['stores_updated']) . "\n";
-        $report .= "📝 Arquivos de tipos processados: " . count($results['types_updated']) . "\n";
-        $report .= "🛣️  Rotas processadas: " . count($results['routes_updated']) . "\n";
-        $report .= "🧩 Componentes processados: " . count($results['components_updated']) . "\n";
-        $report .= "📄 Páginas processadas: " . count($results['pages_updated']) . "\n";
-        $report .= "🔧 Serviços processados: " . count($results['services_updated']) . "\n";
+        $report .= "🏪 Stores atualizadas: " . count($results['stores_updated'] ?? []) . "\n";
+        $report .= "📝 Arquivos de tipos processados: " . count($results['types_updated'] ?? []) . "\n";
+        $report .= "🛣️  Rotas processadas: " . count($results['routes_updated'] ?? []) . "\n";
+        $report .= "🧩 Componentes processados: " . count($results['components_updated'] ?? []) . "\n";
+        $report .= "📄 Páginas processadas: " . count($results['pages_updated'] ?? []) . "\n";
+        $report .= "🔧 Serviços processados: " . count($results['services_updated'] ?? []) . "\n";
 
         // Informação do domínio se disponível
         if (isset($results['domain'])) {

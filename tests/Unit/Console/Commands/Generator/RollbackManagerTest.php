@@ -11,16 +11,22 @@ class RollbackManagerTest extends TestCase
 {
     private string $testRollbackLogPath;
 
-    private array $testRollbackLog;
+    /** @var array<string, mixed> */
+    private array $legacyRollbackFilePayload;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        $frontendRoot = storage_path('testing/frontend');
+        if (! is_dir($frontendRoot.'/src/types')) {
+            mkdir($frontendRoot.'/src/types', 0755, true);
+        }
+
         $this->testRollbackLogPath = storage_path('testing/rollback_test.json');
-        $this->testRollbackLog = [
+        $this->legacyRollbackFilePayload = [
             'version' => '1.0',
-            'timestamp' => now()->toISOString(),
+            'timestamp' => now()->toIso8601String(),
             'created' => [
                 base_path('app/Domains/Products/Models/Product.php'),
                 base_path('app/Domains/Products/Controllers/ProductController.php'),
@@ -36,19 +42,16 @@ class RollbackManagerTest extends TestCase
             ],
         ];
 
-        // Criar diretório de teste
         $testDir = dirname($this->testRollbackLogPath);
         if (! is_dir($testDir)) {
             mkdir($testDir, 0755, true);
         }
 
-        // Criar log de teste
-        file_put_contents($this->testRollbackLogPath, json_encode($this->testRollbackLog, JSON_PRETTY_PRINT));
+        file_put_contents($this->testRollbackLogPath, json_encode($this->legacyRollbackFilePayload, JSON_PRETTY_PRINT));
     }
 
     protected function tearDown(): void
     {
-        // Limpar arquivos de teste
         if (file_exists($this->testRollbackLogPath)) {
             unlink($this->testRollbackLogPath);
         }
@@ -61,32 +64,52 @@ class RollbackManagerTest extends TestCase
         parent::tearDown();
     }
 
+    private function injectSessions(RollbackManager $command, array $sessions): void
+    {
+        $reflection = new \ReflectionClass($command);
+        $sessionsProperty = $reflection->getProperty('sessions');
+        $sessionsProperty->setAccessible(true);
+        $sessionsProperty->setValue($command, $sessions);
+
+        $rebuild = $reflection->getMethod('rebuildFlatFromSessions');
+        $rebuild->setAccessible(true);
+        $rebuild->invoke($command);
+    }
+
+    private function sessionFromLegacy(array $legacy, string $domain = 'Products'): array
+    {
+        return [
+            'id' => 'test-session',
+            'domain' => $domain,
+            'status' => 'completed',
+            'action' => 'create',
+            'timestamp' => $legacy['timestamp'] ?? now()->toIso8601String(),
+            'created' => $legacy['created'] ?? [],
+            'modified' => $legacy['modified'] ?? [],
+            'directories' => $legacy['directories'] ?? [],
+        ];
+    }
+
     /** @test */
     public function can_load_rollback_log()
     {
         $routeManager = $this->createMock(RouteManager::class);
         $command = new RollbackManager($routeManager);
-
-        // Usar reflexão para acessar propriedades privadas
         $reflection = new \ReflectionClass($command);
 
         $rollbackLogPathProperty = $reflection->getProperty('rollbackLogPath');
         $rollbackLogPathProperty->setAccessible(true);
         $rollbackLogPathProperty->setValue($command, $this->testRollbackLogPath);
 
-        $rollbackLogProperty = $reflection->getProperty('rollbackLog');
-        $rollbackLogProperty->setAccessible(true);
-
-        // Simular carregamento do log
         $loadedLog = json_decode(file_get_contents($this->testRollbackLogPath), true);
-        $rollbackLogProperty->setValue($command, $loadedLog);
+        $normalize = $reflection->getMethod('normalizeSessions');
+        $normalize->setAccessible(true);
+        $sessions = $normalize->invoke($command, $loadedLog);
 
-        $actualLog = $rollbackLogProperty->getValue($command);
-
-        $this->assertEquals($this->testRollbackLog['version'], $actualLog['version']);
-        $this->assertCount(3, $actualLog['created']);
-        $this->assertCount(2, $actualLog['modified']);
-        $this->assertCount(2, $actualLog['directories']);
+        $this->assertCount(1, $sessions);
+        $this->assertCount(3, $sessions[0]['created']);
+        $this->assertCount(2, $sessions[0]['modified']);
+        $this->assertCount(2, $sessions[0]['directories']);
     }
 
     /** @test */
@@ -94,14 +117,9 @@ class RollbackManagerTest extends TestCase
     {
         $routeManager = $this->createMock(RouteManager::class);
         $command = new RollbackManager($routeManager);
+        $this->injectSessions($command, [$this->sessionFromLegacy($this->legacyRollbackFilePayload)]);
 
-        // Usar reflexão para testar método privado
         $reflection = new \ReflectionClass($command);
-
-        $rollbackLogProperty = $reflection->getProperty('rollbackLog');
-        $rollbackLogProperty->setAccessible(true);
-        $rollbackLogProperty->setValue($command, $this->testRollbackLog);
-
         $method = $reflection->getMethod('extractDomainsFromLog');
         $method->setAccessible(true);
 
@@ -116,14 +134,9 @@ class RollbackManagerTest extends TestCase
     {
         $routeManager = $this->createMock(RouteManager::class);
         $command = new RollbackManager($routeManager);
+        $this->injectSessions($command, [$this->sessionFromLegacy($this->legacyRollbackFilePayload)]);
 
-        // Usar reflexão para testar método privado
         $reflection = new \ReflectionClass($command);
-
-        $rollbackLogProperty = $reflection->getProperty('rollbackLog');
-        $rollbackLogProperty->setAccessible(true);
-        $rollbackLogProperty->setValue($command, $this->testRollbackLog);
-
         $method = $reflection->getMethod('getDomainFiles');
         $method->setAccessible(true);
 
@@ -132,8 +145,6 @@ class RollbackManagerTest extends TestCase
         $this->assertIsArray($domainFiles);
         $this->assertArrayHasKey('created', $domainFiles);
         $this->assertArrayHasKey('modified', $domainFiles);
-
-        // Verificar se arquivos do domínio Products foram encontrados
         $this->assertGreaterThan(0, count($domainFiles['created']));
     }
 
@@ -142,36 +153,37 @@ class RollbackManagerTest extends TestCase
     {
         $routeManager = $this->createMock(RouteManager::class);
         $command = new RollbackManager($routeManager);
+        $this->injectSessions($command, [$this->sessionFromLegacy($this->legacyRollbackFilePayload)]);
 
-        // Usar reflexão para testar método privado
         $reflection = new \ReflectionClass($command);
-
-        $rollbackLogProperty = $reflection->getProperty('rollbackLog');
-        $rollbackLogProperty->setAccessible(true);
-        $rollbackLogProperty->setValue($command, $this->testRollbackLog);
-
         $method = $reflection->getMethod('getFrontendFilesCount');
         $method->setAccessible(true);
 
         $frontendCount = $method->invoke($command);
 
         $this->assertIsInt($frontendCount);
-        $this->assertGreaterThanOrEqual(1, $frontendCount); // Pelo menos o arquivo Product.ts
+        $this->assertGreaterThanOrEqual(1, $frontendCount);
     }
 
     /** @test */
     public function command_fails_when_no_rollback_log_exists()
     {
-        // Remover o arquivo de log
-        if (file_exists($this->testRollbackLogPath)) {
-            unlink($this->testRollbackLogPath);
-        }
+        $isolatedPath = storage_path('testing/rollback-no-file-'.uniqid('', true).'.json');
+        @unlink($isolatedPath);
+        $this->assertFileDoesNotExist($isolatedPath);
 
         $routeManager = $this->createMock(RouteManager::class);
+        $this->app->instance(RouteManager::class, $routeManager);
 
-        $this->artisan('rollback:manager')
-            ->expectsOutput('❌ Nenhum log de rollback encontrado. Nada a desfazer.')
-            ->assertExitCode(1);
+        putenv('ROLLBACK_LOG_PATH='.$isolatedPath);
+        try {
+            $this->artisan('rollback:manager')
+                ->expectsOutputToContain('Nenhum log de rollback encontrado')
+                ->assertExitCode(1);
+        } finally {
+            putenv('ROLLBACK_LOG_PATH');
+            @unlink($isolatedPath);
+        }
     }
 
     /** @test */
@@ -180,7 +192,6 @@ class RollbackManagerTest extends TestCase
         $routeManager = $this->createMock(RouteManager::class);
         $routeManager->method('removeDomainRoutes')->willReturn(true);
 
-        // Criar alguns arquivos de teste para simular rollback
         $testFiles = [
             base_path('app/Domains/Products/Models/Product.php'),
         ];
@@ -193,10 +204,8 @@ class RollbackManagerTest extends TestCase
             file_put_contents($file, '<?php // Test file');
         }
 
-        // Atualizar a instância do command com nosso mock
         $this->app->instance(RouteManager::class, $routeManager);
 
-        // Simular o comando (sem executar de fato para não afetar arquivos reais)
         $reflection = new \ReflectionClass(RollbackManager::class);
         $command = $reflection->newInstanceWithoutConstructor();
 
@@ -208,25 +217,20 @@ class RollbackManagerTest extends TestCase
         $rollbackLogPathProperty->setAccessible(true);
         $rollbackLogPathProperty->setValue($command, $this->testRollbackLogPath);
 
-        $rollbackLogProperty = $reflection->getProperty('rollbackLog');
-        $rollbackLogProperty->setAccessible(true);
-        $rollbackLogProperty->setValue($command, $this->testRollbackLog);
+        $this->injectSessions($command, [$this->sessionFromLegacy($this->legacyRollbackFilePayload)]);
 
-        // Testar extração de domínios
         $extractMethod = $reflection->getMethod('extractDomainsFromLog');
         $extractMethod->setAccessible(true);
         $domains = $extractMethod->invoke($command);
 
         $this->assertContains('Products', $domains);
 
-        // Limpar arquivos de teste
         foreach ($testFiles as $file) {
             if (file_exists($file)) {
                 unlink($file);
             }
         }
 
-        // Limpar diretórios de teste
         $testDir = base_path('app/Domains/Products/Models');
         if (is_dir($testDir)) {
             rmdir($testDir);
@@ -242,62 +246,60 @@ class RollbackManagerTest extends TestCase
     {
         $routeManager = $this->createMock(RouteManager::class);
         $command = new RollbackManager($routeManager);
+        $this->injectSessions($command, [$this->sessionFromLegacy($this->legacyRollbackFilePayload)]);
 
-        // Usar reflexão para testar método privado de simulação
         $reflection = new \ReflectionClass($command);
-
-        $rollbackLogProperty = $reflection->getProperty('rollbackLog');
-        $rollbackLogProperty->setAccessible(true);
-        $rollbackLogProperty->setValue($command, $this->testRollbackLog);
+        $outputProperty = $reflection->getProperty('output');
+        $outputProperty->setAccessible(true);
+        $outputStyle = $this->createMock(\Illuminate\Console\OutputStyle::class);
+        $outputStyle->expects($this->atLeastOnce())->method('writeln')->willReturnCallback(function (): void {});
+        $outputProperty->setValue($command, $outputStyle);
 
         $method = $reflection->getMethod('simulateRollback');
         $method->setAccessible(true);
 
-        // Capturar output usando buffer
-        ob_start();
         $method->invoke($command);
-        $output = ob_get_clean();
-
-        // Verificar se a simulação mostra informações corretas
-        $this->assertIsString($output);
     }
 
     /** @test */
     public function validates_rollback_log_format()
     {
-        // Criar log inválido
         $invalidLog = ['invalid' => 'format'];
-        file_put_contents($this->testRollbackLogPath, json_encode($invalidLog));
+        $isolatedPath = storage_path('testing/rollback-invalid-'.uniqid('', true).'.json');
+        $dir = dirname($isolatedPath);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        file_put_contents($isolatedPath, json_encode($invalidLog, JSON_THROW_ON_ERROR));
 
         $routeManager = $this->createMock(RouteManager::class);
+        $this->app->instance(RouteManager::class, $routeManager);
 
-        $this->artisan('rollback:manager', ['--force' => true])
-            ->expectsOutput('❌ Log de rollback corrompido ou inválido.')
-            ->assertExitCode(1);
+        putenv('ROLLBACK_LOG_PATH='.$isolatedPath);
+        try {
+            $this->artisan('rollback:manager', ['--force' => true])
+                ->expectsOutputToContain('Log de rollback corrompido ou inválido')
+                ->assertExitCode(1);
+        } finally {
+            putenv('ROLLBACK_LOG_PATH');
+            if (file_exists($isolatedPath)) {
+                unlink($isolatedPath);
+            }
+        }
     }
 
     /** @test */
     public function handles_missing_backup_files_gracefully()
     {
-        // Criar log com backup que não existe
-        $logWithMissingBackup = $this->testRollbackLog;
+        $logWithMissingBackup = $this->legacyRollbackFilePayload;
         $logWithMissingBackup['modified'] = [
             base_path('routes/web.php') => '/nonexistent/backup/file.php',
         ];
 
-        file_put_contents($this->testRollbackLogPath, json_encode($logWithMissingBackup, JSON_PRETTY_PRINT));
-
         $routeManager = $this->createMock(RouteManager::class);
         $command = new RollbackManager($routeManager);
+        $this->injectSessions($command, [$this->sessionFromLegacy($logWithMissingBackup)]);
 
-        // Usar reflexão para testar comportamento
-        $reflection = new \ReflectionClass($command);
-
-        $rollbackLogProperty = $reflection->getProperty('rollbackLog');
-        $rollbackLogProperty->setAccessible(true);
-        $rollbackLogProperty->setValue($command, $logWithMissingBackup);
-
-        // O comando deve continuar funcionando mesmo com backup faltando
-        $this->assertTrue(true); // Se chegou até aqui, não houve exceção
+        $this->assertTrue(true);
     }
 }

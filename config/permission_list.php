@@ -53,6 +53,13 @@ return [
         'products personalization create',
         'products personalization edit',
         'products personalization delete',
+        'attributes list',
+        'attributes create',
+        'attributes edit',
+        'attributes delete',
+        'attributes values create',
+        'attributes values edit',
+        'attributes values delete',
     ],
     'marketing' => [
         'banners list',

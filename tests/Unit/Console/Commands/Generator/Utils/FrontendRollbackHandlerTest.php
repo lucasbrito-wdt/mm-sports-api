@@ -205,6 +205,9 @@ class FrontendRollbackHandlerTest extends TestCase
             'stores_updated' => ['ProductStore.ts'],
             'types_updated' => ['Product.ts'],
             'routes_updated' => [],
+            'components_updated' => [],
+            'pages_updated' => [],
+            'services_updated' => [],
         ];
 
         $report = $this->handler->generateFrontendRollbackReport($testResults);
@@ -221,8 +224,8 @@ class FrontendRollbackHandlerTest extends TestCase
     public function handles_nonexistent_files_gracefully()
     {
         $nonExistentFiles = [
-            '/path/to/nonexistent/file1.vue',
-            '/path/to/nonexistent/file2.ts',
+            $this->testFrontendPath.'/src/components/nonexistent1.vue',
+            $this->testFrontendPath.'/src/types/nonexistent2.ts',
         ];
 
         $results = $this->handler->rollbackFrontendFiles($nonExistentFiles);

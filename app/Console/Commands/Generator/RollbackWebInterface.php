@@ -72,6 +72,7 @@ class RollbackWebInterface extends Command
     {
         $statistics = $this->logger->getStatistics();
         $sessions = $this->logger->getSessions();
+        $domainsCount = count($statistics['domains'] ?? []);
 
         return <<<HTML
 <!DOCTYPE html>
@@ -138,7 +139,7 @@ class RollbackWebInterface extends Command
                         <i class="fas fa-folder text-purple-600"></i>
                     </div>                    <div class="ml-4">
                         <p class="text-gray-600 text-sm">Domínios</p>
-                        <p class="text-2xl font-bold text-gray-800">${count($statistics['domains'])}</p>
+                        <p class="text-2xl font-bold text-gray-800">{$domainsCount}</p>
                     </div>
                 </div>
             </div>
