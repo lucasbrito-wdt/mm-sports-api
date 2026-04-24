@@ -8,6 +8,8 @@ use League\Flysystem\AwsS3V3\AwsS3V3Adapter;
 
 class R2PresignService
 {
+    private const TTL_SECONDS = 300;
+
     /**
      * Generate a presigned PUT URL for direct browser-to-R2 upload.
      *
@@ -31,13 +33,13 @@ class R2PresignService
             'ContentLength' => $contentLength,
         ]);
 
-        $request = $client->createPresignedRequest($cmd, '+5 minutes');
+        $request = $client->createPresignedRequest($cmd, '+' . self::TTL_SECONDS . ' seconds');
 
         return [
             'presigned_url' => (string) $request->getUri(),
             'public_url' => $publicBase . '/' . ltrim($key, '/'),
             'key' => $key,
-            'expires_in' => 300,
+            'expires_in' => self::TTL_SECONDS,
         ];
     }
 }
