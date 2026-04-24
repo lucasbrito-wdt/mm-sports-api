@@ -173,6 +173,11 @@ interface TemplateFactoryInterface
 - **Services**: `app/Domains/{Domain}/Services/`
 - **Migrations**: `app/Domains/{Domain}/Migrations/`
 
+### Identificadores (padrão MM Sports — ULID)
+- **PKs e FKs de domínio**: usar **ULID** (`$table->ulid('id')->primary()`, `foreignUlid()->constrained()`, etc.), alinhado ao CodifyTech / `BaseModel`.
+- **Colunas denormalizadas em array** (ex.: lista de IDs de valores de atributo): usar tipo compatível com ULID no Postgres (ex.: `text[]`), não `bigint[]`.
+- **Exceção**: só `bigIncrements` / `foreignId` com acordo explícito do time (legado ou tabela estritamente interna).
+
 ### Error Handling
 ```php
 // Usar sempre try-catch para operações críticas

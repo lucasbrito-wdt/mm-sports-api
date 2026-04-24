@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('attributes', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->ulid('id')->primary();
             $table->string('code')->unique();
             $table->string('label');
             $table->string('type');
@@ -20,8 +20,8 @@ return new class extends Migration
         });
 
         Schema::create('attribute_values', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->foreignId('attribute_id')
+            $table->ulid('id')->primary();
+            $table->foreignUlid('attribute_id')
                 ->constrained('attributes')
                 ->cascadeOnDelete();
             $table->string('value');
