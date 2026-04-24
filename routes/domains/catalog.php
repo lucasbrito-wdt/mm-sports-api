@@ -2,6 +2,7 @@
 
 use App\Domains\Catalog\Controllers\Admin\AttributeController;
 use App\Domains\Catalog\Controllers\Admin\AttributeValueController;
+use App\Domains\Catalog\Controllers\Admin\ProductImageController;
 use App\Domains\Catalog\Controllers\Admin\ProductVariantMatrixController;
 use App\Domains\Catalog\Controllers\CatalogFacetController;
 use App\Domains\Catalog\Controllers\CatalogProductController;
@@ -46,4 +47,11 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::apiResource('products.variants', ProductVariantAdminController::class)->scoped();
     // `personalization-options` gera parâmetro inválido no singular (optiom); usar `options`.
     Route::apiResource('products.options', ProductPersonalizationOptionAdminController::class)->scoped();
+
+    Route::prefix('products/{product}')->group(function () {
+        Route::get   ('images',         [ProductImageController::class, 'index']);
+        Route::post  ('images',         [ProductImageController::class, 'store']);
+        Route::put   ('images/{image}', [ProductImageController::class, 'update']);
+        Route::delete('images/{image}', [ProductImageController::class, 'destroy']);
+    });
 });
