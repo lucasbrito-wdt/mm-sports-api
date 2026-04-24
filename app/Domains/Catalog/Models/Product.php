@@ -5,7 +5,9 @@ namespace App\Domains\Catalog\Models;
 use App\Domains\Catalog\Enums\ProductOrigin;
 use App\Domains\Catalog\Enums\ProductStatus;
 use App\Domains\Shared\Models\BaseModel;
+use Illuminate\Database\Eloquent\Casts\Attribute as CastsAttribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends BaseModel
@@ -55,5 +57,68 @@ class Product extends BaseModel
     public function options(): HasMany
     {
         return $this->personalizationOptions();
+    }
+
+    public function attributeValues(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            AttributeValue::class,
+            'product_attribute_values',
+            'product_id',
+            'attribute_value_id'
+        );
+    }
+
+    public function variantAxes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Attribute::class,
+            'product_variant_axes',
+            'product_id',
+            'attribute_id'
+        )->withPivot('display_order')->orderByPivot('display_order');
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('display_order');
+    }
+
+    protected function attributeValueIds(): CastsAttribute
+    {
+        return CastsAttribute::make(
+            get: function ($value): array {
+                if ($value === null || $value === '' || $value === '{}') {
+                    return [];
+                }
+                if (is_array($value)) {
+                    return $value;
+                }
+                if (! is_string($value)) {
+                    return [];
+                }
+                if (str_starts_with($value, '[')) {
+                    return json_decode($value, true) ?? [];
+                }
+                $inner = trim($value, '{}');
+                if ($inner === '') {
+                    return [];
+                }
+
+                return array_map('trim', explode(',', $inner));
+            },
+            set: function (array $ids): string {
+                $ids = array_values($ids);
+                if ($this->getConnection()->getDriverName() === 'pgsql') {
+                    if ($ids === []) {
+                        return '{}';
+                    }
+
+                    return '{'.implode(',', $ids).'}';
+                }
+
+                return json_encode($ids);
+            },
+        );
     }
 }
