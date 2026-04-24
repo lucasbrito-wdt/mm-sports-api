@@ -12,7 +12,7 @@
 */
 
 pest()->extend(Tests\TestCase::class)
- // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -41,7 +41,13 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+use App\Domains\Auth\Models\User;
+use Tymon\JWTAuth\Facades\JWTAuth;
+
+/**
+ * @return array<string, string>
+ */
+function jwtHeaders(User $user): array
 {
-    // ..
+    return ['Authorization' => 'Bearer '.JWTAuth::fromUser($user)];
 }

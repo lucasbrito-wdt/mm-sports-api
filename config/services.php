@@ -35,4 +35,20 @@ return [
         ],
     ],
 
+    'mm_store' => [
+        'origin_postal_code' => env('MM_STORE_POSTAL_CODE', '01310100'),
+    ],
+
+    'asaas' => [
+        'api_key' => env('ASAAS_API_KEY'),
+        'base_url' => env('ASAAS_BASE_URL', 'https://api.asaas.com/v3'),
+        'webhook_token' => env('ASAAS_WEBHOOK_TOKEN'),
+    ],
+
+    'correios' => [
+        'username' => env('CORREIOS_USERNAME'),
+        'posting_card' => env('CORREIOS_POSTING_CARD'),
+        'service_codes' => ['03220', '04014'], // PAC, SEDEX — adjust to contract
+    ],
+
 ];

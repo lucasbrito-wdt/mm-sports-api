@@ -2,21 +2,21 @@
 
 namespace App\Domains\Auth\Services;
 
-use Str;
 use App\Domains\Auth\Models\User;
+use App\Domains\Auth\Requests\ForgotPasswordRequest;
+use App\Domains\Auth\Requests\LoginRequest;
+use App\Domains\Auth\Requests\RegisterRequest;
+use App\Domains\Auth\Requests\ResetPasswordRequest;
+use App\Domains\Shared\Services\BaseService;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Auth\Events\PasswordReset;
-use App\Domains\Auth\Requests\LoginRequest;
-use App\Domains\Shared\Services\BaseService;
-use App\Domains\Auth\Requests\RegisterRequest;
 use Illuminate\Validation\ValidationException;
-use App\Domains\Auth\Requests\ResetPasswordRequest;
-use App\Domains\Auth\Requests\ForgotPasswordRequest;
+use Str;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthService extends BaseService
 {
@@ -66,9 +66,7 @@ class AuthService extends BaseService
             'terms' => $request->terms,
         ]);
 
-        if (! empty($request->roles)) {
-            $user->assignRole($request->roles);
-        }
+        $user->assignRole(config('cdf.default_user_role_slug', 'user'));
 
         $this->user->sendEmailVerificationNotification();
 
@@ -141,22 +139,20 @@ class AuthService extends BaseService
         return $this->respondWithToken(Auth::refresh());
     }
 
-
     public function logout()
     {
         try {
             Auth::logout();
         } catch (\Exception $e) {
             // Se o token já expirou ou é inválido, ainda consideramos logout bem-sucedido
-            Log::info('Logout realizado com token expirado/inválido: ' . $e->getMessage());
+            Log::info('Logout realizado com token expirado/inválido: '.$e->getMessage());
         }
     }
 
     /**
      * Get the token array structure.
      *
-     * @param  string $token
-     *
+     * @param  string  $token
      * @return \Illuminate\Http\JsonResponse
      */
     protected function respondWithToken($token)
@@ -164,7 +160,7 @@ class AuthService extends BaseService
         return [
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => $this->getTTLInSeconds()
+            'expires_in' => $this->getTTLInSeconds(),
         ];
     }
 
@@ -172,13 +168,13 @@ class AuthService extends BaseService
     {
         $token = Auth::attempt($request->only('email', 'password'));
 
-        if (!$token) {
+        if (! $token) {
             throw ValidationException::withMessages([
                 'email' => ['As credenciais fornecidas estão incorretas.'],
             ]);
         }
 
-        if (!Auth::user()->active) {
+        if (! Auth::user()->active) {
             throw ValidationException::withMessages([
                 'email' => ['O seu usuário não está ativo. Por favor, entre em contato com o suporte para solicitar a ativação da sua conta.'],
             ]);

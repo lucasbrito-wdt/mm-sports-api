@@ -18,8 +18,8 @@ class TelescopeServiceProvider extends ServiceProvider
         Telescope::tag(function (IncomingEntry $entry) {
             if ($entry->type === 'request') {
                 return [
-                    'Status:'.$entry->content['response_status'],
-                    'Method:'.$entry->content['method'],
+                    'Status:'.$entry->content['response_status'] ?? '',
+                    'Method:'.$entry->content['method'] ?? '',
                     'URI:'.$entry->content['uri'] ?? '',
                     'Controller:'.$entry->content['controller_action'] ?? '',
                 ];

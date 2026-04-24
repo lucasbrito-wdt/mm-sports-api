@@ -21,7 +21,7 @@ return [
     | Recomendado: 'auto' para detecção automática baseada na conexão ativa.
     |
     */
-    'driver' => env('FTS_DRIVER', 'mysql'),
+    'driver' => env('FTS_DRIVER', 'auto'),
 
     /*
     |--------------------------------------------------------------------------

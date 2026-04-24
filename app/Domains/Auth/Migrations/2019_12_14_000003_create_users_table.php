@@ -29,7 +29,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        $this->createSearchableIndex('users', ['name', 'email']);
+        if (in_array(Schema::getConnection()->getDriverName(), ['mysql', 'pgsql'], true)) {
+            $this->createSearchableIndex('users', ['name', 'email']);
+        }
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
@@ -38,8 +40,8 @@ return new class extends Migration
         });
 
         Schema::create('sessions', function (Blueprint $table) {
-            $table->ulid('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->string('id')->primary();
+            $table->foreignUlid('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');

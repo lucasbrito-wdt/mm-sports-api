@@ -2,16 +2,13 @@
 
 namespace Tests\Unit\Console\Commands\Generator;
 
-use App\Console\Commands\Generator\RollbackStatus;
 use App\Console\Commands\Generator\Utils\RollbackLogger;
 use Illuminate\Foundation\Testing\TestCase;
-use Tests\CreatesApplication;
 
 class RollbackStatusTest extends TestCase
 {
-    use CreatesApplication;
-
     private RollbackLogger $mockLogger;
+
     private array $testSessions;
 
     protected function setUp(): void
@@ -40,7 +37,7 @@ class RollbackStatusTest extends TestCase
                 'metadata' => [
                     'user' => 'test_user',
                     'version' => '2.0',
-                ]
+                ],
             ],
             'session2' => [
                 'id' => 'session2',
@@ -59,8 +56,8 @@ class RollbackStatusTest extends TestCase
                 'metadata' => [
                     'user' => 'test_user',
                     'version' => '2.0',
-                ]
-            ]
+                ],
+            ],
         ];
 
         $this->mockLogger = $this->createMock(RollbackLogger::class);
@@ -315,7 +312,7 @@ class RollbackStatusTest extends TestCase
         $sessionWithWarnings = $this->testSessions['session1'];
         $sessionWithWarnings['metadata']['warnings'] = [
             'Arquivo não encontrado: test.php',
-            'Permissão negada: backup.php'
+            'Permissão negada: backup.php',
         ];
 
         $this->mockLogger

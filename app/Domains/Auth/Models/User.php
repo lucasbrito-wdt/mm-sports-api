@@ -5,9 +5,12 @@ namespace App\Domains\Auth\Models;
 use App\Casts\UploadCast;
 use App\Domains\ACL\Models\Role;
 use App\Domains\ACL\Traits\HasRoles;
-use App\Domains\Shared\Traits\TenantScope;
 use App\Domains\Auth\Notifications\ResetPasswordNotification;
 use App\Domains\Auth\Notifications\VerifyEmail;
+use App\Domains\Commerce\Models\Order;
+use App\Domains\Commerce\Models\UserAddress;
+use App\Domains\Reviews\Models\WishlistItem;
+use App\Domains\Shared\Traits\TenantScope;
 use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -36,6 +39,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property-read mixed $role
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
@@ -50,13 +54,20 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTermos($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
+ *
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Role> $roles
  * @property-read int|null $roles_count
+ *
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, HasRoles, HasUlids, MustVerifyEmail, Notifiable, TenantScope, Searchable;
+    use HasFactory, HasRoles, HasUlids, MustVerifyEmail, Notifiable, Searchable, TenantScope;
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\UserFactory::new();
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -117,7 +128,7 @@ class User extends Authenticatable implements JWTSubject
 
     public string $fileDir = 'users';
 
-    //region Attributes
+    // region Attributes
     public function role(): Attribute
     {
         return Attribute::make(
@@ -128,6 +139,7 @@ class User extends Authenticatable implements JWTSubject
             },
         );
     }
+
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      */
@@ -143,17 +155,34 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
-    //endregion
-    //region Relations
+
+    // endregion
+    // region Relations
     public function roles()
     {
         return $this->belongsToMany(Role::class);
     }
-    //endregion
-    //region Methods
+
+    public function userAddresses()
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function wishlistItems()
+    {
+        return $this->hasMany(WishlistItem::class);
+    }
+
+    // endregion
+    // region Methods
     public function sendPasswordResetNotification($token): void
     {
-        $url = env('FRONT_END_URL') . '/admin/auth/redefinir-senha?email=' . $this->email . '&token=' . $token;
+        $url = env('FRONT_END_URL').'/admin/auth/redefinir-senha?email='.$this->email.'&token='.$token;
         $this->notify(new ResetPasswordNotification($url));
     }
 
@@ -161,5 +190,5 @@ class User extends Authenticatable implements JWTSubject
     {
         $this->notify(new VerifyEmail);
     }
-    //endregion
+    // endregion
 }

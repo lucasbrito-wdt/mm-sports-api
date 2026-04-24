@@ -6,13 +6,11 @@ use App\Console\Commands\Generator\RollbackManager;
 use App\Console\Commands\Generator\Utils\RouteManager;
 use Illuminate\Foundation\Testing\TestCase;
 use Illuminate\Support\Facades\File;
-use Tests\CreatesApplication;
 
 class RollbackManagerTest extends TestCase
 {
-    use CreatesApplication;
-
     private string $testRollbackLogPath;
+
     private array $testRollbackLog;
 
     protected function setUp(): void
@@ -35,12 +33,12 @@ class RollbackManagerTest extends TestCase
             'directories' => [
                 base_path('app/Domains/Products'),
                 base_path('app/Domains/Products/Models'),
-            ]
+            ],
         ];
 
         // Criar diretório de teste
         $testDir = dirname($this->testRollbackLogPath);
-        if (!is_dir($testDir)) {
+        if (! is_dir($testDir)) {
             mkdir($testDir, 0755, true);
         }
 
@@ -189,7 +187,7 @@ class RollbackManagerTest extends TestCase
 
         foreach ($testFiles as $file) {
             $dir = dirname($file);
-            if (!is_dir($dir)) {
+            if (! is_dir($dir)) {
                 mkdir($dir, 0755, true);
             }
             file_put_contents($file, '<?php // Test file');
@@ -284,7 +282,7 @@ class RollbackManagerTest extends TestCase
         // Criar log com backup que não existe
         $logWithMissingBackup = $this->testRollbackLog;
         $logWithMissingBackup['modified'] = [
-            base_path('routes/web.php') => '/nonexistent/backup/file.php'
+            base_path('routes/web.php') => '/nonexistent/backup/file.php',
         ];
 
         file_put_contents($this->testRollbackLogPath, json_encode($logWithMissingBackup, JSON_PRETTY_PRINT));

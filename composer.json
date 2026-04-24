@@ -73,6 +73,10 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "db:setup": [
+            "@php artisan db:create --no-interaction",
+            "@php artisan migrate --no-interaction"
         ]
     },
     "extra": {

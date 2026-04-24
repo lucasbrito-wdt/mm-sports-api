@@ -2,11 +2,12 @@
 
 namespace App\Domains\Shared\Controller;
 
+use App\Domains\Shared\Exceptions\BaseControllerException;
 use App\Domains\Shared\Interfaces\IController;
 use App\Domains\Shared\Traits\Dependencies;
 use App\Domains\Shared\Traits\HasACL;
+use App\Domains\Shared\Traits\ResolvesFormRequest;
 use App\Http\Controllers\Controller;
-use App\Domains\Shared\Exceptions\BaseControllerException;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ use Throwable;
  */
 class BaseController extends Controller implements IController
 {
-    use Dependencies, HasACL;
+    use Dependencies, HasACL, ResolvesFormRequest;
 
     /**
      * BaseController constructor.
@@ -32,29 +33,6 @@ class BaseController extends Controller implements IController
     public function __construct()
     {
         $this->bootACL();
-    }
-
-    /**
-     * Handles the incoming request and validates it using the rules defined in the FormRequest.
-     *
-     * @param  Request  $request  The incoming HTTP request.
-     * @return Request The validated request.
-     *
-     * @throws BaseControllerException If no FormRequest is provided in the dependencies.
-     */
-    protected function request(Request $request)
-    {
-        $createRequest = $this->getRequest();
-
-        if (empty($createRequest)) {
-            throw new BaseControllerException('Você precisa fornecer um FormRequest nas dependências.', -1);
-        }
-
-        $newRequest = $createRequest['requestClass']::createFrom($request);
-
-        $newRequest->validate($newRequest->rules());
-
-        return $newRequest;
     }
 
     /**
@@ -150,6 +128,7 @@ class BaseController extends Controller implements IController
      *
      * @param  Request  $request  The incoming HTTP request. The request data is used as options for the search.
      * @return JsonResponse Returns a JSON response containing the search results.
+     *
      * @deprecated
      */
     public function search(Request $request, ?\Closure $builderCallback = null)

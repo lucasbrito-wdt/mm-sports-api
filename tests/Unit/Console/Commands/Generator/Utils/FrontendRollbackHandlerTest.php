@@ -6,14 +6,13 @@ use App\Console\Commands\Generator\Utils\FrontendRollbackHandler;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Testing\TestCase;
 use Illuminate\Support\Facades\File;
-use Tests\CreatesApplication;
 
 class FrontendRollbackHandlerTest extends TestCase
 {
-    use CreatesApplication;
-
     private FrontendRollbackHandler $handler;
+
     private string $testFrontendPath;
+
     private Command $mockCommand;
 
     protected function setUp(): void
@@ -25,7 +24,7 @@ class FrontendRollbackHandlerTest extends TestCase
 
         // Criar diretório temporário para testes
         $this->testFrontendPath = storage_path('testing/frontend');
-        if (!is_dir($this->testFrontendPath)) {
+        if (! is_dir($this->testFrontendPath)) {
             mkdir($this->testFrontendPath, 0755, true);
         }
 
@@ -47,9 +46,9 @@ class FrontendRollbackHandlerTest extends TestCase
     public function can_identify_frontend_files()
     {
         $frontendFiles = [
-            $this->testFrontendPath . '/src/components/TestComponent.vue',
-            $this->testFrontendPath . '/src/stores/TestStore.ts',
-            $this->testFrontendPath . '/src/types/TestTypes.ts',
+            $this->testFrontendPath.'/src/components/TestComponent.vue',
+            $this->testFrontendPath.'/src/stores/TestStore.ts',
+            $this->testFrontendPath.'/src/types/TestTypes.ts',
         ];
 
         $backendFiles = [
@@ -76,14 +75,14 @@ class FrontendRollbackHandlerTest extends TestCase
     {
         // Criar arquivos de teste
         $testFiles = [
-            $this->testFrontendPath . '/src/components/TestComponent.vue',
-            $this->testFrontendPath . '/src/stores/ProductStore.ts',
-            $this->testFrontendPath . '/src/types/Product.ts',
+            $this->testFrontendPath.'/src/components/TestComponent.vue',
+            $this->testFrontendPath.'/src/stores/ProductStore.ts',
+            $this->testFrontendPath.'/src/types/Product.ts',
         ];
 
         foreach ($testFiles as $file) {
             $dir = dirname($file);
-            if (!is_dir($dir)) {
+            if (! is_dir($dir)) {
                 mkdir($dir, 0755, true);
             }
             file_put_contents($file, $this->getTestFileContent(basename($file)));
@@ -173,14 +172,14 @@ class FrontendRollbackHandlerTest extends TestCase
     {
         // Criar arquivos críticos
         $criticalFiles = [
-            $this->testFrontendPath . '/package.json',
-            $this->testFrontendPath . '/src/main.ts',
-            $this->testFrontendPath . '/src/App.vue',
+            $this->testFrontendPath.'/package.json',
+            $this->testFrontendPath.'/src/main.ts',
+            $this->testFrontendPath.'/src/App.vue',
         ];
 
         foreach ($criticalFiles as $file) {
             $dir = dirname($file);
-            if (!is_dir($dir)) {
+            if (! is_dir($dir)) {
                 mkdir($dir, 0755, true);
             }
 
@@ -201,11 +200,11 @@ class FrontendRollbackHandlerTest extends TestCase
         $testResults = [
             'success' => ['file1.vue', 'file2.ts'],
             'failed' => [
-                ['file' => 'file3.ts', 'error' => 'Permission denied']
+                ['file' => 'file3.ts', 'error' => 'Permission denied'],
             ],
             'stores_updated' => ['ProductStore.ts'],
             'types_updated' => ['Product.ts'],
-            'routes_updated' => []
+            'routes_updated' => [],
         ];
 
         $report = $this->handler->generateFrontendRollbackReport($testResults);
@@ -236,28 +235,28 @@ class FrontendRollbackHandlerTest extends TestCase
     private function setupTestFrontendStructure(): void
     {
         $directories = [
-            $this->testFrontendPath . '/src',
-            $this->testFrontendPath . '/src/components',
-            $this->testFrontendPath . '/src/stores',
-            $this->testFrontendPath . '/src/types',
-            $this->testFrontendPath . '/src/pages',
-            $this->testFrontendPath . '/src/router',
+            $this->testFrontendPath.'/src',
+            $this->testFrontendPath.'/src/components',
+            $this->testFrontendPath.'/src/stores',
+            $this->testFrontendPath.'/src/types',
+            $this->testFrontendPath.'/src/pages',
+            $this->testFrontendPath.'/src/router',
         ];
 
         foreach ($directories as $dir) {
-            if (!is_dir($dir)) {
+            if (! is_dir($dir)) {
                 mkdir($dir, 0755, true);
             }
         }
 
         // Criar arquivos básicos
         $basicFiles = [
-            $this->testFrontendPath . '/package.json' => '{"name": "test-frontend"}',
-            $this->testFrontendPath . '/src/main.ts' => 'import { createApp } from "vue";',
-            $this->testFrontendPath . '/src/App.vue' => '<template><div>Test App</div></template>',
-            $this->testFrontendPath . '/src/stores/index.ts' => 'export * from "./ProductStore";',
-            $this->testFrontendPath . '/src/types/index.ts' => 'export * from "./Product";',
-            $this->testFrontendPath . '/src/router/index.ts' => 'import { createRouter } from "vue-router";',
+            $this->testFrontendPath.'/package.json' => '{"name": "test-frontend"}',
+            $this->testFrontendPath.'/src/main.ts' => 'import { createApp } from "vue";',
+            $this->testFrontendPath.'/src/App.vue' => '<template><div>Test App</div></template>',
+            $this->testFrontendPath.'/src/stores/index.ts' => 'export * from "./ProductStore";',
+            $this->testFrontendPath.'/src/types/index.ts' => 'export * from "./Product";',
+            $this->testFrontendPath.'/src/router/index.ts' => 'import { createRouter } from "vue-router";',
         ];
 
         foreach ($basicFiles as $file => $content) {
