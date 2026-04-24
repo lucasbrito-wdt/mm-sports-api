@@ -201,13 +201,98 @@
 - Create **payment** for `grand_total` on checkout; **webhooks** update `orders.status` (`paid`, failed, cancelled).  
 - **Never** store card data.
 
+### 4.3 Tracking, analytics and audit (required)
+
+**Goal:** Every feature recommended in this spec must be **observable in data**: what happened, when, by whom, and in what context. This complements **Laravel Telescope** (already in the project) for local debugging; production relies on these tables + structured application logs.
+
+#### A) Product and commerce **analytics events** — table `analytics_events`
+
+Append-only. Used for funnels, BI exports, and support.
+
+| Column | Type | Notes |
+|--------|------|--------|
+| id | ulid | PK |
+| user_id | fk nullable | guest events allowed |
+| name | string | stable snake_case, see “Canonical event names” below |
+| properties | json nullable | e.g. `product_id`, `product_variant_id`, `order_id` |
+| source | string | default `api` — `api`, `web`, `admin` |
+| request_id | string nullable | correlation (e.g. `X-Request-Id` header) |
+| ip_address | string nullable | hashed at rest in a later hardening if required |
+| user_agent | text nullable | |
+| created_at | timestamp | |
+
+**When to write:** on successful controller actions and integration callbacks (e.g. wishlist add/remove, review submitted, checkout quote, order created, payment confirmed via webhook, Correios label generated). The frontend can also `POST` batched events for **product_view** / **banner_click** if the API exposes a public or authenticated batch endpoint.
+
+#### B) **Order status timeline** — table `order_status_transitions`
+
+One row for **every** change to `orders.status` (and optionally sub-states), so the customer and support see the full journey.
+
+| Column | Type | Notes |
+|--------|------|--------|
+| id | ulid | PK |
+| order_id | fk | → `orders` |
+| from_status | string nullable | null on first create |
+| to_status | string | |
+| source | string | `system`, `asaas_webhook`, `correios`, `admin` |
+| meta | json nullable | raw ids: Asaas event id, tracking code, user id, etc. |
+| created_at | timestamp | |
+
+**Rule:** any code path that updates `orders.status` must insert a **matching** `order_status_transitions` row in the same DB transaction.
+
+#### C) **Audit log** (admin and sensitive writes) — table `audit_logs`
+
+For back-office actions: catalog, banners, promotions, review moderation, manual order edits.
+
+| Column | Type | Notes |
+|--------|------|--------|
+| id | ulid | PK |
+| actor_user_id | fk nullable | null = system / CLI |
+| action | string | e.g. `created`, `updated`, `deleted` |
+| auditable_type | string | Eloquent class name or short morph key |
+| auditable_id | ulid | |
+| old_values | json nullable | |
+| new_values | json nullable | |
+| ip_address | string nullable | |
+| user_agent | text nullable | |
+| created_at | timestamp | |
+
+**Rule:** all mutating admin API routes (when introduced) and ACL-sensitive updates must go through a service that appends an `audit_logs` row.
+
+#### D) **Integration idempotency** (recommended for webhooks) — table `webhook_inbox`
+
+| Column | Type | Notes |
+|--------|------|--------|
+| id | ulid | PK |
+| provider | string | `asaas`, `correios` (future) |
+| external_event_id | string | unique with provider (idempotency) |
+| payload_hash | string nullable | |
+| order_id | fk nullable | if resolved |
+| processing_result | string | `processed`, `ignored`, `failed` |
+| error_message | text nullable | |
+| created_at | timestamp | |
+
+**Rule:** Asaas (and later) webhooks: insert or find by idempotency key before side effects, so retries do not double-apply.
+
+#### Canonical `analytics_events.name` (minimum set)
+
+- `product_viewed` · `product_list_viewed` · `banner_clicked`  
+- `wishlist_added` · `wishlist_removed`  
+- `review_submitted`  
+- `checkout_quote_requested` · `order_created`  
+- `payment_confirmed` · `order_shipped` (when tracking code set)  
+- `search_executed` (if search API exists)  
+
+Add new names only via a single enum/config file in code to avoid typos.
+
 ## 5. API surface (high level, English resources)
 
 - `GET/POST/DELETE /api/wishlist` — item keyed by `product_variant_id`.  
 - `GET /api/banners` — public active banners with `image_url`, `destination_url`.  
 - `GET/POST /api/reviews` — moderation for admin.  
 - `POST /api/checkout/quote` — shipping + promotions preview.  
-- `POST /api/orders` — creates order + Asaas charge flow.
+- `POST /api/orders` — creates order + Asaas charge flow.  
+- `POST /api/analytics/events` (optional auth) — batch append-only `analytics_events` (validate `name` against allowlist).  
+- `GET /api/orders/{id}/timeline` (auth, owner) — returns `order_status_transitions` + key `analytics_events` linked by `order_id` in `properties` if needed.
 
 ## 6. Out of scope (MVP)
 
@@ -219,7 +304,8 @@
 
 - **Placeholders:** None intended; ambiguities pushed to “MVP / later”.  
 - **Consistency:** `imported` origin + single `price` on variant; wishlist on `product_variant_id`.  
-- **Scope:** One implementation plan can follow this doc; large features (full fiscal NF-e) are noted as future.
+- **Scope:** One implementation plan can follow this doc; large features (full fiscal NF-e) are noted as future.  
+- **Tracking:** Spec §4.3 requires DB persistence for analytics, order timeline, audit, and webhook idempotency; implement before calling commerce “complete”.
 
 ---
 

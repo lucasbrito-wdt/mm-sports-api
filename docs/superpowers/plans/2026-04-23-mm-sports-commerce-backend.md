@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement the approved commerce domain (catalog, marketing, wishlist, reviews, orders, user addresses, Correios shipping quotes, Asaas payments) in `mm-sports-api` with English field names, REST under `/api`, and Pest tests for critical paths.
+**Goal:** Implement the approved commerce domain (catalog, marketing, wishlist, reviews, orders, user addresses, Correios shipping quotes, Asaas payments) in `mm-sports-api` with English field names, REST under `/api`, and Pest tests for critical paths — **including full tracking** per spec §4.3 (`analytics_events`, `order_status_transitions`, `audit_logs`, `webhook_inbox` + `AnalyticsService` and hooks on all relevant flows).
 
 **Architecture:** New Laravel domains under `app/Domains/Catalog`, `app/Domains/Marketing`, `app/Domains/Commerce`, `app/Domains/Reviews`, `app/Domains/Integrations` (service classes only, no extra HTTP layer). Models extend the shared `App\Domains\Shared\Models\BaseModel` (ULIDs + `TenantScope` trait: safe for models **not** listed in `config/cdf.php` `tenantModels`, i.e. no automatic `tenant_id` scoping for catalog). Migrations live in each domain’s `Migrations/` folder; `App\Providers\MigrationServiceProvider` already loads all `app/Domains/*/Migrations/*.php`. Routes: one file per area included from `routes/api.php`, mirroring `routes/domains/users.php` style.
 
@@ -21,7 +21,8 @@
 | Reviews | `app/Domains/Reviews/Migrations/*`, `Models/{ProductReview,WishlistItem}.php`, `Controllers/{ProductReviewController,WishlistController}.php` |
 | Commerce | `app/Domains/Commerce/Migrations/*`, `Models/{UserAddress,Order,OrderItem}.php`, `Services/{CheckoutQuoteService,OrderService}.php`, `Controllers/{UserAddressController,OrderController,CheckoutQuoteController}.php` |
 | Integrations | `app/Domains/Integrations/Services/CorreiosService.php`, `Asaas/AsaasClient.php` or `AsaasService.php`, `Http/Controllers/AsaasWebhookController.php` (namespace under Integrations) |
-| Routes | `routes/domains/{catalog,marketing,reviews,commerce,integrations}.php` + `require` in `routes/api.php` |
+| **Tracking** | `app/Domains/Tracking/Migrations/2026_04_23_100001_create_tracking_tables.php`, `Models/{AnalyticsEvent,OrderStatusTransition,AuditLog,WebhookInbox}.php`, `Services/{AnalyticsService,OrderStatusTracker,WebhookInboxService}.php`, `config/analytics.php` (event name allowlist), `Http/Controllers/AnalyticsEventController.php` (batch ingest) |
+| Routes | `routes/domains/{catalog,marketing,reviews,commerce,integrations,tracking}.php` + `require` in `routes/api.php` |
 | Config | `config/services.php` (asaas, correios, store CEP) |
 | Tests | `tests/Feature/Domains/Catalog/*`, `Commerce/*`, etc. |
 | App | `bootstrap/providers.php` if new provider needed (only if you introduce one) |
@@ -33,7 +34,7 @@
 ### Task 0.1: Route includes and `api.php`
 
 **Files:**
-- Create: (empty for now) `routes/domains/catalog.php`, `routes/domains/marketing.php`, `routes/domains/reviews.php`, `routes/domains/commerce.php`, `routes/domains/integrations.php`
+- Create: (empty for now) `routes/domains/catalog.php`, `routes/domains/marketing.php`, `routes/domains/reviews.php`, `routes/domains/commerce.php`, `routes/domains/integrations.php`, `routes/domains/tracking.php`
 - Modify: `routes/api.php`
 
 - [ ] **Step 1:** Add requires at bottom of `routes/api.php` (after existing requires):
@@ -44,6 +45,7 @@ require __DIR__ . '/domains/marketing.php';
 require __DIR__ . '/domains/reviews.php';
 require __DIR__ . '/domains/commerce.php';
 require __DIR__ . '/domains/integrations.php';
+require __DIR__ . '/domains/tracking.php';
 ```
 
 - [ ] **Step 2:** In each new `routes/domains/*.php` file, start with:
@@ -61,7 +63,7 @@ use Illuminate\Support\Facades\Route;
 - [ ] **Step 4:** Commit:
 
 ```bash
-git add routes/api.php routes/domains/catalog.php routes/domains/marketing.php routes/domains/reviews.php routes/domains/commerce.php routes/domains/integrations.php
+git add routes/api.php routes/domains/catalog.php routes/domains/marketing.php routes/domains/reviews.php routes/domains/commerce.php routes/domains/integrations.php routes/domains/tracking.php
 git commit -m "chore(api): scaffold commerce domain route files"
 ```
 
@@ -280,6 +282,25 @@ Use this as the **complete** `up(): void` body (condense `down()` in the same cl
 
 - [ ] **Step 3:** Commit the migration file.
 
+### Task 1.1b: Tracking tables (depends on `users` + `orders` existing)
+
+**Files:**
+- Create: `app/Domains/Tracking/Migrations/2026_04_23_100001_create_tracking_tables.php` (new domain folder `app/Domains/Tracking/`)
+- Create: `config/analytics.php`
+
+- [ ] **Step 1:** Migration `up()` — create in this order:
+
+1. `analytics_events` — columns: `id` (ulid), `user_id` nullable `foreignUlid` → `users`, `name` (string), `properties` (json nullable), `source` (string, default `api`), `request_id` (string nullable), `ip_address` (string nullable), `user_agent` (text nullable), `created_at` (no `updated_at` — append-only).
+2. `order_status_transitions` — `id`, `foreignUlid('order_id')->constrained('orders')->cascadeOnDelete()`, `from_status` (string nullable), `to_status` (string), `source` (string), `meta` (json nullable), `created_at`.
+3. `audit_logs` — `id`, `actor_user_id` nullable `foreignUlid` → `users` nullOnDelete(), `action`, `auditable_type`, `auditable_id` (ulid, not morph uuid — use `string` for id if needed), `old_values`/`new_values` json, `ip_address`, `user_agent` nullable, `created_at` only.
+4. `webhook_inbox` — `id`, `provider` (string), `external_event_id` (string), **unique** index on `['provider', 'external_event_id']`, `payload_hash` nullable, `order_id` nullable `foreignUlid` → `orders` nullOnDelete(), `processing_result` (string), `error_message` (text nullable), `created_at`.
+
+- [ ] **Step 2:** `config/analytics.php` return `['allowed_event_names' => [ 'product_viewed', 'product_list_viewed', 'banner_clicked', 'wishlist_added', 'wishlist_removed', 'review_submitted', 'checkout_quote_requested', 'order_created', 'payment_confirmed', 'order_shipped', 'search_executed' ] ]`.
+
+- [ ] **Step 3:** `php artisan migrate` — exit 0.
+
+- [ ] **Step 4:** Commit.
+
 ### Task 1.2: Eloquent models (Catalog)
 
 **Files:**
@@ -314,6 +335,19 @@ Use this as the **complete** `up(): void` body (condense `down()` in the same cl
 - [ ] `UserAddress` `belongsTo` User. `Order` `hasMany` `items`, `belongsTo` User. `OrderItem` `belongsTo` Order, ProductVariant. `ProductReview` `belongsTo` User, Product, optional Order. `WishlistItem` `belongsTo` User, ProductVariant. Unique on wishlist at DB level + optional composite unique in model.
 
 - [ ] `User` model: add `hasMany` relations methods `userAddresses`, `orders`, `wishlistItems` (optional but recommended for DX).
+
+- [ ] Commit.
+
+### Task 1.5: Tracking domain — models + `AnalyticsService` + `OrderStatusTracker`
+
+**Files:**
+- Create: `app/Domains/Tracking/Models/{AnalyticsEvent,OrderStatusTransition,AuditLog,WebhookInbox}.php`
+- Create: `app/Domains/Tracking/Services/AnalyticsService.php` — `track(string $name, ?string $userId, array $properties, string $source = 'api', ?Request $request = null)` validates `$name` against `config('analytics.allowed_event_names')`, writes `analytics_events`.
+- Create: `app/Domains/Tracking/Services/OrderStatusTracker.php` — `record(Order $order, ?string $from, string $to, string $source, ?array $meta): void` inside `DB::transaction` together with `$order->status = $to` (callers must use this helper only, not raw `update` on status).
+- Create: `app/Domains/Tracking/Services/AuditLogger.php` — `log(?string $actorId, string $action, Model $model, ?array $old, ?array $new, ?Request $request)`.
+- Create: `app/Domains/Tracking/Services/WebhookInboxService.php` — `claimOrIgnore(string $provider, string $externalEventId, Closure $process): void` uses `webhook_inbox` unique constraint; on duplicate external id, skip side effects.
+
+- [ ] Unit or feature test: `OrderStatusTracker` creates a row in `order_status_transitions` when status changes; `AnalyticsService` rejects unknown `name`.
 
 - [ ] Commit.
 
@@ -393,7 +427,18 @@ Route::get('products/{id}', [App\Domains\Catalog\Controllers\ProductController::
 
 - [ ] `BannerController@index` public: filter `is_active`, `where` date range, `orderBy('sort_order')`.
 
+- [ ] **Tracking:** on successful `GET /api/products` list response, `AnalyticsService::track('product_list_viewed', auth id or null, ['category' => request], 'api', request)`.
+
 - [ ] Route in `routes/domains/marketing.php`: `Route::get('banners', ...)`; commit.
+
+### Task 2.3: `POST /api/analytics/events` (batch, optional auth)
+
+- [ ] `AnalyticsEventController@store` in `routes/domains/tracking.php`: body `{ "events": [ { "name", "properties"?, "client_timestamp"? } ] }` — each row validated; max 50 per request; `user_id` from JWT if present.
+- [ ] Throttle: `throttle:60,1` per IP.
+- [ ] Feature test: two events, both persisted with allowed names.
+- [ ] **Tracking (product show):** `ProductController@show` calls `product_viewed` with `product_id` / `product_variant` ids in `properties` when a variant is implied (if applicable).
+
+- [ ] Commit.
 
 ---
 
@@ -407,6 +452,8 @@ Route::get('products/{id}', [App\Domains\Catalog\Controllers\ProductController::
 
 - [ ] `WishlistController` with `auth:api` middleware; methods `index`, `store` (ULID `product_variant_id`), `destroy`.
 
+- [ ] **Tracking:** `store` → `AnalyticsService::track('wishlist_added', ...)`; `destroy` → `wishlist_removed` with `product_variant_id` in `properties`.
+
 - [ ] `routes/domains/reviews.php`: `Route::middleware('auth:api')->group(... wishlist routes);` — *place wishlist in `reviews` route file or split `routes/domains/wishlist.php` if preferred*.
 
 - [ ] Commit.
@@ -416,6 +463,8 @@ Route::get('products/{id}', [App\Domains\Catalog\Controllers\ProductController::
 - [ ] Test: user creates `pending` review; **must** rate 1–5, link to `product_id`.
 
 - [ ] `ProductReviewController@store` with `auth:api`. Optional `order_id` to set `is_verified_purchase` with validation (order belongs to user and contains line for product).
+
+- [ ] **Tracking:** after create → `review_submitted` with `product_id`, `rating` in `properties`.
 
 - [ ] `GET /api/products/{id}/reviews` public — only `moderation_status = approved` for public list.
 
@@ -439,6 +488,8 @@ Route::get('products/{id}', [App\Domains\Catalog\Controllers\ProductController::
 
 - [ ] `CheckoutQuoteService` computes: line subtotals from `product_variants.price`, applies **one** active promotion (spec: “best first” or first match — **pick: highest discount** and document in code comment), default shipping `0.01` or call `CorreiosService` if config present.
 
+- [ ] **Tracking:** successful quote → `checkout_quote_requested` with `postal_code` (5 digits + mask only, no full PII if policy requires), `line_count` in `properties`.
+
 - [ ] `CorreiosService::quote(...)` — if env missing, return structured stub `{ "price": 0, "eta_days": 0, "service_code": "STUB" }` so tests pass without API keys.
 
 - [ ] Test: two items, valid CEP, assert JSON shape: `subtotal`, `discount_total`, `shipping_total`, `grand_total`, `lines`.
@@ -447,17 +498,31 @@ Route::get('products/{id}', [App\Domains\Catalog\Controllers\ProductController::
 
 ### Task 4.2: `POST /api/orders` — create pending order + call Asaas
 
-- [ ] `OrderService::createFromCart` — persist `order`, `order_items` with snapshots, set `status` = `pending_payment`, call `AsaasService::createPayment` — if `ASAAS_API_KEY` empty, use **fake** that sets `asaas_payment_id` to `test_` + ulid and does not HTTP.
+- [ ] `OrderService::createFromCart` — persist `order`, `order_items` with snapshots, set `status` = `pending_payment` via `OrderStatusTracker` (`from` null, `to` = `pending_payment`, `source` = `system`, `meta` with cart summary hash). Then call `AsaasService::createPayment` — if `ASAAS_API_KEY` empty, use **fake** that sets `asaas_payment_id` to `test_` + ulid and does not HTTP.
 
-- [ ] Test: assert order in DB, status pending.
+- [ ] **Tracking:** `order_created` with `order_id` in `properties`; do **not** set status with raw Eloquent on `Order` in this code path (use `OrderStatusTracker` only).
+
+- [ ] Test: assert order in DB, status pending, **and** 1 `order_status_transitions` row + 1 `analytics_events` with `order_created`.
 
 - [ ] Commit.
 
-### Task 4.3: `POST /api/webhooks/asaas` (signed)
+### Task 4.3: `POST /api/webhooks/asaas` (signed) + idempotency
 
-- [ ] `AsaasWebhookController`: validate `X-Asaas-Token` or custom header = `config('asaas.webhook_token')` when token set. Map payment received → set order `status` = `paid`, `paid_at` = now.
+- [ ] `AsaasWebhookController`: **first** `WebhookInboxService::claimOrIgnore('asaas', $idFromPayload, fn () => ...)`; inside closure: validate `X-Asaas-Token` (or Asaas-suggested header) = `config('asaas.webhook_token')` when token set. Map payment received → `OrderStatusTracker` to `paid` with `source` = `asaas_webhook` and `meta` including event id. Set `webhook_inbox.processing_result` to `processed` or `failed`.
 
-- [ ] Feature test: POST with valid token, mock order id in payload (shape per Asaas docs when integrating).
+- [ ] On duplicate `external_event_id`, closure not run; inbox row `ignored` with no double payment application.
+
+- [ ] **Tracking:** `payment_confirmed` with `order_id` in `properties` when transition to `paid` succeeds (same transaction as transition).
+
+- [ ] Feature test: POST with valid token, mock order id in payload; second identical POST does not change totals twice (assert one transition to `paid`).
+
+- [ ] Commit.
+
+### Task 4.4: `GET /api/orders/{id}/timeline` (auth, owner or admin)
+
+- [ ] Return `order_status_transitions` ordered by `created_at` asc + optional `correios_tracking_code` on parent order in envelope.
+
+- [ ] **Tracking:** N/A (read path).
 
 - [ ] Commit.
 
@@ -466,6 +531,8 @@ Route::get('products/{id}', [App\Domains\Catalog\Controllers\ProductController::
 ## Phase 5 — Admin / ACL (optional MVP)
 
 - [ ] If admin must CRUD products in API: add permissions in `config/permission_list.php` and protect routes with `CheckPermission` like `UserController`. Otherwise **defer** to Filament/nova later and document in README.
+
+- [ ] **Tracking:** on every future admin `store`/`update`/`destroy` for `Product`, `Banner`, `Promotion`, and review moderation, call `AuditLogger` with `source` in `new_values` / actor; ensure `analytics_events` is **not** required for read-only admin actions.
 
 - [ ] **Out of this plan** if not required for launch: full admin.
 
@@ -484,6 +551,7 @@ Route::get('products/{id}', [App\Domains\Catalog\Controllers\ProductController::
 | Correios | 0.2, 4.1 (stub + real) |
 | Asaas | 0.2, 4.2–4.3 |
 | English fields | Migrations + JSON keys in controllers |
+| Tracking (§4.3) | 1.1b, 1.5, 2.3, 2.1–2.2 bullets, 3.1–3.2, 4.1–4.4, Phase 5 admin audit |
 
 **Task 1.1 note:** Merged migration uses FK-safe `up()` order; no further reordering required.
 
