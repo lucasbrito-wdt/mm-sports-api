@@ -12,6 +12,7 @@ class UploadPresignController extends BaseController
 {
     public function __construct(private readonly R2PresignService $service)
     {
+        $this->setACL('products', ['create' => ['__invoke']]);
         parent::__construct();
     }
 
