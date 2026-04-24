@@ -4,9 +4,9 @@
 
 **Goal:** Implement the approved commerce domain (catalog, marketing, wishlist, reviews, orders, user addresses, Correios shipping quotes, Asaas payments) in `mm-sports-api` with English field names, REST under `/api`, and Pest tests for critical paths — **including full tracking** per spec §4.3 (`analytics_events`, `order_status_transitions`, `audit_logs`, `webhook_inbox` + `AnalyticsService` and hooks on all relevant flows).
 
-**Architecture:** New Laravel domains under `app/Domains/Catalog`, `app/Domains/Marketing`, `app/Domains/Commerce`, `app/Domains/Reviews`, `app/Domains/Integrations` (service classes only, no extra HTTP layer). Models extend the shared `App\Domains\Shared\Models\BaseModel` (ULIDs + `TenantScope` trait: safe for models **not** listed in `config/cdf.php` `tenantModels`, i.e. no automatic `tenant_id` scoping for catalog). Migrations live in each domain’s `Migrations/` folder; `App\Providers\MigrationServiceProvider` already loads all `app/Domains/*/Migrations/*.php`. Routes: one file per area included from `routes/api.php`, mirroring `routes/domains/users.php` style.
+**Architecture:** New Laravel domains under `app/Domains/Catalog`, `app/Domains/Marketing`, `app/Domains/Commerce`, `app/Domains/Reviews`, `app/Domains/Integrations`, `app/Domains/Tracking`. **Every** deliverable must comply with the **CodifyTech DDD** skill (`codifytech-ddd`): **BaseModel** → **BaseService** → **BaseFormRequest** → **BaseController**; controllers only orchestrate; services own logic; no inline validation in controllers. Read the skill’s `laravel-rules.md` before writing code. Models extend `App\Domains\Shared\Models\BaseModel` (ULIDs + `TenantScope`: inert for models not in `config/cdf.php` `tenantModels`). Migrations: `$table->ulid('id')` as in spec. Migrations live in each domain’s `Migrations/`; `MigrationServiceProvider` loads `app/Domains/*/Migrations/*.php`. Routes: one file per area from `routes/api.php`, mirroring `routes/domains/users.php`. Use **PHP enums** in each domain for statuses/origins per CodifyTech. Register new admin permissions in `config/permission_list.php` when exposing CRUD.
 
-**Tech Stack:** Laravel 11, PHP 8.2+, Pest, JWT `auth:api` where spec requires auth, Tymon JWTAuth, existing ACL patterns (`BaseController` + permissions where admin CRUD is added).
+**Tech Stack:** Laravel 11, PHP 8.2+, Pest, JWT `auth:api` where spec requires auth, Tymon JWTAuth, CodifyTech DDD bases + ACL (`BaseController` + `CheckPermission` for admin).
 
 **Spec reference:** `docs/superpowers/specs/2026-04-23-mm-sports-commerce-backend-design.md`
 
@@ -14,13 +14,15 @@
 
 ## File map (created or touched)
 
+**Rule:** Each row’s PHP classes follow CodifyTech: `*Controller extends BaseController`, `*Service extends BaseService`, `*Request extends BaseFormRequest`, `* extends BaseModel`.
+
 | Area | Create / modify |
 |------|-----------------|
-| Catalog | `app/Domains/Catalog/Migrations/*`, `Models/{Product,ProductVariant,SizeChart,ProductPersonalizationOption}.php`, `Services/ProductCatalogService.php`, `Controllers/{ProductController,ProductVariantController}.php` (or single resource), `Requests/*` |
-| Marketing | `app/Domains/Marketing/Migrations/*`, `Models/{Banner,Promotion,PromotionItem}.php`, `Controllers/BannerController.php` |
-| Reviews | `app/Domains/Reviews/Migrations/*`, `Models/{ProductReview,WishlistItem}.php`, `Controllers/{ProductReviewController,WishlistController}.php` |
-| Commerce | `app/Domains/Commerce/Migrations/*`, `Models/{UserAddress,Order,OrderItem}.php`, `Services/{CheckoutQuoteService,OrderService}.php`, `Controllers/{UserAddressController,OrderController,CheckoutQuoteController}.php` |
-| Integrations | `app/Domains/Integrations/Services/CorreiosService.php`, `Asaas/AsaasClient.php` or `AsaasService.php`, `Http/Controllers/AsaasWebhookController.php` (namespace under Integrations) |
+| Catalog | `app/Domains/Catalog/Migrations/*`, `Enums/*`, `Models/{Product,ProductVariant,SizeChart,ProductPersonalizationOption}.php`, `Services/ProductCatalogService.php` (or split by responsibility), `Controllers/{ProductController,…}.php`, `Requests/*` |
+| Marketing | `app/Domains/Marketing/Migrations/*`, `Enums/*`, `Models/{Banner,Promotion,PromotionItem}.php`, `Services/*`, `Requests/*`, `Controllers/BannerController.php` |
+| Reviews | `app/Domains/Reviews/Migrations/*`, `Models/{ProductReview,WishlistItem}.php`, `Services/*`, `Requests/*`, `Controllers/{ProductReviewController,WishlistController}.php` |
+| Commerce | `app/Domains/Commerce/Migrations/*`, `Enums/*` (order status, etc.), `Models/{UserAddress,Order,OrderItem}.php`, `Services/{CheckoutQuoteService,OrderService}.php`, `Requests/*`, `Controllers/{UserAddressController,OrderController,CheckoutQuoteController}.php` |
+| Integrations | `app/Domains/Integrations/Services/CorreiosService.php`, `AsaasService.php` (extends `BaseService` if it fits `IService` contract, else plain class **injected** into Commerce services — no fat controllers), `Controllers/AsaasWebhookController.php` + `Requests/AsaasWebhookRequest.php` |
 | **Tracking** | `app/Domains/Tracking/Migrations/2026_04_23_100001_create_tracking_tables.php`, `Models/{AnalyticsEvent,OrderStatusTransition,AuditLog,WebhookInbox}.php`, `Services/{AnalyticsService,OrderStatusTracker,WebhookInboxService}.php`, `config/analytics.php` (event name allowlist), `Http/Controllers/AnalyticsEventController.php` (batch ingest) |
 | Routes | `routes/domains/{catalog,marketing,reviews,commerce,integrations,tracking}.php` + `require` in `routes/api.php` |
 | Config | `config/services.php` (asaas, correios, store CEP) |
@@ -30,6 +32,12 @@
 ---
 
 ## Phase 0 — API wiring and configuration
+
+### Task 0.0: Read `codifytech-ddd` + `laravel-rules.md` (gate for all code tasks)
+
+- [ ] Open the **codifytech-ddd** skill (Stackforge: `skills/codifytech-ddd`) and read **`laravel-rules.md`** (enums, FormRequest, Service, Controller).
+- [ ] Confirm checklist: domain folder layout, no logic in controllers, no `Model`/`validate()` shortcuts, ULID PKs in new tables.
+- [ ] No commit required; do this **once** before Phase 1.
 
 ### Task 0.1: Route includes and `api.php`
 
@@ -552,6 +560,7 @@ Route::get('products/{id}', [App\Domains\Catalog\Controllers\ProductController::
 | Asaas | 0.2, 4.2–4.3 |
 | English fields | Migrations + JSON keys in controllers |
 | Tracking (§4.3) | 1.1b, 1.5, 2.3, 2.1–2.2 bullets, 3.1–3.2, 4.1–4.4, Phase 5 admin audit |
+| CodifyTech DDD (spec §1.1) | **All** tasks: BaseModel/BaseService/BaseFormRequest/BaseController; enums; `permission_list` for admin |
 
 **Task 1.1 note:** Merged migration uses FK-safe `up()` order; no further reordering required.
 

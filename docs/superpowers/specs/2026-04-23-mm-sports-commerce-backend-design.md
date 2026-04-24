@@ -11,6 +11,29 @@
 - **Suggested domains:** `Catalog` (products, variants, size charts, personalization), `Marketing` (banners, promotions), `Commerce` (orders, order items, addresses), `Reviews`, `Integrations` (Correios, Asaas; thin adapters + webhooks).
 - **IDs:** Prefer **ULID** for public-facing resources where existing project patterns use `HasUlid`.
 
+### 1.1 CodifyTech DDD (mandatory — non-negotiable)
+
+All commerce work **must** follow the **CodifyTech Domain-Driven Architecture** described in the **`codifytech-ddd`** skill. Before implementing any feature, read that skill and, for backend work, its embedded **`laravel-rules.md`** (enums, requests, services, controllers). Do not duplicate the full rulebook here; treat the skill as the **source of procedural truth** for this repository.
+
+**Four pillars (Laravel backend):**
+
+| Layer | Base class | Rule |
+|-------|------------|------|
+| Model | `App\Domains\Shared\Models\BaseModel` | Extend **BaseModel**, not raw `Model`; IDs **ULID** in migrations (`$table->ulid('id')`). |
+| Service | `App\Domains\Shared\Services\BaseService` | **All** business logic, queries, transactions, calls to `AnalyticsService` / `OrderStatusTracker`, third-party APIs. |
+| Request | `App\Domains\Shared\Requests\BaseFormRequest` | **All** HTTP validation; **never** `$request->validate()` in controllers. Use `base()`, `store()`, `update()` as per BaseFormRequest. |
+| Controller | `App\Domains\Shared\Controller\BaseController` | **Orchestration only**: resolve FormRequest + Service, return JSON; **no** queries or domain rules in the controller. |
+
+**Per-domain layout (under each `app/Domains/{Domain}/`):** `Controllers/`, `Models/`, `Services/`, `Requests/`, `Migrations/`, `Seeders/` as applicable.
+
+**Enums:** Use **PHP backed enums** per domain for fixed sets (e.g. `ProductStatus`, `OrderStatus`, `ProductOrigin`) — see `laravel-rules.md` in the skill package for the CodifyTech enum pattern.
+
+**ACL:** New admin-facing resources must register permissions in **`config/permission_list.php`** and wire `BaseController` ACL like existing `UserController` (no public admin bypass).
+
+**Anti-patterns (forbidden):** Extending `Illuminate\Database\Eloquent\Model` directly for domain models; validation in controllers; DB queries in controllers; ad-hoc JSON responses that break the project’s standard envelope (follow existing `BaseController` / API helpers).
+
+**Related skills (when the task fits):** `api-patterns`, `database-design`, `testing-patterns`, `clean-code` — see routing table inside `codifytech-ddd`.
+
 ## 2. Business rules (fixed decisions)
 
 | Topic | Decision |
@@ -305,7 +328,8 @@ Add new names only via a single enum/config file in code to avoid typos.
 - **Placeholders:** None intended; ambiguities pushed to “MVP / later”.  
 - **Consistency:** `imported` origin + single `price` on variant; wishlist on `product_variant_id`.  
 - **Scope:** One implementation plan can follow this doc; large features (full fiscal NF-e) are noted as future.  
-- **Tracking:** Spec §4.3 requires DB persistence for analytics, order timeline, audit, and webhook idempotency; implement before calling commerce “complete”.
+- **Tracking:** Spec §4.3 requires DB persistence for analytics, order timeline, audit, and webhook idempotency; implement before calling commerce “complete”.  
+- **CodifyTech DDD:** Spec §1.1 — implementation is not complete if any new code violates BaseModel/BaseService/BaseFormRequest/BaseController or places business logic in controllers.
 
 ---
 
