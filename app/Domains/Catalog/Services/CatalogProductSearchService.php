@@ -7,6 +7,7 @@ use App\Domains\Catalog\Models\Attribute;
 use App\Domains\Catalog\Models\AttributeValue;
 use App\Domains\Catalog\Models\Product;
 use App\Domains\Shared\Services\BaseService;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -38,10 +39,41 @@ class CatalogProductSearchService extends BaseService
 
         $store = config('cache.default');
         if (in_array($store, ['redis', 'memcached'], true)) {
-            return Cache::tags(['facets'])->remember($key, $ttl, $callback);
+            return $this->rememberTaggedWithStampedeLock($key, $ttl, $callback);
         }
 
         return Cache::remember($key, $ttl, $callback);
+    }
+
+    /**
+     * Evita cache stampede em listagens quando várias requisições missam ao mesmo tempo.
+     *
+     * @param  \Closure(): Collection<int, Product>  $callback
+     * @return Collection<int, Product>
+     */
+    private function rememberTaggedWithStampedeLock(string $key, \DateTimeInterface $ttl, \Closure $callback): Collection
+    {
+        $cached = Cache::tags(['facets'])->get($key);
+        if ($cached instanceof Collection) {
+            return $cached;
+        }
+
+        $lock = Cache::lock($key.':stampede', 30);
+
+        try {
+            return $lock->block(10, function () use ($key, $ttl, $callback) {
+                $cached = Cache::tags(['facets'])->get($key);
+                if ($cached instanceof Collection) {
+                    return $cached;
+                }
+                $value = $callback();
+                Cache::tags(['facets'])->put($key, $value, $ttl);
+
+                return $value;
+            });
+        } catch (LockTimeoutException) {
+            return $callback();
+        }
     }
 
     /**

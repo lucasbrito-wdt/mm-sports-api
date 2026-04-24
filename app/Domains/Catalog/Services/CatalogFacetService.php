@@ -4,6 +4,7 @@ namespace App\Domains\Catalog\Services;
 
 use App\Domains\Catalog\Models\Product;
 use App\Domains\Shared\Services\BaseService;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -23,10 +24,38 @@ class CatalogFacetService extends BaseService
 
         $store = config('cache.default');
         if (in_array($store, ['redis', 'memcached'], true)) {
-            return Cache::tags(['facets'])->remember($key, $ttl, $callback);
+            return $this->rememberTaggedFacetsWithStampedeLock($key, $ttl, $callback);
         }
 
         return Cache::remember($key, $ttl, $callback);
+    }
+
+    /**
+     * @param  \Closure(): array  $callback
+     */
+    private function rememberTaggedFacetsWithStampedeLock(string $key, \DateTimeInterface $ttl, \Closure $callback): array
+    {
+        $cached = Cache::tags(['facets'])->get($key);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $lock = Cache::lock($key.':stampede', 30);
+
+        try {
+            return $lock->block(10, function () use ($key, $ttl, $callback) {
+                $cached = Cache::tags(['facets'])->get($key);
+                if (is_array($cached)) {
+                    return $cached;
+                }
+                $value = $callback();
+                Cache::tags(['facets'])->put($key, $value, $ttl);
+
+                return $value;
+            });
+        } catch (LockTimeoutException) {
+            return $callback();
+        }
     }
 
     private function queryFacets(): array
