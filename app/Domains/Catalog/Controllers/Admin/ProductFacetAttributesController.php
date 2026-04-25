@@ -15,16 +15,14 @@ class ProductFacetAttributesController extends Controller
 {
     use Dependencies, HasACL, ResolvesFormRequest;
 
-    private readonly ProductFacetAttributeService $facetService;
-
-    public function __construct(ProductFacetAttributeService $facetService)
+    public function __construct(private readonly ProductFacetAttributeService $facetService)
     {
-        $this->facetService = $facetService;
         $this->setACL('products', [
             'list' => ['show'],
             'edit' => ['update'],
         ]);
         $this->bootACL();
+        $this->setService($this->facetService);
     }
 
     public function show(Product $product): JsonResponse
