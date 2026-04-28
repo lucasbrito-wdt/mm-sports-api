@@ -60,6 +60,10 @@ return [
         'attributes values create',
         'attributes values edit',
         'attributes values delete',
+        'categories list',
+        'categories create',
+        'categories edit',
+        'categories delete',
     ],
     'marketing' => [
         'banners list',

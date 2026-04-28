@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute as CastsAttribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Product extends BaseModel
 {
@@ -27,6 +28,7 @@ class Product extends BaseModel
         'meta_title',
         'meta_description',
         'attribute_value_ids',
+        'category_id',
     ];
 
     protected function casts(): array
@@ -41,6 +43,11 @@ class Product extends BaseModel
     public function sizeChart(): BelongsTo
     {
         return $this->belongsTo(SizeChart::class, 'size_chart_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     public function variants(): HasMany
@@ -126,7 +133,9 @@ class Product extends BaseModel
             },
             set: function (array $ids): string {
                 $ids = array_values($ids);
-                if ($this->getConnection()->getDriverName() === 'pgsql') {
+                $connectionName = $this->getConnectionName();
+                $driver = DB::connection($connectionName)->getDriverName();
+                if ($driver === 'pgsql') {
                     if ($ids === []) {
                         return '{}';
                     }

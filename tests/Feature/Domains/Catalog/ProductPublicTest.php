@@ -3,6 +3,7 @@
 use App\Domains\Catalog\Enums\PersonalizationOptionType;
 use App\Domains\Catalog\Enums\ProductOrigin;
 use App\Domains\Catalog\Enums\ProductStatus;
+use App\Domains\Catalog\Models\Category;
 use App\Domains\Catalog\Models\Product;
 use App\Domains\Catalog\Models\ProductPersonalizationOption;
 use App\Domains\Catalog\Models\SizeChart;
@@ -14,10 +15,17 @@ use Tests\Support\CommerceFixtures;
 uses(RefreshDatabase::class);
 
 it('lista produtos publicados com variantes ativas', function () {
-    CommerceFixtures::publishedProductWithVariant('Kit');
+    [$product] = CommerceFixtures::publishedProductWithVariant('Kit');
+    $category = Category::query()->create([
+        'name' => 'Kits',
+        'slug' => 'kits-'.Str::lower(Str::random(6)),
+    ]);
+    $product->update(['category_id' => $category->id]);
+
     $res = $this->getJson('/api/products');
     $res->assertOk();
     $res->assertJsonPath('data.0.title', 'Kit');
+    $res->assertJsonPath('data.0.category_id', (string) $category->id);
 });
 
 it('filtra a listagem com q e regista eventos de analytics', function () {
@@ -46,12 +54,17 @@ it('filtra a listagem com q e regista eventos de analytics', function () {
 
 it('detalhe público inclui tabela de medidas e opções de personalização', function () {
     [$product] = CommerceFixtures::publishedProductWithVariant('Com Guia');
+    $category = Category::query()->create([
+        'name' => 'Camisas',
+        'slug' => 'camisas-'.Str::lower(Str::random(6)),
+    ]);
     $chart = SizeChart::query()->create([
         'name' => 'Medidas',
         'table_json' => ['headers' => ['P'], 'rows' => [['40']]],
     ]);
     $product->update([
         'size_chart_id' => $chart->id,
+        'category_id' => $category->id,
         'allows_personalization' => true,
     ]);
     ProductPersonalizationOption::query()->create([
@@ -67,6 +80,7 @@ it('detalhe público inclui tabela de medidas e opções de personalização', f
 
     $res = $this->getJson("/api/products/{$product->id}");
     $res->assertOk();
+    $res->assertJsonPath('category_id', $category->id);
     $res->assertJsonPath('size_chart.name', 'Medidas');
     $res->assertJsonPath('size_chart.table_json.headers.0', 'P');
     $res->assertJsonPath('personalization_options.0.label', 'Nome');

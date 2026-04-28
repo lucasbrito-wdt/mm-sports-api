@@ -2,6 +2,7 @@
 
 use App\Domains\Catalog\Controllers\Admin\AttributeController;
 use App\Domains\Catalog\Controllers\Admin\AttributeValueController;
+use App\Domains\Catalog\Controllers\Admin\CategoryController;
 use App\Domains\Catalog\Controllers\Admin\ProductFacetAttributesController;
 use App\Domains\Catalog\Controllers\Admin\ProductImageController;
 use App\Domains\Catalog\Controllers\Admin\ProductVariantMatrixController;
@@ -37,6 +38,12 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::post('attributes', [AttributeController::class, 'store'])->name('attributes.store');
     Route::put('attributes/{attribute}', [AttributeController::class, 'update'])->name('attributes.update');
     Route::delete('attributes/{attribute}', [AttributeController::class, 'destroy'])->name('attributes.destroy');
+
+    Route::get('categories/tree', [CategoryController::class, 'tree'])->name('categories.tree');
+    Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
     Route::post('attributes/{attribute}/values', [AttributeValueController::class, 'store'])->name('attributes.values.store');
     Route::put('attributes/values/{value}', [AttributeValueController::class, 'update'])->name('attributes.values.update');

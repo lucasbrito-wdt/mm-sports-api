@@ -79,6 +79,7 @@ class ProductCatalogService extends BaseService
             'title' => $p->title,
             'slug' => $p->slug,
             'description' => $p->description,
+            'category_id' => $p->category_id,
             'origin' => $p->origin->value,
             'allows_personalization' => $p->allows_personalization,
             'ncm' => $p->ncm,
