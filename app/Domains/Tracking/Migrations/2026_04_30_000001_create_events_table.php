@@ -45,9 +45,18 @@ return new class extends Migration
             $table->char('currency', 3)->default('BRL');
         });
 
-        DB::statement('ALTER TABLE events ADD COLUMN ip_address inet NULL');
+        $isPgsql = DB::getDriverName() === 'pgsql';
+
+        if ($isPgsql) {
+            DB::statement('ALTER TABLE events ADD COLUMN ip_address inet NULL');
+        }
+
         DB::statement('CREATE INDEX idx_events_name_time ON events (event_name, event_timestamp DESC)');
-        DB::statement('CREATE INDEX idx_events_properties ON events USING GIN (properties)');
+
+        if ($isPgsql) {
+            DB::statement('CREATE INDEX idx_events_properties ON events USING GIN (properties)');
+        }
+
         DB::statement('CREATE INDEX idx_events_utm ON events (utm_source, utm_medium, utm_campaign)');
     }
 

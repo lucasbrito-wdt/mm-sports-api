@@ -3,7 +3,8 @@
 namespace App\Domains\Tracking\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Bus;
+use App\Domains\Tracking\Jobs\SendToGa4;
+use App\Domains\Tracking\Jobs\SendToMetaCapi;
 
 class TrackingEvent extends Model
 {
@@ -32,10 +33,8 @@ class TrackingEvent extends Model
                 return;
             }
 
-            Bus::chain([
-                new \App\Domains\Tracking\Jobs\SendToGa4($event->id),
-                new \App\Domains\Tracking\Jobs\SendToMetaCapi($event->id),
-            ])->onQueue('tracking')->dispatch();
+            SendToGa4::dispatch($event->id)->onQueue('tracking');
+            SendToMetaCapi::dispatch($event->id)->onQueue('tracking');
         });
     }
 }

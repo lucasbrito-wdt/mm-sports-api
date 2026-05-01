@@ -63,7 +63,7 @@ class SendToMetaCapi implements ShouldQueue
         $customData = [];
         if (in_array($event->event_name, ['purchase', 'refund'], true)) {
             $customData = [
-                'value'        => $event->revenue_cents / 100,
+                'value'        => ($event->revenue_cents ?? 0) / 100,
                 'currency'     => $event->currency ?? 'BRL',
                 'order_id'     => (string) $event->order_id,
                 'content_ids'  => array_column($event->properties['items'] ?? [], 'item_id'),
