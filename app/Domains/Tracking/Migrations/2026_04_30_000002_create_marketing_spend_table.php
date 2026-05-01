@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('marketing_spend', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->date('date')->index();
+            $table->date('date');
             $table->string('canal', 100);
             $table->integer('valor_cents');
             $table->timestamps();
