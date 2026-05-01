@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('analytics/events', [AnalyticsEventController::class, 'ingest'])->middleware('throttle:60,1');
 
+Route::post('events/batch', [\App\Domains\Tracking\Controllers\TrackingEventController::class, 'batch'])
+    ->middleware('throttle:120,1');
+
 Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::get('analytics-events', [AnalyticsEventAdminController::class, 'index'])->name('analytics.events.index');
     Route::get('analytics-events/{id}', [AnalyticsEventAdminController::class, 'show'])->name('analytics.events.show');
