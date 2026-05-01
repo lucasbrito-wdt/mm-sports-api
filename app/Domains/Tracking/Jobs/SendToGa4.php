@@ -73,7 +73,7 @@ class SendToGa4 implements ShouldQueue
 
         if (in_array($event->event_name, ['purchase', 'refund'], true)) {
             $base['transaction_id'] = (string) $event->order_id;
-            $base['value']          = $event->revenue_cents / 100;
+            $base['value']          = ($event->revenue_cents ?? 0) / 100;
             $base['currency']       = $event->currency ?? 'BRL';
             $base['items']          = $event->properties['items'] ?? [];
             if ($event->properties['coupon_code'] ?? false) {

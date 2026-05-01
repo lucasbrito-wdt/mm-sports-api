@@ -24,6 +24,7 @@ class SendToMetaCapi implements ShouldQueue
         'begin_checkout'   => 'InitiateCheckout',
         'add_payment_info' => 'AddPaymentInfo',
         'purchase'         => 'Purchase',
+        'refund'           => 'Purchase',
         'sign_up'          => 'CompleteRegistration',
     ];
 
@@ -57,7 +58,7 @@ class SendToMetaCapi implements ShouldQueue
             'ph' => isset($event->properties['phone'])
                 ? hash('sha256', preg_replace('/\D/', '', $event->properties['phone']))
                 : null,
-        ]);
+        ], fn($v) => $v !== null);
 
         $customData = [];
         if (in_array($event->event_name, ['purchase', 'refund'], true)) {
