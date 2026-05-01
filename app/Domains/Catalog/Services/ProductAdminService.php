@@ -21,7 +21,14 @@ class ProductAdminService extends BaseService
     public function index(array $options = [], ?\Closure $builderCallback = null)
     {
         $enrich = function ($query) {
-            $query->with(['variants', 'personalizationOptions']);
+            $query
+                ->addSelect([
+                    'cover_image_url' => \App\Domains\Catalog\Models\ProductImage::select('url')
+                        ->whereColumn('product_id', 'products.id')
+                        ->orderBy('display_order')
+                        ->limit(1),
+                ])
+                ->with(['variants', 'personalizationOptions']);
         };
         if ($builderCallback) {
             $cb = $builderCallback;

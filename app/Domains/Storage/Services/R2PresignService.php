@@ -3,8 +3,6 @@
 namespace App\Domains\Storage\Services;
 
 use Aws\S3\S3Client;
-use Illuminate\Support\Facades\Storage;
-use League\Flysystem\AwsS3V3\AwsS3V3Adapter;
 
 class R2PresignService
 {
@@ -17,19 +15,24 @@ class R2PresignService
      */
     public function generatePutUrl(string $key, string $contentType, int $contentLength): array
     {
-        $disk = Storage::disk('r2');
-        /** @var AwsS3V3Adapter $adapter */
-        $adapter = $disk->getAdapter();
-        /** @var S3Client $client */
-        $client = $adapter->getClient();
+        $client = new S3Client([
+            'region'                  => 'auto',
+            'version'                 => 'latest',
+            'endpoint'                => config('filesystems.disks.r2.endpoint'),
+            'use_path_style_endpoint' => true,
+            'credentials'             => [
+                'key'    => config('filesystems.disks.r2.key'),
+                'secret' => config('filesystems.disks.r2.secret'),
+            ],
+        ]);
 
-        $bucket = config('filesystems.disks.r2.bucket');
+        $bucket    = config('filesystems.disks.r2.bucket');
         $publicBase = rtrim((string) config('filesystems.disks.r2.url'), '/');
 
         $cmd = $client->getCommand('PutObject', [
-            'Bucket' => $bucket,
-            'Key' => $key,
-            'ContentType' => $contentType,
+            'Bucket'        => $bucket,
+            'Key'           => $key,
+            'ContentType'   => $contentType,
             'ContentLength' => $contentLength,
         ]);
 
@@ -37,9 +40,9 @@ class R2PresignService
 
         return [
             'presigned_url' => (string) $request->getUri(),
-            'public_url' => $publicBase . '/' . ltrim($key, '/'),
-            'key' => $key,
-            'expires_in' => self::TTL_SECONDS,
+            'public_url'    => $publicBase . '/' . ltrim($key, '/'),
+            'key'           => $key,
+            'expires_in'    => self::TTL_SECONDS,
         ];
     }
 }

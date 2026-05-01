@@ -10,7 +10,7 @@ class ProductVariantAdminRequest extends BaseFormRequest
     public function store(): array
     {
         return [
-            'sku' => ['required', 'string', 'max:64', 'unique:product_variants,sku'],
+            'sku' => ['required', 'string', 'max:255', 'unique:product_variants,sku'],
             'price' => ['required', 'numeric', 'min:0'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
@@ -29,7 +29,7 @@ class ProductVariantAdminRequest extends BaseFormRequest
 
         return [
             'sku' => [
-                'sometimes', 'string', 'max:64',
+                'sometimes', 'string', 'max:255',
                 Rule::unique('product_variants', 'sku')->ignore($id, 'id'),
             ],
             'price' => ['sometimes', 'numeric', 'min:0'],
