@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ])
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(ReturnJsonResponseMiddleware::class);
+        $middleware->append(\App\Http\Middleware\CaptureEventContext::class);
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('catalog:refresh-facets')->everyFiveMinutes()->withoutOverlapping();
