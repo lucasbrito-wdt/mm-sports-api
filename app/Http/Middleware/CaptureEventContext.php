@@ -34,8 +34,12 @@ class CaptureEventContext
             $ctx->utmCampaign = substr((string) $request->query('utm_campaign', ''), 0, 100) ?: null;
             $ctx->utmTerm     = substr((string) $request->query('utm_term',     ''), 0, 100) ?: null;
             $ctx->utmContent  = substr((string) $request->query('utm_content',  ''), 0, 100) ?: null;
-            $ctx->landingPage = $request->fullUrl();
-            $ctx->referrer    = $request->header('referer');
+            $ctx->landingPage = $request->fullUrl()
+                ? substr($request->fullUrl(), 0, 500)
+                : null;
+            $ctx->referrer = $request->header('referer')
+                ? substr($request->header('referer'), 0, 500)
+                : null;
         } else {
             $ctx->utmSource   = $request->cookie('_utm_source');
             $ctx->utmMedium   = $request->cookie('_utm_medium');
@@ -47,7 +51,9 @@ class CaptureEventContext
         }
 
         $ctx->ipAddress  = $request->ip();
-        $ctx->userAgent  = substr((string) $request->userAgent(), 0, 500);
+        $ctx->userAgent  = $request->userAgent()
+            ? substr($request->userAgent(), 0, 500)
+            : null;
         $ctx->deviceType = $this->detectDevice($request->userAgent());
 
         $ctx->country = $request->header('CF-IPCountry');
@@ -91,8 +97,8 @@ class CaptureEventContext
     {
         if (!$userAgent) return 'unknown';
         $ua = strtolower($userAgent);
+        if (preg_match('/ipad|tablet|android(?!.*mobile)/', $ua)) return 'tablet';
         if (preg_match('/mobile|android|iphone|ipod/', $ua)) return 'mobile';
-        if (preg_match('/ipad|tablet/', $ua)) return 'tablet';
         return 'desktop';
     }
 }
