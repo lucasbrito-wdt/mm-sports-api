@@ -24,4 +24,12 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
 
     Route::get('order-status-transitions', [OrderStatusTransitionAdminController::class, 'index'])->name('order.transitions.index');
     Route::get('order-status-transitions/{id}', [OrderStatusTransitionAdminController::class, 'show'])->name('order.transitions.show');
+
+    Route::prefix('analytics')->group(function () {
+        Route::get('kpis',          [\App\Domains\Tracking\Controllers\Admin\AnalyticsDashboardController::class, 'kpis']);
+        Route::get('funnel',        [\App\Domains\Tracking\Controllers\Admin\AnalyticsDashboardController::class, 'funnel']);
+        Route::get('revenue-daily', [\App\Domains\Tracking\Controllers\Admin\AnalyticsDashboardController::class, 'revenueDaily']);
+        Route::get('top-products',  [\App\Domains\Tracking\Controllers\Admin\AnalyticsDashboardController::class, 'topProducts']);
+        Route::get('acquisition',   [\App\Domains\Tracking\Controllers\Admin\AnalyticsDashboardController::class, 'acquisition']);
+    });
 });
