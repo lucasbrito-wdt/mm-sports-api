@@ -25,10 +25,10 @@ class TrackingEventController extends Controller
             return [
                 'event_name'      => $e['event_name'],
                 'event_timestamp' => $e['event_timestamp'] ?? $now,
-                'session_id'      => $e['session_id']    ?? $ctx->sessionId,
-                'anonymous_id'    => $e['anonymous_id']  ?? $ctx->anonymousId,
+                'session_id'      => $e['session_id']    ?? $ctx->sessionId   ?? (string) \Illuminate\Support\Str::uuid(),
+                'anonymous_id'    => $e['anonymous_id']  ?? $ctx->anonymousId ?? (string) \Illuminate\Support\Str::uuid(),
                 'user_id'         => $e['user_id']       ?? $ctx->userId,
-                'properties'      => json_encode($e['properties'] ?? []),
+                'properties'      => $e['properties'] ?? [],
                 'device_type'     => $e['device_type']   ?? $ctx->deviceType,
                 'ip_address'      => $ctx->ipAddress,
                 'user_agent'      => $ctx->userAgent,
