@@ -7,6 +7,10 @@ use App\Domains\Commerce\Controllers\OrderController;
 use App\Domains\Commerce\Controllers\UserAddressController;
 use Illuminate\Support\Facades\Route;
 
+// Guest checkout — no authentication required
+Route::post('guest-orders', [OrderController::class, 'placeGuest']);
+Route::get('orders/{orderId}/status', [OrderController::class, 'orderStatus']);
+
 Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::get('dashboard', [DashboardAdminController::class, 'summary'])->name('dashboard.summary');
     Route::get('orders', [OrderAdminController::class, 'index'])->name('orders.index');
