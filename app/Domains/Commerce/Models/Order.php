@@ -28,6 +28,18 @@ class Order extends BaseModel
         'asaas_payment_id',
         'paid_at',
         'shipped_at',
+        'payment_method',
+        'guest_name',
+        'guest_email',
+        'guest_phone',
+        'guest_cpf',
+        'asaas_pix_qr_code',
+        'asaas_pix_copy_paste',
+        'asaas_pix_expires_at',
+        'asaas_boleto_url',
+        'asaas_boleto_barcode',
+        'asaas_boleto_due_date',
+        'notes',
     ];
 
     protected function casts(): array
@@ -42,6 +54,8 @@ class Order extends BaseModel
             'shipping_address_snapshot' => 'array',
             'paid_at' => 'datetime',
             'shipped_at' => 'datetime',
+            'asaas_pix_expires_at' => 'datetime',
+            'asaas_boleto_due_date' => 'date',
         ];
     }
 
