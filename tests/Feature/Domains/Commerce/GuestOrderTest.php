@@ -1,6 +1,5 @@
 <?php
 
-use App\Domains\Auth\Models\User;
 use App\Domains\Commerce\Enums\OrderStatus;
 use App\Domains\Commerce\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,10 +20,8 @@ test('GET /api/orders/{id}/status returns 404 for unknown order', function () {
 });
 
 test('GET /api/orders/{id}/status returns status for known order', function () {
-    $user = User::factory()->create();
-
     $order = Order::create([
-        'user_id'                  => $user->id,
+        'user_id'                  => null,
         'status'                   => OrderStatus::PendingPayment,
         'guest_name'               => 'Test User',
         'guest_email'              => 'test@test.com',
