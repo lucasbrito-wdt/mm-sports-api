@@ -96,6 +96,96 @@ class OrderService extends BaseService
         });
     }
 
+    public function createFromGuest(array $customerData, array $data): Order
+    {
+        if (empty($data['items'])) {
+            throw new InvalidArgumentException('items não pode ser vazio');
+        }
+
+        $quote = $this->checkoutQuoteService->computeQuote('guest', [
+            'items' => $data['items'],
+            'destination_postal_code' => $data['address']['postal_code'],
+        ]);
+
+        $addr = $data['address'];
+        $addressSnapshot = [
+            'recipient_name' => $customerData['name'],
+            'postal_code' => $addr['postal_code'],
+            'street' => $addr['street'],
+            'number' => $addr['number'],
+            'complement' => $addr['complement'] ?? null,
+            'city' => $addr['city'],
+            'state' => $addr['state'],
+        ];
+
+        $billingType = strtoupper($data['billing_type']);
+
+        return DB::transaction(function () use ($customerData, $data, $quote, $addressSnapshot, $billingType) {
+            $orderId = (string) Str::ulid();
+            $cartHash = hash('sha256', json_encode($quote['lines']) ?: '');
+
+            $order = $this->order->newQuery()->create([
+                'id' => $orderId,
+                'user_id' => null,
+                'status' => OrderStatus::PendingPayment,
+                'payment_method' => strtolower($billingType),
+                'guest_name' => $customerData['name'],
+                'guest_email' => $customerData['email'],
+                'guest_cpf' => preg_replace('/\D/', '', $customerData['cpf']),
+                'guest_phone' => preg_replace('/\D/', '', $customerData['phone']),
+                'subtotal' => $quote['subtotal'],
+                'discount_total' => $quote['discount_total'],
+                'shipping_total' => $quote['shipping_total'],
+                'grand_total' => $quote['grand_total'],
+                'shipping_service_code' => $quote['shipping']['service_code'] ?? null,
+                'shipping_quote_json' => $quote['shipping'],
+                'shipping_address_snapshot' => $addressSnapshot,
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            $this->orderStatusTracker->record(
+                $order,
+                null,
+                OrderStatus::PendingPayment->value,
+                'system',
+                ['cart_summary_hash' => $cartHash]
+            );
+
+            foreach ($quote['lines'] as $line) {
+                $this->orderItem->newQuery()->create([
+                    'id' => (string) Str::ulid(),
+                    'order_id' => $order->id,
+                    'product_variant_id' => $line['product_variant_id'],
+                    'quantity' => $line['quantity'],
+                    'unit_price' => $line['unit_price'],
+                    'discount_amount' => 0,
+                    'product_title_snapshot' => $line['product_title'],
+                    'variant_label_snapshot' => $line['variant_label'],
+                    'personalization_snapshot' => $line['personalization_snapshot'] ?? null,
+                ]);
+            }
+
+            $paymentResult = match ($billingType) {
+                'PIX' => $this->handlePixPayment($order),
+                'CREDIT_CARD' => $this->handleCardPayment($order, $data),
+                'BOLETO' => $this->handleBoletoPayment($order),
+                default => throw new \InvalidArgumentException('billing_type inválido: '.$billingType),
+            };
+
+            $order->update($paymentResult);
+
+            $this->analyticsService->track(
+                'order_created',
+                'guest',
+                ['order_id' => (string) $order->id, 'billing_type' => $billingType],
+                'api',
+                request()
+            );
+
+            return $order->fresh();
+        });
+    }
+
     /**
      * Encomendas do utilizador (paginado; não inclui encomendas de outros, exceto se for admin a consultar o detalhe noutro método).
      */
@@ -220,6 +310,51 @@ class OrderService extends BaseService
                     'personalization_snapshot' => $item->personalization_snapshot,
                 ];
             })->all(),
+        ];
+    }
+
+    private function handlePixPayment(Order $order): array
+    {
+        $result = $this->asaasService->createPixPayment($order);
+
+        return [
+            'asaas_payment_id' => $result['asaas_payment_id'] ?? null,
+            'asaas_customer_id' => $result['asaas_customer_id'] ?? null,
+            'asaas_pix_qr_code' => $result['qr_code'],
+            'asaas_pix_copy_paste' => $result['copy_paste'],
+            'asaas_pix_expires_at' => $result['expires_at'],
+        ];
+    }
+
+    private function handleBoletoPayment(Order $order): array
+    {
+        $result = $this->asaasService->createBoletoPayment($order);
+
+        return [
+            'asaas_payment_id' => $result['asaas_payment_id'] ?? null,
+            'asaas_customer_id' => $result['asaas_customer_id'] ?? null,
+            'asaas_boleto_url' => $result['boleto_url'],
+            'asaas_boleto_barcode' => $result['barcode'],
+            'asaas_boleto_due_date' => $result['due_date'],
+        ];
+    }
+
+    private function handleCardPayment(Order $order, array $data): array
+    {
+        $remoteIp = request()->header('X-Forwarded-For') ?? request()->ip() ?? '127.0.0.1';
+        $remoteIp = explode(',', $remoteIp)[0];
+        $installments = (int) ($data['installments'] ?? 1);
+        $cardData = $data['credit_card'] ?? [];
+
+        $result = $this->asaasService->createCardPayment($order, $cardData, trim($remoteIp), $installments);
+
+        if (! in_array($result['status'], ['CONFIRMED', 'PENDING', 'RECEIVED'], true)) {
+            throw new \RuntimeException('Transação não autorizada');
+        }
+
+        return [
+            'asaas_payment_id' => $result['asaas_payment_id'] ?? null,
+            'asaas_customer_id' => $result['asaas_customer_id'] ?? null,
         ];
     }
 
