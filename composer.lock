@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "59efe7f0d9443880c70c7131a58d338b",
+    "content-hash": "27a93cba1bf9997e2b70547cd445055d",
     "packages": [
         {
             "name": "archtechx/enums",
@@ -2760,6 +2760,63 @@
                 "source": "https://github.com/lucasbrito-wdt/laravel-database-fts"
             },
             "time": "2026-04-02T14:28:05+00:00"
+        },
+        {
+            "name": "luquinhasbrito/asaas-api-sdk-laravel",
+            "version": "1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/lucasbrito-wdt/asaas-api-sdk-laravel.git",
+                "reference": "0a4b2b61e154036bcbffb6668bddb78216a5590b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/lucasbrito-wdt/asaas-api-sdk-laravel/zipball/0a4b2b61e154036bcbffb6668bddb78216a5590b",
+                "reference": "0a4b2b61e154036bcbffb6668bddb78216a5590b",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/http": "^11.0|^12.0",
+                "illuminate/support": "^11.0|^12.0",
+                "illuminate/validation": "^11.0|^12.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpunit/phpunit": "^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Asaas\\Laravel\\AsaasServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Asaas\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "WDT",
+                    "homepage": "https://github.com/lucasbrito-wdt/asaas-api-sdk-laravel"
+                }
+            ],
+            "description": "SDK Laravel para a API Asaas v3 - cliente HTTP com retry, serviços, Models e Form Requests",
+            "support": {
+                "issues": "https://github.com/lucasbrito-wdt/asaas-api-sdk-laravel/issues",
+                "source": "https://github.com/lucasbrito-wdt/asaas-api-sdk-laravel/tree/v1.0.2"
+            },
+            "time": "2026-02-28T21:51:21+00:00"
         },
         {
             "name": "monolog/monolog",

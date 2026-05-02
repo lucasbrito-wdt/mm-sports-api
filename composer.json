@@ -19,6 +19,7 @@
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.32",
         "lucasbrito-wdt/laravel-database-fts": "^1.1",
+        "luquinhasbrito/asaas-api-sdk-laravel": "^1.0",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {
