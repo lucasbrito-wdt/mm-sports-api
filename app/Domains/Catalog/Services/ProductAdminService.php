@@ -5,6 +5,7 @@ namespace App\Domains\Catalog\Services;
 use App\Domains\Catalog\Models\Product;
 use App\Domains\Shared\Services\BaseService;
 use App\Domains\Tracking\Services\AuditLogger;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +21,14 @@ class ProductAdminService extends BaseService
     public function index(array $options = [], ?\Closure $builderCallback = null)
     {
         $enrich = function ($query) {
-            $query->with(['variants', 'personalizationOptions']);
+            $query
+                ->addSelect([
+                    'cover_image_url' => \App\Domains\Catalog\Models\ProductImage::select('url')
+                        ->whereColumn('product_id', 'products.id')
+                        ->orderBy('display_order')
+                        ->limit(1),
+                ])
+                ->with(['variants', 'personalizationOptions']);
         };
         if ($builderCallback) {
             $cb = $builderCallback;
@@ -35,6 +43,64 @@ class ProductAdminService extends BaseService
         }
 
         return parent::index($options, $enrich);
+    }
+
+    protected function applyFilters(Builder $query, array $options): Builder
+    {
+        $categoryFilter = $options['filters']['category_id'] ?? null;
+        if (isset($options['filters']) && is_array($options['filters'])) {
+            unset($options['filters']['category_id']);
+        }
+
+        $query = parent::applyFilters($query, $options);
+
+        if (! is_string($categoryFilter) || trim($categoryFilter) === '') {
+            return $query;
+        }
+
+        $categoryId = trim($categoryFilter);
+
+        return $query->whereRaw(
+            $this->categoryTreeSql(),
+            [$categoryId]
+        );
+    }
+
+    private function categoryTreeSql(): string
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            return <<<'SQL'
+            category_id IN (
+                WITH RECURSIVE category_tree AS (
+                    SELECT id, ARRAY[id] AS path
+                    FROM categories
+                    WHERE id = ?
+                    UNION ALL
+                    SELECT c.id, ct.path || c.id
+                    FROM categories c
+                    INNER JOIN category_tree ct ON c.parent_id = ct.id
+                    WHERE NOT (c.id = ANY(ct.path))
+                )
+                SELECT id FROM category_tree
+            )
+            SQL;
+        }
+
+        return <<<'SQL'
+        category_id IN (
+            WITH RECURSIVE category_tree(id, path) AS (
+                SELECT id, id
+                FROM categories
+                WHERE id = ?
+                UNION ALL
+                SELECT c.id, category_tree.path || ',' || c.id
+                FROM categories c
+                INNER JOIN category_tree ON c.parent_id = category_tree.id
+                WHERE instr(',' || category_tree.path || ',', ',' || c.id || ',') = 0
+            )
+            SELECT id FROM category_tree
+        )
+        SQL;
     }
 
     public function show(string $id)

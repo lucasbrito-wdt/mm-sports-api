@@ -13,11 +13,15 @@
         "ext-gd": "*",
         "archtechx/enums": "*",
         "coduo/php-humanizer": "^5.0",
+        "doctrine/dbal": "^4.4",
         "intervention/image": "*",
         "laravel/framework": "^12.0",
         "laravel/telescope": "*",
         "laravel/tinker": "^2.10.1",
+        "league/flysystem-aws-s3-v3": "^3.32",
+        "lucasbrito-wdt/correios": "^1.0",
         "lucasbrito-wdt/laravel-database-fts": "^1.1",
+        "luquinhasbrito/asaas-api-sdk-laravel": "^1.0",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {

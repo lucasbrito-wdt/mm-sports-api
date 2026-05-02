@@ -3,9 +3,10 @@
 namespace App\Domains\Auth\Controllers;
 
 use App\Domains\Auth\Requests\ForgotPasswordRequest;
-use App\Domains\Auth\Requests\ResetPasswordRequest;
 use App\Domains\Auth\Requests\LoginRequest;
 use App\Domains\Auth\Requests\RegisterRequest;
+use App\Domains\Auth\Requests\ResetPasswordRequest;
+use App\Domains\Auth\Requests\UpdateProfileRequest;
 use App\Domains\Auth\Services\AuthService;
 use App\Domains\Shared\Controller\BaseController;
 
@@ -20,19 +21,14 @@ class AuthController extends BaseController
 
     /**
      * Get the authenticated User.
-     *
-     * @param LoginRequest $request
      */
     public function login(LoginRequest $request)
     {
         return $this->authService->login($request);
     }
 
-
     /**
      * Create the authenticated User.
-     *
-     * @param RegisterRequest $request
      */
     public function register(RegisterRequest $request)
     {
@@ -51,11 +47,15 @@ class AuthController extends BaseController
 
     /**
      * Get the authenticated User.
-     *
      */
     public function profile()
     {
         return $this->authService->profile();
+    }
+
+    public function updateProfile(UpdateProfileRequest $request)
+    {
+        return $this->authService->updateProfile($request->validated());
     }
 
     /**

@@ -20,7 +20,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void {}
+    public function register(): void
+    {
+        $this->app->singleton(\App\Domains\Tracking\Services\EventContext::class);
+    }
 
     /**
      * Bootstrap any application services.

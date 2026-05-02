@@ -51,4 +51,15 @@ return [
         'service_codes' => ['03220', '04014'], // PAC, SEDEX — adjust to contract
     ],
 
+    'ga4' => [
+        'measurement_id' => env('GA4_MEASUREMENT_ID'),
+        'api_secret'     => env('GA4_API_SECRET'),
+    ],
+
+    'meta' => [
+        'pixel_id'        => env('META_PIXEL_ID'),
+        'access_token'    => env('META_ACCESS_TOKEN'),
+        'test_event_code' => env('META_TEST_EVENT_CODE'),
+    ],
+
 ];
