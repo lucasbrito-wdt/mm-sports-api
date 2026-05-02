@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "715f937261b0d9ed55d2be4b005c74a3",
+    "content-hash": "c8f04a04f487aa5db57670eeaaddff93",
     "packages": [
         {
             "name": "archtechx/enums",
@@ -2848,6 +2848,73 @@
                 }
             ],
             "time": "2025-12-07T16:03:21+00:00"
+        },
+        {
+            "name": "lucasbrito-wdt/correios",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/lucasbrito-wdt/correios.git",
+                "reference": "36bc64ee6ef5569cf80b957c4e4b7b2389a4c61d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/lucasbrito-wdt/correios/zipball/36bc64ee6ef5569cf80b957c4e4b7b2389a4c61d",
+                "reference": "36bc64ee6ef5569cf80b957c4e4b7b2389a4c61d",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/cache": "^11.0|^12.0",
+                "illuminate/http": "^11.0|^12.0",
+                "illuminate/support": "^11.0|^12.0",
+                "illuminate/validation": "^11.0|^12.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpunit/phpunit": "^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Correios": "Correios\\Facades\\Correios"
+                    },
+                    "providers": [
+                        "Correios\\Providers\\CorreiosServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Correios\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "CodifyTech",
+                    "email": "contato@codifytech.com.br"
+                }
+            ],
+            "description": "Pacote Laravel para integração com as APIs do CWS (Correios Web Services) — Token, CEP, Preço, Prazo, Rastro e Pré-Postagem.",
+            "keywords": [
+                "correios",
+                "cws",
+                "etiqueta",
+                "frete",
+                "laravel",
+                "pre-postagem",
+                "rastreio"
+            ],
+            "support": {
+                "issues": "https://github.com/lucasbrito-wdt/correios/issues",
+                "source": "https://github.com/lucasbrito-wdt/correios/tree/v1.0.0"
+            },
+            "time": "2026-05-02T17:48:37+00:00"
         },
         {
             "name": "lucasbrito-wdt/laravel-database-fts",

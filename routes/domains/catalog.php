@@ -12,6 +12,7 @@ use App\Domains\Catalog\Controllers\ProductAdminController;
 use App\Domains\Catalog\Controllers\ProductController;
 use App\Domains\Catalog\Controllers\ProductPersonalizationOptionAdminController;
 use App\Domains\Catalog\Controllers\ProductVariantAdminController;
+use App\Domains\Catalog\Controllers\Public\PublicCategoryController;
 use App\Domains\Catalog\Controllers\SizeChartAdminController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,9 @@ Route::prefix('catalog')->group(function () {
 Route::get('products', [ProductController::class, 'index']);
 Route::get('products/{id}', [ProductController::class, 'show']);
 Route::get('products/{id}/reviews', [ProductController::class, 'reviews']);
+
+Route::get('categories/tree', [PublicCategoryController::class, 'tree']);
+Route::get('categories', [PublicCategoryController::class, 'index']);
 
 Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::apiResource('size_charts', SizeChartAdminController::class)
@@ -57,12 +61,12 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::apiResource('products.options', ProductPersonalizationOptionAdminController::class)->scoped();
 
     Route::prefix('products/{product}')->group(function () {
-        Route::get   ('images',         [ProductImageController::class, 'index']);
-        Route::post  ('images',         [ProductImageController::class, 'store']);
-        Route::put   ('images/{image}', [ProductImageController::class, 'update']);
+        Route::get('images', [ProductImageController::class, 'index']);
+        Route::post('images', [ProductImageController::class, 'store']);
+        Route::put('images/{image}', [ProductImageController::class, 'update']);
         Route::delete('images/{image}', [ProductImageController::class, 'destroy']);
 
-        Route::get('facet-attributes',  [ProductFacetAttributesController::class, 'show']);
-        Route::put('facet-attributes',  [ProductFacetAttributesController::class, 'update']);
+        Route::get('facet-attributes', [ProductFacetAttributesController::class, 'show']);
+        Route::put('facet-attributes', [ProductFacetAttributesController::class, 'update']);
     });
 });

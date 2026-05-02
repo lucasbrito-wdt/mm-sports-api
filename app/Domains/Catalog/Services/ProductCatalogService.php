@@ -34,6 +34,7 @@ class ProductCatalogService extends BaseService
             ->with([
                 'variants' => fn ($q) => $q->where('is_active', true),
                 'sizeChart',
+                'images',
             ])
             ->orderBy('title')
             ->get();
@@ -57,6 +58,7 @@ class ProductCatalogService extends BaseService
                 'variants' => fn ($q) => $q->where('is_active', true),
                 'personalizationOptions',
                 'sizeChart',
+                'images',
             ])
             ->first();
 
@@ -74,6 +76,8 @@ class ProductCatalogService extends BaseService
 
     private function transformProduct(Product $p): array
     {
+        $images = $this->transformImages($p);
+
         $out = [
             'id' => (string) $p->id,
             'title' => $p->title,
@@ -86,6 +90,8 @@ class ProductCatalogService extends BaseService
             'meta_title' => $p->meta_title,
             'meta_description' => $p->meta_description,
             'size_chart' => $this->transformSizeChart($p),
+            'images' => $images,
+            'primary_image_url' => $images[0]['url'] ?? null,
             'personalization_options' => [],
             'variants' => $p->variants->map(fn ($v) => [
                 'id' => (string) $v->id,
@@ -119,6 +125,27 @@ class ProductCatalogService extends BaseService
         }
 
         return $out;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function transformImages(Product $p): array
+    {
+        if (! $p->relationLoaded('images')) {
+            return [];
+        }
+
+        // Convention: lowest display_order is the primary image.
+        $sorted = $p->images->sortBy('display_order')->values();
+
+        return $sorted->map(fn ($img, int $idx) => [
+            'id' => (string) $img->id,
+            'url' => $img->url,
+            'alt' => $img->alt,
+            'sort_order' => (int) $img->display_order,
+            'is_primary' => $idx === 0,
+        ])->all();
     }
 
     private function transformSizeChart(Product $p): ?array

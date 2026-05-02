@@ -5,8 +5,8 @@ namespace App\Domains\Catalog\Services;
 use App\Domains\Catalog\Models\Category;
 use App\Domains\Catalog\Models\Product;
 use App\Domains\Shared\Services\BaseService;
-use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -83,6 +83,52 @@ class CategoryService extends BaseService
                 'category' => ['Não é possível remover a categoria porque ela está vinculada a outros registros.'],
             ]);
         }
+    }
+
+    /**
+     * Public-facing flat list (only active categories).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listPublic(): array
+    {
+        $items = $this->category->newQuery()
+            ->where('is_active', true)
+            ->orderBy('display_order')
+            ->orderBy('name')
+            ->get();
+
+        return $items->map(fn (Category $c) => $this->transformPublic($c))->all();
+    }
+
+    /**
+     * Public-facing nested tree (only active categories).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function treePublic(): array
+    {
+        $categories = $this->category->newQuery()
+            ->where('is_active', true)
+            ->orderBy('display_order')
+            ->orderBy('name')
+            ->get();
+
+        return $this->buildTree($categories);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function transformPublic(Category $c): array
+    {
+        return [
+            'id' => (string) $c->id,
+            'name' => $c->name,
+            'slug' => $c->slug,
+            'parent_id' => $c->parent_id,
+            'display_order' => (int) $c->display_order,
+        ];
     }
 
     /**

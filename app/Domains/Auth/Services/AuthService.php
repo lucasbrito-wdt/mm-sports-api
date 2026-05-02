@@ -130,6 +130,35 @@ class AuthService extends BaseService
     }
 
     /**
+     * Update the authenticated user's profile.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function updateProfile(array $data): JsonResponse
+    {
+        /** @var User $user */
+        $user = auth()->user();
+
+        $emailChanged = isset($data['email']) && $data['email'] !== $user->email;
+
+        $user->fill([
+            'name' => $data['name'],
+            'email' => $data['email'],
+        ]);
+
+        // TODO: when `email` changes, dispatch a re-verification flow
+        // (reset email_verified_at and resend VerifyEmail notification).
+        // Out of scope for this endpoint until product decision.
+        if ($emailChanged) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        return response()->json($user->refresh());
+    }
+
+    /**
      * Refresh a token.
      *
      * @return \Illuminate\Http\JsonResponse

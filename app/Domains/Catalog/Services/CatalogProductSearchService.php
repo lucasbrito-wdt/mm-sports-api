@@ -130,6 +130,7 @@ class CatalogProductSearchService extends BaseService
         }
 
         return $query
+            ->with(['images'])
             ->orderByDesc('id')
             ->forPage($page, $perPage)
             ->get();
