@@ -109,8 +109,18 @@ class OrderController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
+        $shipping = $quote['shipping'];
+
         return response()->json([
-            'shipping'       => $quote['shipping'],
+            'shipping'         => $shipping,
+            'shipping_options' => $shipping['options'] ?? [
+                [
+                    'service_code' => $shipping['service_code'] ?? 'STUB',
+                    'service_name' => $shipping['service_name'] ?? 'Frete',
+                    'price'        => (float) $quote['shipping_total'],
+                    'eta_days'     => $shipping['eta_days'] ?? 7,
+                ],
+            ],
             'subtotal'       => $quote['subtotal'],
             'discount_total' => $quote['discount_total'],
             'shipping_total' => $quote['shipping_total'],
