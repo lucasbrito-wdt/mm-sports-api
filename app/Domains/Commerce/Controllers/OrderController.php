@@ -5,6 +5,7 @@ namespace App\Domains\Commerce\Controllers;
 use App\Domains\Commerce\Models\Order;
 use App\Domains\Commerce\Requests\GuestOrderRequest;
 use App\Domains\Commerce\Requests\StoreOrderRequest;
+use App\Domains\Commerce\Services\CheckoutQuoteService;
 use App\Domains\Commerce\Services\OrderService;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -17,6 +18,7 @@ class OrderController extends Controller
 {
     public function __construct(
         private readonly OrderService $orderService,
+        private readonly CheckoutQuoteService $checkoutQuoteService,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -87,6 +89,33 @@ class OrderController extends Controller
         }
 
         return response()->json($payload, 201);
+    }
+
+    public function quoteShipping(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'postal_code'                      => ['required', 'string', 'min:8', 'max:9'],
+            'items'                            => ['required', 'array', 'min:1'],
+            'items.*.product_variant_id'       => ['required', 'string'],
+            'items.*.quantity'                 => ['required', 'integer', 'min:1'],
+        ]);
+
+        try {
+            $quote = $this->checkoutQuoteService->computeQuote('guest', [
+                'items'                    => $validated['items'],
+                'destination_postal_code'  => $validated['postal_code'],
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'shipping'       => $quote['shipping'],
+            'subtotal'       => $quote['subtotal'],
+            'discount_total' => $quote['discount_total'],
+            'shipping_total' => $quote['shipping_total'],
+            'grand_total'    => $quote['grand_total'],
+        ]);
     }
 
     public function orderStatus(string $orderId): JsonResponse
