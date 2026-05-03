@@ -12,6 +12,7 @@ use App\Domains\Catalog\Controllers\ProductAdminController;
 use App\Domains\Catalog\Controllers\ProductController;
 use App\Domains\Catalog\Controllers\ProductPersonalizationOptionAdminController;
 use App\Domains\Catalog\Controllers\ProductVariantAdminController;
+use App\Domains\Catalog\Controllers\Public\CatalogHomeController;
 use App\Domains\Catalog\Controllers\Public\PublicCategoryController;
 use App\Domains\Catalog\Controllers\SizeChartAdminController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('catalog')->group(function () {
     Route::get('facets', [CatalogFacetController::class, 'index']);
     Route::get('products', [CatalogProductController::class, 'index']);
+    Route::get('home', [CatalogHomeController::class, 'index']);
 });
 
 Route::get('products', [ProductController::class, 'index']);

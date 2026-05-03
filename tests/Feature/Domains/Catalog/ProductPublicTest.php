@@ -28,6 +28,27 @@ it('lista produtos publicados com variantes ativas', function () {
     $res->assertJsonPath('data.0.category_id', (string) $category->id);
 });
 
+it('filtra a listagem por category_id', function () {
+    [$catA] = CommerceFixtures::publishedProductWithVariant('Só categoria A');
+    $categoryA = Category::query()->create([
+        'name' => 'A',
+        'slug' => 'cat-a-'.Str::lower(Str::random(6)),
+    ]);
+    $catA->update(['category_id' => $categoryA->id]);
+
+    [$catB] = CommerceFixtures::publishedProductWithVariant('Só categoria B');
+    $categoryB = Category::query()->create([
+        'name' => 'B',
+        'slug' => 'cat-b-'.Str::lower(Str::random(6)),
+    ]);
+    $catB->update(['category_id' => $categoryB->id]);
+
+    $res = $this->getJson('/api/products?category_id='.urlencode((string) $categoryA->id));
+    $res->assertOk();
+    $res->assertJsonCount(1, 'data');
+    $res->assertJsonPath('data.0.title', 'Só categoria A');
+});
+
 it('filtra a listagem com q e regista eventos de analytics', function () {
     CommerceFixtures::publishedProductWithVariant('Camiseta Alpha');
     Product::query()->create([

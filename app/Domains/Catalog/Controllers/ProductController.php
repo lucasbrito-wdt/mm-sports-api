@@ -23,9 +23,19 @@ class ProductController extends BaseController
 
     public function index(Request $request, ?Closure $builderCallback = null): JsonResponse
     {
-        $q = $request->query('q');
-        $search = is_string($q) ? trim($q) : null;
-        $out = $this->productCatalogService->listPublished($search);
+        $rawSearch = $request->query('q');
+        if (! is_string($rawSearch) || trim($rawSearch) === '') {
+            $rawSearch = $request->query('search');
+        }
+        $search = is_string($rawSearch) ? trim($rawSearch) : null;
+        if ($search === '') {
+            $search = null;
+        }
+
+        $rawCategory = $request->query('category_id');
+        $categoryId = is_string($rawCategory) && $rawCategory !== '' ? $rawCategory : null;
+
+        $out = $this->productCatalogService->listPublished($search, $categoryId);
         try {
             $this->analyticsService->track(
                 'product_list_viewed',

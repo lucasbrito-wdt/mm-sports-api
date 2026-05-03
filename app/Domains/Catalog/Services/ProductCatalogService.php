@@ -3,6 +3,7 @@
 namespace App\Domains\Catalog\Services;
 
 use App\Domains\Catalog\Enums\ProductStatus;
+use App\Domains\Catalog\Models\Category;
 use App\Domains\Catalog\Models\Product;
 use App\Domains\Shared\Services\BaseService;
 
@@ -16,11 +17,16 @@ class ProductCatalogService extends BaseService
 
     /**
      * @param  string|null  $search  Plain search; filters title/slug (LIKE). Empty string = no filter.
+     * @param  string|null  $categoryId  When set, restricts to products in that category (ULID).
      */
-    public function listPublished(?string $search = null): array
+    public function listPublished(?string $search = null, ?string $categoryId = null): array
     {
         $query = $this->product->newQuery()
             ->where('status', ProductStatus::Published);
+
+        if ($categoryId !== null && $categoryId !== '') {
+            $query->where('category_id', $categoryId);
+        }
 
         if ($search !== null && $search !== '') {
             $term = '%'.$this->escapeLike($search).'%';
@@ -44,6 +50,92 @@ class ProductCatalogService extends BaseService
         ];
     }
 
+    /**
+     * Payload agregado para a home: destaques (mix de produtos publicados) + até N
+     * blocos por categoria (slugs em config), cada um com lista limitada.
+     *
+     * @param  int|null  $categoryBlocks  Quantidade de blocos de categoria (2–5); null usa o default do config.
+     * @return array{destaques: array{data: array<int, array<string, mixed>>}, sections: array<int, array{category: array{id: string, name: string, slug: string}, products: array{data: array<int, array<string, mixed>>}}>, meta: array<string, int>}
+     */
+    public function homeShowcase(
+        ?int $categoryBlocks = null,
+        int $productsPerSection = 12,
+        int $destaquesLimit = 12,
+    ): array {
+        $defaultBlocks = (int) config('mm_storefront.home.category_blocks_default', 4);
+        $n = $categoryBlocks ?? $defaultBlocks;
+        $n = max(2, min(5, $n));
+
+        $productsPerSection = max(1, min(48, $productsPerSection));
+        $destaquesLimit = max(1, min(48, $destaquesLimit));
+
+        $slugs = config('mm_storefront.home.section_slugs', []);
+        $slugs = array_slice($slugs, 0, $n);
+
+        $with = [
+            'variants' => fn ($q) => $q->where('is_active', true),
+            'sizeChart',
+            'images',
+        ];
+
+        $destaquesItems = $this->product->newQuery()
+            ->where('status', ProductStatus::Published)
+            ->with($with)
+            ->orderByDesc('updated_at')
+            ->limit($destaquesLimit)
+            ->get();
+
+        $destaques = $destaquesItems
+            ->map(fn (Product $p) => $this->transformProduct($p))
+            ->values()
+            ->all();
+
+        $sections = [];
+        foreach ($slugs as $slug) {
+            $category = Category::query()
+                ->where('slug', $slug)
+                ->where('is_active', true)
+                ->first();
+
+            if ($category === null) {
+                continue;
+            }
+
+            $catProducts = $this->product->newQuery()
+                ->where('status', ProductStatus::Published)
+                ->where('category_id', $category->id)
+                ->with($with)
+                ->orderBy('title')
+                ->limit($productsPerSection)
+                ->get();
+
+            $sections[] = [
+                'category' => [
+                    'id' => (string) $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                ],
+                'products' => [
+                    'data' => $catProducts
+                        ->map(fn (Product $p) => $this->transformProduct($p))
+                        ->values()
+                        ->all(),
+                ],
+            ];
+        }
+
+        return [
+            'destaques' => ['data' => $destaques],
+            'sections' => $sections,
+            'meta' => [
+                'category_blocks_requested' => $n,
+                'category_blocks_returned' => count($sections),
+                'destaques_count' => count($destaques),
+                'products_per_section' => $productsPerSection,
+            ],
+        ];
+    }
+
     private function escapeLike(string $value): string
     {
         return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
@@ -53,7 +145,7 @@ class ProductCatalogService extends BaseService
     {
         $product = $this->product->newQuery()
             ->where('status', ProductStatus::Published)
-            ->where('id', $id)
+            ->where(fn ($q) => $q->where('id', $id)->orWhere('slug', $id))
             ->with([
                 'variants' => fn ($q) => $q->where('is_active', true),
                 'personalizationOptions',

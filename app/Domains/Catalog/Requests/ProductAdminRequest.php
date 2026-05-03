@@ -21,6 +21,10 @@ class ProductAdminRequest extends BaseFormRequest
             'category_id' => ['nullable', 'ulid', 'exists:categories,id'],
             'status' => ['required', Rule::enum(ProductStatus::class)],
             'ncm' => ['nullable', 'string', 'max:32'],
+            'weight_grams' => ['nullable', 'integer', 'min:0'],
+            'length_cm' => ['nullable', 'numeric', 'min:0'],
+            'width_cm' => ['nullable', 'numeric', 'min:0'],
+            'height_cm' => ['nullable', 'numeric', 'min:0'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
         ];
@@ -40,6 +44,10 @@ class ProductAdminRequest extends BaseFormRequest
             'category_id' => ['nullable', 'ulid', 'exists:categories,id'],
             'status' => ['sometimes', Rule::enum(ProductStatus::class)],
             'ncm' => ['nullable', 'string', 'max:32'],
+            'weight_grams' => ['nullable', 'integer', 'min:0'],
+            'length_cm' => ['nullable', 'numeric', 'min:0'],
+            'width_cm' => ['nullable', 'numeric', 'min:0'],
+            'height_cm' => ['nullable', 'numeric', 'min:0'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
         ];
