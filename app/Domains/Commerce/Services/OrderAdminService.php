@@ -76,7 +76,7 @@ class OrderAdminService extends BaseService
                     }
                     $this->analyticsService->track(
                         'order_shipped',
-                        (string) $order->user_id,
+                        $order->user_id,
                         [
                             'order_id' => (string) $order->id,
                             'source' => 'admin',

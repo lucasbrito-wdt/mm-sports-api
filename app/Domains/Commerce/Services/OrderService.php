@@ -176,7 +176,7 @@ class OrderService extends BaseService
 
             $this->analyticsService->track(
                 'order_created',
-                'guest',
+                null,
                 ['order_id' => (string) $order->id, 'billing_type' => $billingType],
                 'api',
                 request()
