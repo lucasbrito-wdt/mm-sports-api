@@ -15,6 +15,7 @@ use App\Domains\Marketing\Models\Promotion;
 use App\Domains\Shared\Services\BaseService;
 use App\Domains\Tracking\Services\AnalyticsService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
 
 class CheckoutQuoteService extends BaseService
@@ -83,7 +84,7 @@ class CheckoutQuoteService extends BaseService
         ], $lines);
 
         $dest = $data['destination_postal_code'];
-        $origin = (string) config('services.mm_store.origin_postal_code', '01310100');
+        $origin = (string) config('services.mm_store.origin_postal_code', '58200230');
         $dest = preg_replace('/\D/', '', $dest) ?? $dest;
 
         $ship = $this->correiosService->quote($dest, $lineWeights, $origin);
@@ -157,7 +158,7 @@ class CheckoutQuoteService extends BaseService
      */
     private function resolvePersonalization(Product $product, array $raw): array
     {
-        /** @var \Illuminate\Database\Eloquent\Collection<string, ProductPersonalizationOption> $byId */
+        /** @var Collection<string, ProductPersonalizationOption> $byId */
         $byId = $product->relationLoaded('personalizationOptions')
             ? $product->personalizationOptions->keyBy('id')
             : $product->personalizationOptions()->get()->keyBy('id');

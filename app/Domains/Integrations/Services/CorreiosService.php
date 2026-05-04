@@ -20,8 +20,10 @@ class CorreiosService
 
     /** Dimensões padrão de uma camiseta embalada (em cm) */
     private const DEFAULT_COMPRIMENTO = 30;
-    private const DEFAULT_LARGURA     = 20;
-    private const DEFAULT_ALTURA      = 5;
+
+    private const DEFAULT_LARGURA = 20;
+
+    private const DEFAULT_ALTURA = 5;
 
     /** Peso mínimo aceito pela API (gramas) */
     private const PESO_MINIMO = 100;
@@ -40,28 +42,28 @@ class CorreiosService
      */
     public function quote(string $destinationCep, array $lineWeights, ?string $originCep = null): array
     {
-        $origin = preg_replace('/\D/', '', $originCep ?? config('services.mm_store.origin_postal_code', '01310100'));
-        $dest   = preg_replace('/\D/', '', $destinationCep);
-        $peso   = max(self::PESO_MINIMO, $this->totalWeight($lineWeights));
+        $origin = preg_replace('/\D/', '', $originCep ?? config('services.mm_store.origin_postal_code', '58200230'));
+        $dest = preg_replace('/\D/', '', $destinationCep);
+        $peso = max(self::PESO_MINIMO, $this->totalWeight($lineWeights));
 
         if (! $this->isConfigured()) {
             return $this->stub($origin, $dest);
         }
 
         $serviceCodes = array_keys(self::SERVICE_NAMES);
-        $dtPostagem   = now()->toDateString();
+        $dtPostagem = now()->toDateString();
 
         // ── Preço em lote ────────────────────────────────────────────────────
         $precoRequests = array_map(
             fn (string $co) => new CotacaoPrecoRequestDTO(
-                coProduto:   $co,
-                cepOrigem:   $origin,
-                cepDestino:  $dest,
-                psObjeto:    $peso,
-                tpObjeto:    2,
+                coProduto: $co,
+                cepOrigem: $origin,
+                cepDestino: $dest,
+                psObjeto: $peso,
+                tpObjeto: 2,
                 comprimento: self::DEFAULT_COMPRIMENTO,
-                largura:     self::DEFAULT_LARGURA,
-                altura:      self::DEFAULT_ALTURA,
+                largura: self::DEFAULT_LARGURA,
+                altura: self::DEFAULT_ALTURA,
             ),
             $serviceCodes
         );
@@ -75,9 +77,9 @@ class CorreiosService
         // ── Prazo em lote ────────────────────────────────────────────────────
         $prazoItems = array_map(
             fn (string $co) => [
-                'coProduto'    => $co,
-                'cepOrigem'    => $origin,
-                'cepDestino'   => $dest,
+                'coProduto' => $co,
+                'cepOrigem' => $origin,
+                'cepDestino' => $dest,
                 'dataPostagem' => $dtPostagem,
             ],
             $serviceCodes
@@ -95,14 +97,14 @@ class CorreiosService
             if ($preco->temErro()) {
                 continue;
             }
-            $co      = $serviceCodes[$i];
+            $co = $serviceCodes[$i];
             $etaDays = isset($prazoResps[$i]) ? max(1, $prazoResps[$i]->prazoEntrega) : 7;
 
             $options[] = [
                 'service_code' => $co,
                 'service_name' => self::SERVICE_NAMES[$co] ?? $co,
-                'price'        => round($preco->pcFinal, 2),
-                'eta_days'     => $etaDays,
+                'price' => round($preco->pcFinal, 2),
+                'eta_days' => $etaDays,
             ];
         }
 
@@ -115,11 +117,11 @@ class CorreiosService
         $first = $options[0];
 
         return [
-            'price'        => $first['price'],
-            'eta_days'     => $first['eta_days'],
+            'price' => $first['price'],
+            'eta_days' => $first['eta_days'],
             'service_code' => $first['service_code'],
             'service_name' => $first['service_name'],
-            'options'      => $options,
+            'options' => $options,
         ];
     }
 
@@ -152,15 +154,15 @@ class CorreiosService
     {
         $options = [
             ['service_code' => '03220', 'service_name' => 'SEDEX', 'price' => 24.90, 'eta_days' => 3],
-            ['service_code' => '03298', 'service_name' => 'PAC',   'price' =>  9.90, 'eta_days' => 8],
+            ['service_code' => '03298', 'service_name' => 'PAC',   'price' => 9.90, 'eta_days' => 8],
         ];
 
         return [
-            'price'        => 9.90,
-            'eta_days'     => 8,
+            'price' => 9.90,
+            'eta_days' => 8,
             'service_code' => '03298',
             'service_name' => 'PAC',
-            'options'      => $options,
+            'options' => $options,
         ];
     }
 }

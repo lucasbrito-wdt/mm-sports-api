@@ -27,8 +27,8 @@ it('admin cancela encomenda pendente e gera transição e audit', function () {
             'items' => [
                 ['product_variant_id' => (string) $v->id, 'quantity' => 1],
             ],
-            'destination_postal_code' => '01310100',
-        ])->json('data.id');
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
+        ])->json('order_id');
 
     $res = $this->withHeaders(jwtHeaders($this->admin))
         ->patchJson("/api/admin/orders/{$orderId}", [
@@ -61,8 +61,8 @@ it('admin define tracking e transição para shipped com evento de analytics', f
             'items' => [
                 ['product_variant_id' => (string) $v->id, 'quantity' => 1],
             ],
-            'destination_postal_code' => '01310100',
-        ])->json('data.id');
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
+        ])->json('order_id');
 
     $order = Order::query()->findOrFail($orderId);
     $order->update([

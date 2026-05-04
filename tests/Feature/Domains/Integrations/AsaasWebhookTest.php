@@ -22,10 +22,10 @@ it('confirma pagamento e ignora o mesmo evento no segundo POST', function () {
             'items' => [
                 ['product_variant_id' => (string) $v->id, 'quantity' => 1],
             ],
-            'destination_postal_code' => '01310100',
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
         ]);
     $orderRes->assertCreated();
-    $orderId = $orderRes->json('data.id');
+    $orderId = $orderRes->json('order_id');
 
     $externalPaymentId = 'asaas_evt_'.uniqid('', true);
     $payload = [

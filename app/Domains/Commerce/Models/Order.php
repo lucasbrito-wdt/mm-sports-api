@@ -4,6 +4,7 @@ namespace App\Domains\Commerce\Models;
 
 use App\Domains\Auth\Models\User;
 use App\Domains\Commerce\Enums\OrderStatus;
+use App\Domains\Marketing\Models\Coupon;
 use App\Domains\Shared\Models\BaseModel;
 use App\Domains\Tracking\Models\OrderStatusTransition;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +16,8 @@ class Order extends BaseModel
 
     protected $fillable = [
         'user_id',
+        'coupon_id',
+        'coupon_code',
         'status',
         'subtotal',
         'discount_total',
@@ -26,13 +29,12 @@ class Order extends BaseModel
         'correios_tracking_code',
         'asaas_customer_id',
         'asaas_payment_id',
+        'asaas_credit_card_token',
+        'asaas_credit_card_brand',
+        'asaas_credit_card_last4',
         'paid_at',
         'shipped_at',
         'payment_method',
-        'guest_name',
-        'guest_email',
-        'guest_phone',
-        'guest_cpf',
         'asaas_pix_qr_code',
         'asaas_pix_copy_paste',
         'asaas_pix_expires_at',
@@ -62,6 +64,11 @@ class Order extends BaseModel
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function items(): HasMany

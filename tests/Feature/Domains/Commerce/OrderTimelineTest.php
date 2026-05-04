@@ -15,9 +15,9 @@ it('retorna timeline para o dono do pedido', function () {
             'items' => [
                 ['product_variant_id' => (string) $v->id, 'quantity' => 1],
             ],
-            'destination_postal_code' => '01310100',
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
         ]);
-    $orderId = $orderRes->json('data.id');
+    $orderId = $orderRes->json('order_id');
 
     $res = $this->withHeaders(jwtHeaders($user))
         ->getJson("/api/orders/{$orderId}/timeline");
@@ -41,8 +41,8 @@ it('retorna 403 para outro usuário', function () {
             'items' => [
                 ['product_variant_id' => (string) $v->id, 'quantity' => 1],
             ],
-            'destination_postal_code' => '01310100',
-        ])->json('data.id');
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
+        ])->json('order_id');
 
     $order = Order::query()->findOrFail($orderId);
     expect((string) $order->user_id)->toBe((string) $owner->id);

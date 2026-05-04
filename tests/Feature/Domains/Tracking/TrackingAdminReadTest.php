@@ -7,6 +7,7 @@ use App\Domains\Tracking\Models\AuditLog;
 use App\Domains\Tracking\Models\OrderStatusTransition;
 use App\Domains\Tracking\Models\WebhookInbox;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\Support\CommerceFixtures;
 
 uses(RefreshDatabase::class);
@@ -45,7 +46,7 @@ it('admin lista e mostra audit logs', function () {
         'actor_user_id' => $this->admin->id,
         'action' => 'test.action',
         'auditable_type' => 'banner',
-        'auditable_id' => (string) \Illuminate\Support\Str::ulid(),
+        'auditable_id' => (string) Str::ulid(),
         'old_values' => null,
         'new_values' => ['a' => 1],
     ]);
@@ -85,10 +86,10 @@ it('admin lista transições de estado com filtro por pedido', function () {
             'items' => [
                 ['product_variant_id' => (string) $variant->id, 'quantity' => 1],
             ],
-            'destination_postal_code' => '01310100',
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
         ]);
     $res->assertCreated();
-    $orderId = $res->json('data.id');
+    $orderId = $res->json('order_id');
     $tid = OrderStatusTransition::query()->where('order_id', $orderId)->value('id');
     expect($tid)->not->toBeNull();
 

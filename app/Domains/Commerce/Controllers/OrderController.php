@@ -3,7 +3,6 @@
 namespace App\Domains\Commerce\Controllers;
 
 use App\Domains\Commerce\Models\Order;
-use App\Domains\Commerce\Requests\GuestOrderRequest;
 use App\Domains\Commerce\Requests\StoreOrderRequest;
 use App\Domains\Commerce\Services\CheckoutQuoteService;
 use App\Domains\Commerce\Services\OrderService;
@@ -45,30 +44,13 @@ class OrderController extends Controller
     {
         try {
             $order = $this->orderService->createFromUser($request->user(), $request->validated());
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         } catch (Throwable $e) {
             report($e);
 
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
-
-        return response()->json(['data' => [
-            'id' => (string) $order->id,
-            'status' => $order->status->value,
-            'grand_total' => (string) $order->grand_total,
-            'asaas_payment_id' => $order->asaas_payment_id,
-        ]], 201);
-    }
-
-    public function placeGuest(GuestOrderRequest $request): JsonResponse
-    {
-        try {
-            $order = $this->orderService->createFromGuest(
-                $request->input('customer'),
-                $request->validated()
-            );
-        } catch (\InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        } catch (\RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
@@ -94,41 +76,41 @@ class OrderController extends Controller
     public function quoteShipping(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'postal_code'                      => ['required', 'string', 'min:8', 'max:9'],
-            'items'                            => ['required', 'array', 'min:1'],
-            'items.*.product_variant_id'       => ['required', 'string'],
-            'items.*.quantity'                 => ['required', 'integer', 'min:1'],
+            'postal_code' => ['required', 'string', 'min:8', 'max:9'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_variant_id' => ['required', 'string'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 
         try {
-            $quote = $this->checkoutQuoteService->computeQuote('guest', [
-                'items'                    => $validated['items'],
-                'destination_postal_code'  => $validated['postal_code'],
+            $quote = $this->checkoutQuoteService->computeQuote($request->user()?->id ?? 'anonymous', [
+                'items' => $validated['items'],
+                'destination_postal_code' => $validated['postal_code'],
             ]);
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
         $shipping = $quote['shipping'];
 
         return response()->json([
-            'shipping'         => $shipping,
+            'shipping' => $shipping,
             'shipping_options' => $shipping['options'] ?? [
                 [
                     'service_code' => $shipping['service_code'] ?? 'STUB',
                     'service_name' => $shipping['service_name'] ?? 'Frete',
-                    'price'        => (float) $quote['shipping_total'],
-                    'eta_days'     => $shipping['eta_days'] ?? 7,
+                    'price' => (float) $quote['shipping_total'],
+                    'eta_days' => $shipping['eta_days'] ?? 7,
                 ],
             ],
-            'subtotal'       => $quote['subtotal'],
+            'subtotal' => $quote['subtotal'],
             'discount_total' => $quote['discount_total'],
             'shipping_total' => $quote['shipping_total'],
-            'grand_total'    => $quote['grand_total'],
+            'grand_total' => $quote['grand_total'],
         ]);
     }
 
-    public function orderStatus(string $orderId): JsonResponse
+    public function orderStatus(Request $request, string $orderId): JsonResponse
     {
         $order = Order::query()->whereKey($orderId)->first();
 
@@ -136,9 +118,21 @@ class OrderController extends Controller
             return response()->json(['message' => 'Pedido não encontrado'], 404);
         }
 
+        $user = $request->user();
+        if ((string) $order->user_id !== (string) $user->id) {
+            $isAdmin = false;
+            try {
+                $isAdmin = $user->roles()->where('slug', 'admin')->exists();
+            } catch (Throwable) {
+            }
+            if (! $isAdmin) {
+                abort(403);
+            }
+        }
+
         return response()->json([
             'order_id' => (string) $order->id,
-            'status'   => $order->status->value,
+            'status' => $order->status->value,
         ]);
     }
 

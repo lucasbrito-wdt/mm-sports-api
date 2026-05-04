@@ -1,7 +1,25 @@
 {
     "mcpServers": {
+        "laravel-boost": {
+            "command": "/usr/bin/php",
+            "args": [
+                "/mnt/dev/CodifyTech/backend/mm-sports-api/artisan",
+                "boost:mcp"
+            ]
+        },
         "asaas": {
             "url": "https://docs.asaas.com/mcp"
+        },
+        "laravel-telescope": {
+            "command": "php",
+            "args": [
+                "artisan",
+                "telescope-mcp:server"
+            ],
+            "env": {
+                "APP_ENV": "local"
+            },
+            "cwd": "/mnt/dev/CodifyTech/backend/mm-sports-api"
         }
     }
 }

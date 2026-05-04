@@ -34,5 +34,6 @@
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="CDF_DIR_FRONT_END" value="storage/testing/frontend"/>
+        <env name="ASAAS_API_KEY" value=""/>
     </php>
 </phpunit>

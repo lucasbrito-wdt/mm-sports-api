@@ -16,7 +16,7 @@ it('lista encomendas só do utilizador autenticado', function () {
     $this->withHeaders(jwtHeaders($u1))
         ->postJson('/api/orders', [
             'items' => [['product_variant_id' => (string) $v->id, 'quantity' => 1]],
-            'destination_postal_code' => '01310100',
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
         ])
         ->assertCreated();
 
@@ -53,16 +53,16 @@ it('detalhe da encomenda inclui linhas e personalização para o dono', function
                     ['option_id' => (string) $opt->id, 'value' => 'Teste'],
                 ],
             ]],
-            'destination_postal_code' => '01310100',
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
         ]);
     $create->assertCreated();
-    $orderId = $create->json('data.id');
+    $orderId = $create->json('order_id');
 
     $detail = $this->withHeaders(jwtHeaders($user))->getJson("/api/orders/{$orderId}");
     $detail->assertOk();
     $detail->assertJsonPath('items.0.product_title', $p->title);
     $detail->assertJsonPath('items.0.personalization_snapshot.0.value', 'Teste');
-    $detail->assertJsonPath('grand_total', $create->json('data.grand_total'));
+    $detail->assertJsonPath('id', $orderId);
 });
 
 it('outro utilizador não acede ao detalhe da encomenda', function () {
@@ -72,9 +72,9 @@ it('outro utilizador não acede ao detalhe da encomenda', function () {
     $orderId = $this->withHeaders(jwtHeaders($owner))
         ->postJson('/api/orders', [
             'items' => [['product_variant_id' => (string) $v->id, 'quantity' => 1]],
-            'destination_postal_code' => '01310100',
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
         ])
-        ->json('data.id');
+        ->json('order_id');
 
     $this->withHeaders(jwtHeaders($other))
         ->getJson("/api/orders/{$orderId}")

@@ -5,6 +5,7 @@ namespace App\Domains\Catalog\Services;
 use App\Domains\Catalog\Models\Product;
 use App\Domains\Shared\Services\BaseService;
 use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -61,7 +62,13 @@ class CatalogFacetService extends BaseService
     private function queryFacets(): array
     {
         if ($this->useMaterializedViewForFacets()) {
-            return $this->queryFacetsUsingMaterializedView();
+            try {
+                return $this->queryFacetsUsingMaterializedView();
+            } catch (QueryException $e) {
+                if ($e->getCode() !== '55000') {
+                    throw $e;
+                }
+            }
         }
 
         return $this->queryFacetsUsingLiveCounts();

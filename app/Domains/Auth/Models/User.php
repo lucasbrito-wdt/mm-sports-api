@@ -9,14 +9,21 @@ use App\Domains\Auth\Notifications\ResetPasswordNotification;
 use App\Domains\Auth\Notifications\VerifyEmail;
 use App\Domains\Commerce\Models\Order;
 use App\Domains\Commerce\Models\UserAddress;
+use App\Domains\Commerce\Models\UserPaymentMethod;
 use App\Domains\Reviews\Models\WishlistItem;
 use App\Domains\Shared\Traits\TenantScope;
+use Database\Factories\UserFactory;
 use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
+use Laravel\Sanctum\PersonalAccessToken;
 use LucasBritoWdt\LaravelDatabaseFts\Traits\Searchable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
@@ -24,20 +31,20 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property string $id
  * @property string $name
  * @property string $email
- * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $foto
  * @property int $termos
  * @property int $ativo
  * @property string|null $remember_token
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Domains\ACL\Models\Role> $belongsToManyRoles
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, Role> $belongsToManyRoles
  * @property-read int|null $belongs_to_many_roles_count
- * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
  * @property-read mixed $role
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
+ * @property-read Collection<int, PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
@@ -55,7 +62,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTermos($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  *
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Role> $roles
+ * @property-read Collection<int, Role> $roles
  * @property-read int|null $roles_count
  *
  * @mixin \Eloquent
@@ -66,7 +73,7 @@ class User extends Authenticatable implements JWTSubject
 
     protected static function newFactory()
     {
-        return \Database\Factories\UserFactory::new();
+        return UserFactory::new();
     }
 
     /**
@@ -82,6 +89,13 @@ class User extends Authenticatable implements JWTSubject
         'avatar',
         'terms',
         'active',
+        'cpf',
+        'phone',
+        'asaas_customer_id',
+        'rg',
+        'gender',
+        'birthdate',
+        'favorite_team',
     ];
 
     protected static array $searchable = [
@@ -109,6 +123,7 @@ class User extends Authenticatable implements JWTSubject
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'avatar' => UploadCast::class,
+        'birthdate' => 'date',
     ];
 
     protected $appends = [
@@ -176,6 +191,11 @@ class User extends Authenticatable implements JWTSubject
     public function wishlistItems()
     {
         return $this->hasMany(WishlistItem::class);
+    }
+
+    public function paymentMethods()
+    {
+        return $this->hasMany(UserPaymentMethod::class);
     }
 
     // endregion

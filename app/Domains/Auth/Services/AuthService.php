@@ -2,6 +2,7 @@
 
 namespace App\Domains\Auth\Services;
 
+use App\Domains\ACL\Enums\RoleEnum;
 use App\Domains\Auth\Models\User;
 use App\Domains\Auth\Requests\ForgotPasswordRequest;
 use App\Domains\Auth\Requests\LoginRequest;
@@ -62,11 +63,16 @@ class AuthService extends BaseService
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'cpf' => $request->input('cpf'),
+            'rg' => $request->input('rg'),
+            'gender' => $request->input('gender'),
+            'birthdate' => $request->input('birthdate'),
+            'favorite_team' => $request->input('favorite_team'),
             'password' => Hash::make($request->password),
             'terms' => $request->terms,
         ]);
 
-        $user->assignRole(config('cdf.default_user_role_slug', 'user'));
+        $user->assignRole(RoleEnum::User->value);
 
         $this->user->sendEmailVerificationNotification();
 
@@ -126,7 +132,10 @@ class AuthService extends BaseService
 
     public function profile(): JsonResponse
     {
-        return response()->json(auth()->user());
+        /** @var User|null $user */
+        $user = auth('api')->user();
+
+        return response()->json($user);
     }
 
     /**
@@ -137,7 +146,7 @@ class AuthService extends BaseService
     public function updateProfile(array $data): JsonResponse
     {
         /** @var User $user */
-        $user = auth()->user();
+        $user = auth('api')->user();
 
         $emailChanged = isset($data['email']) && $data['email'] !== $user->email;
 
@@ -161,7 +170,7 @@ class AuthService extends BaseService
     /**
      * Refresh a token.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function refresh()
     {
@@ -182,7 +191,7 @@ class AuthService extends BaseService
      * Get the token array structure.
      *
      * @param  string  $token
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     protected function respondWithToken($token)
     {
@@ -219,7 +228,7 @@ class AuthService extends BaseService
     {
         try {
             return JWTAuth::factory()->getTTL() * 60;
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             // Fallback para config direto
             return config('jwt.ttl', 60) * 60;
         }

@@ -76,6 +76,11 @@ return [
         'promotions create',
         'promotions edit',
         'promotions delete',
+        'coupons list',
+        'coupons read',
+        'coupons create',
+        'coupons edit',
+        'coupons delete',
     ],
     'commerce' => [
         'orders list',

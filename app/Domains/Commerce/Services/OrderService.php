@@ -6,8 +6,10 @@ use App\Domains\Auth\Models\User;
 use App\Domains\Commerce\Enums\OrderStatus;
 use App\Domains\Commerce\Models\Order;
 use App\Domains\Commerce\Models\OrderItem;
-use App\Domains\Commerce\Models\UserAddress;
+use App\Domains\Commerce\Models\UserPaymentMethod;
 use App\Domains\Integrations\Services\AsaasService;
+use App\Domains\Marketing\Models\Coupon;
+use App\Domains\Marketing\Services\CouponService;
 use App\Domains\Shared\Services\BaseService;
 use App\Domains\Shared\Utils\IntHelper;
 use App\Domains\Tracking\Services\AnalyticsService;
@@ -25,123 +27,69 @@ class OrderService extends BaseService
         private readonly OrderStatusTracker $orderStatusTracker,
         private readonly AsaasService $asaasService,
         private readonly AnalyticsService $analyticsService,
+        private readonly CouponService $couponService,
     ) {
         $this->setModel($this->order);
     }
 
     public function createFromUser(User $user, array $data): Order
     {
-        $quote = $this->checkoutQuoteService->computeQuote($user->id, [
-            'items' => $data['items'],
-            'destination_postal_code' => $data['destination_postal_code'],
-            'user_address_id' => $data['user_address_id'] ?? null,
-        ]);
-
-        $addressSnapshot = $this->resolveShippingSnapshot($user->id, $data);
-
-        return DB::transaction(function () use ($user, $quote, $addressSnapshot) {
-            $orderId = (string) Str::ulid();
-            $cartHash = hash('sha256', json_encode($quote['lines']) ?: '');
-
-            $order = $this->order->newQuery()->create([
-                'id' => $orderId,
-                'user_id' => $user->id,
-                'status' => OrderStatus::PendingPayment,
-                'subtotal' => $quote['subtotal'],
-                'discount_total' => $quote['discount_total'],
-                'shipping_total' => $quote['shipping_total'],
-                'grand_total' => $quote['grand_total'],
-                'shipping_service_code' => $quote['shipping']['service_code'] ?? null,
-                'shipping_quote_json' => $quote['shipping'],
-                'shipping_address_snapshot' => $addressSnapshot,
-            ]);
-
-            $this->orderStatusTracker->record(
-                $order,
-                null,
-                OrderStatus::PendingPayment->value,
-                'system',
-                ['cart_summary_hash' => $cartHash]
-            );
-
-            foreach ($quote['lines'] as $line) {
-                $this->orderItem->newQuery()->create([
-                    'id' => (string) Str::ulid(),
-                    'order_id' => $order->id,
-                    'product_variant_id' => $line['product_variant_id'],
-                    'quantity' => $line['quantity'],
-                    'unit_price' => $line['unit_price'],
-                    'discount_amount' => 0,
-                    'product_title_snapshot' => $line['product_title'],
-                    'variant_label_snapshot' => $line['variant_label'],
-                    'personalization_snapshot' => $line['personalization_snapshot'] ?? null,
-                ]);
-            }
-
-            $pay = $this->asaasService->createPayment($order, (float) $quote['grand_total']);
-            $order->update([
-                'asaas_payment_id' => $pay['asaas_payment_id'],
-                'asaas_customer_id' => $pay['asaas_customer_id'],
-            ]);
-
-            $this->analyticsService->track(
-                'order_created',
-                $user->id,
-                ['order_id' => (string) $order->id],
-                'api',
-                request()
-            );
-
-            return $order->fresh();
-        });
-    }
-
-    public function createFromGuest(array $customerData, array $data): Order
-    {
         if (empty($data['items'])) {
             throw new InvalidArgumentException('items não pode ser vazio');
         }
 
-        $quote = $this->checkoutQuoteService->computeQuote('guest', [
-            'items' => $data['items'],
-            'destination_postal_code' => $data['address']['postal_code'],
-        ]);
+        $this->syncUserContact($user, $data['customer'] ?? []);
 
         $addr = $data['address'];
+        $quote = $this->checkoutQuoteService->computeQuote($user->id, [
+            'items' => $data['items'],
+            'destination_postal_code' => $addr['postal_code'],
+        ]);
+
         $addressSnapshot = [
-            'recipient_name' => $customerData['name'],
+            'recipient_name' => $user->name,
             'postal_code' => $addr['postal_code'],
             'street' => $addr['street'],
             'number' => $addr['number'],
             'complement' => $addr['complement'] ?? null,
+            'district' => $addr['district'] ?? null,
             'city' => $addr['city'],
             'state' => $addr['state'],
         ];
 
         $billingType = strtoupper($data['billing_type']);
 
-        return DB::transaction(function () use ($customerData, $data, $quote, $addressSnapshot, $billingType) {
+        $couponData = $this->resolveCoupon($data['coupon_code'] ?? null, (float) $quote['subtotal']);
+
+        return DB::transaction(function () use ($user, $data, $quote, $addressSnapshot, $billingType, $couponData) {
             $orderId = (string) Str::ulid();
             $cartHash = hash('sha256', json_encode($quote['lines']) ?: '');
 
+            $couponDiscount = $couponData['discount'] ?? 0.0;
+            $discountTotal = round((float) $quote['discount_total'] + $couponDiscount, 2);
+            $afterDiscount = round((float) $quote['subtotal'] - $discountTotal, 2);
+            $grandTotal = round($afterDiscount + (float) $quote['shipping_total'], 2);
+
             $order = $this->order->newQuery()->create([
                 'id' => $orderId,
-                'user_id' => null,
+                'user_id' => $user->id,
+                'coupon_id' => $couponData['coupon_id'] ?? null,
+                'coupon_code' => $couponData['code'] ?? null,
                 'status' => OrderStatus::PendingPayment,
                 'payment_method' => strtolower($billingType),
-                'guest_name' => $customerData['name'],
-                'guest_email' => $customerData['email'],
-                'guest_cpf' => preg_replace('/\D/', '', $customerData['cpf']),
-                'guest_phone' => preg_replace('/\D/', '', $customerData['phone']),
                 'subtotal' => $quote['subtotal'],
-                'discount_total' => $quote['discount_total'],
+                'discount_total' => $discountTotal,
                 'shipping_total' => $quote['shipping_total'],
-                'grand_total' => $quote['grand_total'],
+                'grand_total' => $grandTotal,
                 'shipping_service_code' => $quote['shipping']['service_code'] ?? null,
                 'shipping_quote_json' => $quote['shipping'],
                 'shipping_address_snapshot' => $addressSnapshot,
                 'notes' => $data['notes'] ?? null,
             ]);
+
+            if (! empty($couponData['model'])) {
+                $this->couponService->consume($couponData['model']);
+            }
 
             $this->orderStatusTracker->record(
                 $order,
@@ -169,14 +117,14 @@ class OrderService extends BaseService
                 'PIX' => $this->handlePixPayment($order),
                 'CREDIT_CARD' => $this->handleCardPayment($order, $data),
                 'BOLETO' => $this->handleBoletoPayment($order),
-                default => throw new \InvalidArgumentException('billing_type inválido: '.$billingType),
+                default => throw new InvalidArgumentException('billing_type inválido: '.$billingType),
             };
 
             $order->update($paymentResult);
 
             $this->analyticsService->track(
                 'order_created',
-                null,
+                $user->id,
                 ['order_id' => (string) $order->id, 'billing_type' => $billingType],
                 'api',
                 request()
@@ -255,32 +203,6 @@ class OrderService extends BaseService
         ];
     }
 
-    private function resolveShippingSnapshot(string $userId, array $data): array
-    {
-        if (! empty($data['user_address_id'])) {
-            $a = UserAddress::query()
-                ->where('user_id', $userId)
-                ->where('id', $data['user_address_id'])
-                ->firstOrFail();
-
-            return [
-                'recipient_name' => $a->recipient_name,
-                'postal_code' => $a->postal_code,
-                'street' => $a->street,
-                'number' => $a->number,
-                'complement' => $a->complement,
-                'district' => $a->district,
-                'city' => $a->city,
-                'state' => $a->state,
-            ];
-        }
-
-        return [
-            'postal_code' => $data['destination_postal_code'],
-            'note' => 'quote_only_address',
-        ];
-    }
-
     private function serializeOrderDetail(Order $order): array
     {
         return [
@@ -344,7 +266,11 @@ class OrderService extends BaseService
         $remoteIp = request()->header('X-Forwarded-For') ?? request()->ip() ?? '127.0.0.1';
         $remoteIp = explode(',', $remoteIp)[0];
         $installments = (int) ($data['installments'] ?? 1);
-        $cardData = $data['credit_card'] ?? [];
+        $useShippingAsBilling = (bool) ($data['use_shipping_as_billing'] ?? true);
+
+        $cardData = ! empty($data['credit_card_token'])
+            ? ['token' => $data['credit_card_token']]
+            : AsaasService::buildCardData($data['credit_card'] ?? [], $order, $useShippingAsBilling);
 
         $result = $this->asaasService->createCardPayment($order, $cardData, trim($remoteIp), $installments);
 
@@ -352,10 +278,43 @@ class OrderService extends BaseService
             throw new \RuntimeException('Transação não autorizada');
         }
 
+        if ($order->user_id && ! empty($result['credit_card_token'])) {
+            UserPaymentMethod::query()->updateOrCreate(
+                [
+                    'user_id' => $order->user_id,
+                    'asaas_card_token' => $result['credit_card_token'],
+                ],
+                [
+                    'brand' => $result['credit_card_brand'] ?? null,
+                    'last4' => $result['credit_card_last4'] ?? null,
+                    'holder_name' => $cardData['holder_name'] ?? null,
+                    'expiry_month' => $cardData['expiry_month'] ?? null,
+                    'expiry_year' => $cardData['expiry_year'] ?? null,
+                ]
+            );
+        }
+
         return [
             'asaas_payment_id' => $result['asaas_payment_id'] ?? null,
             'asaas_customer_id' => $result['asaas_customer_id'] ?? null,
+            'asaas_credit_card_token' => $result['credit_card_token'] ?? null,
+            'asaas_credit_card_brand' => $result['credit_card_brand'] ?? null,
+            'asaas_credit_card_last4' => $result['credit_card_last4'] ?? null,
         ];
+    }
+
+    private function syncUserContact(User $user, array $customer): void
+    {
+        $updates = [];
+        if (empty($user->cpf) && ! empty($customer['cpf'])) {
+            $updates['cpf'] = preg_replace('/\D/', '', (string) $customer['cpf']);
+        }
+        if (empty($user->phone) && ! empty($customer['phone'])) {
+            $updates['phone'] = preg_replace('/\D/', '', (string) $customer['phone']);
+        }
+        if (! empty($updates)) {
+            $user->forceFill($updates)->save();
+        }
     }
 
     private function isAdmin(User $user): bool
@@ -365,5 +324,29 @@ class OrderService extends BaseService
         } catch (\Throwable) {
             return false;
         }
+    }
+
+    /**
+     * Validate the coupon code against the (already discounted) subtotal and
+     * return the snapshot to persist on the order.
+     *
+     * @return array{coupon_id?: string, code?: string, discount: float, model?: Coupon}|array{}
+     */
+    private function resolveCoupon(?string $code, float $subtotal): array
+    {
+        $code = is_string($code) ? trim($code) : '';
+        if ($code === '') {
+            return [];
+        }
+
+        $subtotalCents = (int) round($subtotal * 100);
+        $result = $this->couponService->validate($code, $subtotalCents);
+
+        return [
+            'coupon_id' => (string) $result['coupon']->id,
+            'code' => $result['coupon']->code,
+            'discount' => round($result['discount_cents'] / 100, 2),
+            'model' => $result['coupon'],
+        ];
     }
 }

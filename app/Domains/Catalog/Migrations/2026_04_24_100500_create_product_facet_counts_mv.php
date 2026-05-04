@@ -30,6 +30,8 @@ return new class extends Migration
             CREATE UNIQUE INDEX product_facet_counts_pk
             ON product_facet_counts (attribute_id, attribute_value_id)
         ');
+
+        DB::statement('REFRESH MATERIALIZED VIEW product_facet_counts');
     }
 
     public function down(): void

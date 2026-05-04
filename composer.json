@@ -21,12 +21,14 @@
         "league/flysystem-aws-s3-v3": "^3.32",
         "lucasbrito-wdt/correios": "^1.0",
         "lucasbrito-wdt/laravel-database-fts": "^1.1",
+        "lucianotonet/laravel-telescope-mcp": "^1.1",
         "luquinhasbrito/asaas-api-sdk-laravel": "^1.0",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.5",
         "fakerphp/faker": "^1.23",
+        "laravel/boost": "^2.4",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.41",
@@ -54,7 +56,8 @@
             "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+            "@php artisan boost:update --ansi"
         ],
         "post-update-cmd-dev": [
             "@php artisan ide-helper:generate",

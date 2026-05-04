@@ -21,10 +21,10 @@ it('cria pedido pendente com rastreio e analytics', function () {
             'items' => [
                 ['product_variant_id' => (string) $v->id, 'quantity' => 1],
             ],
-            'destination_postal_code' => '01310100',
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
         ]);
     $res->assertCreated();
-    $id = $res->json('data.id');
+    $id = $res->json('order_id');
     $order = Order::query()->findOrFail($id);
     expect($order->status)->toBe(OrderStatus::PendingPayment);
     expect($order->asaas_payment_id)->toStartWith('test_');
@@ -55,10 +55,10 @@ it('grava snapshot de personalização nas linhas do pedido', function () {
                     ['option_id' => (string) $opt->id, 'value' => '10'],
                 ],
             ]],
-            'destination_postal_code' => '01310100',
+            'address' => ['postal_code' => '01310100', 'street' => 'Av. Paulista', 'number' => '1000', 'district' => 'Bela Vista', 'city' => 'São Paulo', 'state' => 'SP'], 'billing_type' => 'PIX',
         ]);
     $res->assertCreated();
-    $orderId = $res->json('data.id');
+    $orderId = $res->json('order_id');
     $row = OrderItem::query()->where('order_id', $orderId)->firstOrFail();
     expect($row->personalization_snapshot)->toBeArray()
         ->and($row->personalization_snapshot[0]['value'])->toBe('10')

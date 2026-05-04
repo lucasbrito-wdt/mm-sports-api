@@ -26,15 +26,15 @@ class RolesPermissionSeeder extends Seeder
             Role::updateOrCreate(['name' => $roleEnum->getRoleName(), 'slug' => $roleEnum->value], ['name' => $roleEnum->getRoleName(), 'slug' => $roleEnum->value]);
         });
 
-        // Assign permissions to roles
-        Role::all()->map(function ($role) {
+        // Assign permissions to roles (detach + attach — limpa pivots duplicados de seedings antigos).
+        Role::all()->each(function (Role $role) {
             $roleEnum = RoleEnum::from($role->slug);
-
-            collect($roleEnum->getPermissions())
-                ->each(function ($p) use (&$role) {
-                    $permission = Permission::whereSlug($p)->firstOrFail();
-                    $role->givePermissionTo($permission);
-                });
+            $slugs = collect($roleEnum->getPermissions())->unique()->values();
+            $ids = Permission::whereIn('slug', $slugs)->pluck('id')->all();
+            $role->permissions()->detach();
+            if ($ids !== []) {
+                $role->permissions()->attach($ids);
+            }
         });
     }
 }

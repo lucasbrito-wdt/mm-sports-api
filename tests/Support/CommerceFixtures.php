@@ -44,4 +44,23 @@ final class CommerceFixtures
 
         return [$p, $v];
     }
+
+    /**
+     * Payload mínimo para `POST /api/orders` no contrato autenticado.
+     */
+    public static function orderPayload(array $items, array $overrides = []): array
+    {
+        return array_merge([
+            'billing_type' => 'PIX',
+            'items' => $items,
+            'address' => [
+                'postal_code' => '01310100',
+                'street' => 'Av. Paulista',
+                'number' => '1000',
+                'district' => 'Bela Vista',
+                'city' => 'São Paulo',
+                'state' => 'SP',
+            ],
+        ], $overrides);
+    }
 }

@@ -36,7 +36,7 @@ return [
     ],
 
     'mm_store' => [
-        'origin_postal_code' => env('MM_STORE_POSTAL_CODE', '01310100'),
+        'origin_postal_code' => env('MM_STORE_POSTAL_CODE', '58200230'),
     ],
 
     'asaas' => [
@@ -53,12 +53,12 @@ return [
 
     'ga4' => [
         'measurement_id' => env('GA4_MEASUREMENT_ID'),
-        'api_secret'     => env('GA4_API_SECRET'),
+        'api_secret' => env('GA4_API_SECRET'),
     ],
 
     'meta' => [
-        'pixel_id'        => env('META_PIXEL_ID'),
-        'access_token'    => env('META_ACCESS_TOKEN'),
+        'pixel_id' => env('META_PIXEL_ID'),
+        'access_token' => env('META_ACCESS_TOKEN'),
         'test_event_code' => env('META_TEST_EVENT_CODE'),
     ],
 
