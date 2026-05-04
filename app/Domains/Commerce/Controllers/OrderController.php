@@ -44,6 +44,7 @@ class OrderController extends Controller
     {
         try {
             $order = $this->orderService->createFromUser($request->user(), $request->validated());
+            $this->orderService->dispatchOrderPlacedEmail($order);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         } catch (\RuntimeException $e) {

@@ -4,6 +4,7 @@ namespace App\Domains\Integrations\Controllers;
 
 use App\Domains\Commerce\Enums\OrderStatus;
 use App\Domains\Commerce\Models\Order;
+use App\Domains\Commerce\Services\OrderService;
 use App\Domains\Shared\Controller\BaseController;
 use App\Domains\Tracking\Services\AnalyticsService;
 use App\Domains\Tracking\Services\OrderStatusTracker;
@@ -18,6 +19,7 @@ class AsaasWebhookController extends BaseController
         private readonly WebhookInboxService $webhookInboxService,
         private readonly OrderStatusTracker $orderStatusTracker,
         private readonly AnalyticsService $analyticsService,
+        private readonly OrderService $orderService,
     ) {
         parent::__construct();
     }
@@ -71,6 +73,8 @@ class AsaasWebhookController extends BaseController
                     'api',
                     request()
                 );
+
+                $this->orderService->dispatchOrderPaidEmail($order);
             }
         });
 

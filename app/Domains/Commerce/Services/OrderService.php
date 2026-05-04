@@ -14,7 +14,11 @@ use App\Domains\Shared\Services\BaseService;
 use App\Domains\Shared\Utils\IntHelper;
 use App\Domains\Tracking\Services\AnalyticsService;
 use App\Domains\Tracking\Services\OrderStatusTracker;
+use App\Mail\OrderPaidMail;
+use App\Mail\OrderPlacedMail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -132,6 +136,48 @@ class OrderService extends BaseService
 
             return $order->fresh();
         });
+    }
+
+    /**
+     * Send the order-placed e-mail to the customer. Failures are swallowed —
+     * a broken mailer must never block order creation.
+     */
+    public function dispatchOrderPlacedEmail(Order $order): void
+    {
+        $email = $order->user?->email;
+        if (! $email) {
+            return;
+        }
+
+        try {
+            Mail::to($email)->send(new OrderPlacedMail($order));
+        } catch (\Throwable $e) {
+            Log::warning('OrderPlacedMail dispatch failed', [
+                'order_id' => (string) $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Send the order-paid e-mail to the customer. Failures are swallowed —
+     * a broken mailer must never break the webhook flow.
+     */
+    public function dispatchOrderPaidEmail(Order $order): void
+    {
+        $email = $order->user?->email;
+        if (! $email) {
+            return;
+        }
+
+        try {
+            Mail::to($email)->send(new OrderPaidMail($order));
+        } catch (\Throwable $e) {
+            Log::warning('OrderPaidMail dispatch failed', [
+                'order_id' => (string) $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
