@@ -91,6 +91,7 @@ class User extends Authenticatable implements JWTSubject
         'active',
         'cpf',
         'phone',
+        'landline',
         'asaas_customer_id',
         'rg',
         'gender',

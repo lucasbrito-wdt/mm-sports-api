@@ -16,9 +16,6 @@ class UpdateProfileRequest extends FormRequest
     {
         $userId = $this->user()?->getKey();
 
-        // NOTE: phone/cpf are not yet columns on `users` table. The frontend
-        // /minha-conta/dados page may submit them; if/when those columns are
-        // added (separate migration), expand this rule set accordingly.
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -28,6 +25,13 @@ class UpdateProfileRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
+            'cpf' => ['nullable', 'string', 'max:20'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'landline' => ['nullable', 'string', 'max:20'],
+            'rg' => ['nullable', 'string', 'max:20'],
+            'gender' => ['nullable', 'string', 'in:m,f,o'],
+            'birthdate' => ['nullable', 'date_format:Y-m-d'],
+            'favorite_team' => ['nullable', 'string', 'max:64'],
         ];
     }
 }

@@ -150,10 +150,24 @@ class AuthService extends BaseService
 
         $emailChanged = isset($data['email']) && $data['email'] !== $user->email;
 
-        $user->fill([
-            'name' => $data['name'],
-            'email' => $data['email'],
-        ]);
+        $user->fill(array_filter([
+            'name' => $data['name'] ?? null,
+            'email' => $data['email'] ?? null,
+            'cpf' => $data['cpf'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'landline' => $data['landline'] ?? null,
+            'rg' => $data['rg'] ?? null,
+            'gender' => $data['gender'] ?? null,
+            'birthdate' => $data['birthdate'] ?? null,
+            'favorite_team' => $data['favorite_team'] ?? null,
+        ], fn ($v) => $v !== null));
+
+        // Permite explicitamente apagar campos opcionais.
+        foreach (['cpf', 'phone', 'landline', 'rg', 'gender', 'birthdate', 'favorite_team'] as $field) {
+            if (array_key_exists($field, $data) && ($data[$field] === '' || $data[$field] === null)) {
+                $user->{$field} = null;
+            }
+        }
 
         // TODO: when `email` changes, dispatch a re-verification flow
         // (reset email_verified_at and resend VerifyEmail notification).

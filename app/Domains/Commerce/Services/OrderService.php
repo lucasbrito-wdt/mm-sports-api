@@ -265,17 +265,26 @@ class OrderService extends BaseService
             'shipping' => $order->shipping_quote_json,
             'shipping_address_snapshot' => $order->shipping_address_snapshot,
             'created_at' => $order->created_at?->toIso8601String(),
+            'asaas_pix_qr_code' => $order->asaas_pix_qr_code,
+            'asaas_pix_copy_paste' => $order->asaas_pix_copy_paste,
+            'asaas_pix_expires_at' => $order->asaas_pix_expires_at?->toIso8601String(),
+            'asaas_boleto_url' => $order->asaas_boleto_url,
             'items' => $order->items->map(function ($item) {
+                $variant = $item->productVariant;
+                $variant?->loadMissing('product.images');
+                $imageUrl = $variant?->product?->images?->first()?->url;
+
                 return [
                     'id' => (string) $item->id,
                     'product_variant_id' => (string) $item->product_variant_id,
-                    'sku' => $item->productVariant?->sku,
+                    'sku' => $variant?->sku,
                     'quantity' => $item->quantity,
                     'unit_price' => (string) $item->unit_price,
                     'discount_amount' => (string) $item->discount_amount,
                     'product_title' => $item->product_title_snapshot,
                     'variant_label' => $item->variant_label_snapshot,
                     'personalization_snapshot' => $item->personalization_snapshot,
+                    'image_url' => $imageUrl,
                 ];
             })->all(),
         ];
