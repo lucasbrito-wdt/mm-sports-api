@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute as CastsAttribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 
 class Product extends BaseModel
@@ -95,6 +96,13 @@ class Product extends BaseModel
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('display_order');
+    }
+
+    public function coverImage(): HasOne
+    {
+        return $this->hasOne(ProductImage::class)
+            ->whereNull('attribute_value_id')
+            ->orderBy('display_order');
     }
 
     /**

@@ -18,7 +18,7 @@ class UserAddressService extends BaseService
     {
         $rows = $this->userAddress->newQuery()->where('user_id', $userId)->orderByDesc('is_default')->get();
 
-        return ['data' => $rows->map(fn (UserAddress $a) => $this->transform($a))->all()];
+        return ['data' => $rows->map(fn (UserAddress $a) => $this->toApiArray($a))->all()];
     }
 
     public function storeForUser(string $userId, array $data): UserAddress
@@ -58,10 +58,26 @@ class UserAddressService extends BaseService
         return $this->userAddress->newQuery()->where('user_id', $userId)->where('id', $id)->firstOrFail();
     }
 
-    private function transform(UserAddress $a): array
+    /**
+     * @return array{
+     *     id: string,
+     *     user_id: string,
+     *     recipient_name: string|null,
+     *     postal_code: string|null,
+     *     street: string|null,
+     *     number: string|null,
+     *     complement: string|null,
+     *     district: string|null,
+     *     city: string|null,
+     *     state: string|null,
+     *     is_default: bool
+     * }
+     */
+    public function toApiArray(UserAddress $a): array
     {
         return [
             'id' => (string) $a->id,
+            'user_id' => (string) $a->user_id,
             'recipient_name' => $a->recipient_name,
             'postal_code' => $a->postal_code,
             'street' => $a->street,
@@ -70,7 +86,7 @@ class UserAddressService extends BaseService
             'district' => $a->district,
             'city' => $a->city,
             'state' => $a->state,
-            'is_default' => $a->is_default,
+            'is_default' => (bool) $a->is_default,
         ];
     }
 }

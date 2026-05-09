@@ -47,7 +47,7 @@ class OrderAdminService extends BaseService
     {
         $order = $this->findById($id);
 
-        return $order->load(['user', 'items.productVariant']);
+        return $order->load(['user', 'items.productVariant.product.coverImage']);
     }
 
     public function updateByAdmin(string $id, array $data): Order
@@ -99,7 +99,7 @@ class OrderAdminService extends BaseService
                 request()
             );
 
-            return $order->load(['user', 'items.productVariant']);
+            return $order->load(['user', 'items.productVariant.product.coverImage']);
         });
     }
 
