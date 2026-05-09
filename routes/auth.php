@@ -6,10 +6,10 @@ use App\Domains\Auth\Controllers\EmailVerificationPromptController;
 use App\Domains\Auth\Controllers\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
-Route::group(['prefix' => 'auth', 'as' => 'auth', 'controller' => AuthController::class], function () {
+Route::group(['prefix' => 'auth', 'as' => 'auth.', 'controller' => AuthController::class], function () {
     Route::middleware('throttle:5,1')->group(function () {
-        Route::post('login', 'login');
-        Route::post('register', 'register');
+        Route::post('login', 'login')->name('login');
+        Route::post('register', 'register')->name('register');
         Route::post('forgot-password', 'forgotPassword')->name('forgot.password');
         Route::post('reset-password', 'resetPassword')->name('password.reset');
     });
@@ -31,11 +31,11 @@ Route::group(['prefix' => 'auth', 'as' => 'auth', 'controller' => AuthController
 
 Route::group([
     'prefix' => 'auth',
-    'as' => 'auth',
+    'as' => 'auth.',
     'middleware' => ['auth:api', 'verified'],
     'controller' => AuthController::class,
 ], function () {
-    Route::get('profile', 'profile');
-    Route::put('profile', 'updateProfile');
-    Route::post('logout', 'logout');
+    Route::get('profile', 'profile')->name('profile');
+    Route::put('profile', 'updateProfile')->name('profile.update');
+    Route::post('logout', 'logout')->name('logout');
 });

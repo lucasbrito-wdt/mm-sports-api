@@ -10,9 +10,9 @@ Route::middleware(['auth:api', 'verified'])->group(function () {
      * User
     */
     Route::apiResource('users', UserController::class);
-    Route::group(['prefix' => 'users', 'as' => 'users'], function () {
-        Route::post('search', [UserController::class, 'searchText']);
-        Route::get('list/roles', [UserController::class, 'roles']);
+    Route::group(['prefix' => 'users', 'as' => 'users.'], function () {
+        Route::post('search', [UserController::class, 'searchText'])->name('search');
+        Route::get('list/roles', [UserController::class, 'roles'])->name('list.roles');
     });
 });
 
